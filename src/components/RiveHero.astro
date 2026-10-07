@@ -77,7 +77,8 @@ import poster from '../assets/images/hero-poster.webp';
 				stroke-linejoin="round"
 			>
 				<path d="M3.5 11.2c2.6-.3 5.2-.2 7.6 0l7.8-6.9c.8 6.6.9 14.1.2 21.3l-8-6.6c-2.5.3-5.1.2-7.7-.2-.6-2.5-.5-5.2.1-7.6Z" />
-				<g data-on class="hidden">
+				<!-- display attributes (not classes) so the starting "off" state never depends on CSS having loaded -->
+				<g data-on display="none">
 					<path d="M23.5 10.5c1.8 2.6 1.9 6 .1 8.8" />
 					<path d="M27.8 6.4c3.6 4.9 3.7 11.9.2 17.3" />
 					<path d="M32.2 2.8c5.4 7.1 5.4 17 .1 24.6" />
@@ -206,8 +207,8 @@ import poster from '../assets/images/hero-poster.webp';
 			if (!soundBtn) return;
 			const on = isOn();
 			soundBtn.setAttribute('aria-pressed', String(on));
-			soundBtn.querySelector('[data-on]')?.classList.toggle('hidden', !on);
-			soundBtn.querySelector('[data-off]')?.classList.toggle('hidden', on);
+			soundBtn.querySelector('[data-on]')?.setAttribute('display', on ? 'inline' : 'none');
+			soundBtn.querySelector('[data-off]')?.setAttribute('display', on ? 'none' : 'inline');
 			const label = soundBtn.querySelector('[data-label]');
 			if (label) label.textContent = on ? 'sound on' : 'sound off';
 		};
