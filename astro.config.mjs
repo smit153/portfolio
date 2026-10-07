@@ -41,6 +41,15 @@ export default defineConfig({
       options: {
         variants: [{ src: ['./src/assets/fonts/GrapeNuts-Regular.ttf'], weight: 400, style: 'normal' }]
       }
+    },
+    {
+      provider: fontProviders.google(),
+      name: 'Caveat',
+      cssVariable: '--font-caveat',
+      weights: [400, 500],
+      styles: ['normal'],
+      subsets: ['latin'],
+      fallbacks: ['cursive']
     }
   ],
   vite: {

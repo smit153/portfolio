@@ -4,6 +4,7 @@
 @theme inline {
   --font-sohne: var(--font-sohne-mono);
   --font-grape: var(--font-grape-nuts);
+  --font-handwritten: var(--font-caveat);
 }
 
 @theme {
@@ -11,4 +12,5 @@
   --color-line: #1f2020;
   --color-tick: #5a5a5a;
   --color-muted: #8d8d8d;
+  --color-doodle: #a3a3a3;
 }
