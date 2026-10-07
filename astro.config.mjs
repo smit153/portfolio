@@ -13,23 +13,23 @@ export default defineConfig({
       fallbacks: ['monospace'],
       options: {
         variants: [
-          { src: ['./src/assets/fonts/SohneMono-Extraleicht.ttf'], weight: 200, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-ExtraleichtKursiv.ttf'], weight: 200, style: 'italic' },
-          { src: ['./src/assets/fonts/SohneMono-Leicht.ttf'], weight: 300, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-LeichtKursiv.ttf'], weight: 300, style: 'italic' },
-          { src: ['./src/assets/fonts/SohneMono-Buch.ttf'], weight: 400, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-BuchKursiv.ttf'], weight: 400, style: 'italic' },
-          { src: ['./src/assets/fonts/SohneMono-Kraftig.ttf'], weight: 500, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-KraftigKursiv.ttf'], weight: 500, style: 'italic' },
-          { src: ['./src/assets/fonts/SohneMono-Halbfett.ttf'], weight: 600, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-HalbfettKursiv.ttf'], weight: 600, style: 'italic' },
+          { src: ['./src/assets/fonts/SohneMono-Extraleicht.woff2'], weight: 200, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-ExtraleichtKursiv.woff2'], weight: 200, style: 'italic' },
+          { src: ['./src/assets/fonts/SohneMono-Leicht.woff2'], weight: 300, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-LeichtKursiv.woff2'], weight: 300, style: 'italic' },
+          { src: ['./src/assets/fonts/SohneMono-Buch.woff2'], weight: 400, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-BuchKursiv.woff2'], weight: 400, style: 'italic' },
+          { src: ['./src/assets/fonts/SohneMono-Kraftig.woff2'], weight: 500, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-KraftigKursiv.woff2'], weight: 500, style: 'italic' },
+          { src: ['./src/assets/fonts/SohneMono-Halbfett.woff2'], weight: 600, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-HalbfettKursiv.woff2'], weight: 600, style: 'italic' },
           // the 700 italic's file name is truncated in the font package
-          { src: ['./src/assets/fonts/SohneMono-Dreiviertelfett.ttf'], weight: 700, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-DreiviertelfettKurs.ttf'], weight: 700, style: 'italic' },
-          { src: ['./src/assets/fonts/SohneMono-Fett.ttf'], weight: 800, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-FettKursiv.ttf'], weight: 800, style: 'italic' },
-          { src: ['./src/assets/fonts/SohneMono-Extrafett.ttf'], weight: 900, style: 'normal' },
-          { src: ['./src/assets/fonts/SohneMono-ExtrafettKursiv.ttf'], weight: 900, style: 'italic' }
+          { src: ['./src/assets/fonts/SohneMono-Dreiviertelfett.woff2'], weight: 700, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-DreiviertelfettKurs.woff2'], weight: 700, style: 'italic' },
+          { src: ['./src/assets/fonts/SohneMono-Fett.woff2'], weight: 800, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-FettKursiv.woff2'], weight: 800, style: 'italic' },
+          { src: ['./src/assets/fonts/SohneMono-Extrafett.woff2'], weight: 900, style: 'normal' },
+          { src: ['./src/assets/fonts/SohneMono-ExtrafettKursiv.woff2'], weight: 900, style: 'italic' }
         ]
       }
     },
@@ -39,14 +39,14 @@ export default defineConfig({
       cssVariable: '--font-grape-nuts',
       fallbacks: ['cursive'],
       options: {
-        variants: [{ src: ['./src/assets/fonts/GrapeNuts-Regular.ttf'], weight: 400, style: 'normal' }]
+        variants: [{ src: ['./src/assets/fonts/GrapeNuts-Regular.woff2'], weight: 400, style: 'normal' }]
       }
     },
     {
       provider: fontProviders.google(),
       name: 'Caveat',
       cssVariable: '--font-caveat',
-      weights: [400, 500],
+      weights: [400],
       styles: ['normal'],
       subsets: ['latin'],
       fallbacks: ['cursive']
