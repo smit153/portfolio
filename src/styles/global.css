@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+/* Font families come from the Astro Fonts API (astro.config.mjs) */
+@theme inline {
+  --font-sohne: var(--font-sohne-mono);
+  --font-grape: var(--font-grape-nuts);
+}
