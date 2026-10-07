@@ -1,0 +1,22 @@
+---
+// Pixel expand/collapse icon for a <details> entry. Put it inside a <details class="group">:
+// shows chevrons pointing apart when closed (expand) and pointing together when open (collapse).
+const px = (cells: [number, number][]) => cells.map(([x, y]) => `M${x} ${y}h1v1h-1z`).join('');
+const expand = px([
+	[5, 1], [6, 1], [4, 2], [7, 2], [3, 3], [8, 3], [2, 4], [9, 4],
+	[2, 7], [9, 7], [3, 8], [8, 8], [4, 9], [7, 9], [5, 10], [6, 10],
+]);
+const collapse = px([
+	[2, 1], [9, 1], [3, 2], [8, 2], [4, 3], [7, 3], [5, 4], [6, 4],
+	[5, 7], [6, 7], [4, 8], [7, 8], [3, 9], [8, 9], [2, 10], [9, 10],
+]);
+---
+
+<span aria-hidden="true" class="flex size-6 shrink-0 items-center justify-center text-white/70 transition-colors group-hover:text-white">
+	<svg width="13" height="13" viewBox="0 0 12 12" fill="currentColor" shape-rendering="crispEdges" class="group-open:hidden">
+		<path d={expand} />
+	</svg>
+	<svg width="13" height="13" viewBox="0 0 12 12" fill="currentColor" shape-rendering="crispEdges" class="hidden group-open:block">
+		<path d={collapse} />
+	</svg>
+</span>
