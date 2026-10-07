@@ -31,7 +31,7 @@ const { title } = Astro.props;
 					};
 			}
 		</script>
-		<!-- preload only what's on screen first: Söhne Mono Buch (400) + Kräftig (500), Caveat for the notes -->
+		<!-- preload only what's on screen first: Söhne Mono Buch (400) + Kräftig (500), Grape Nuts for section titles, Caveat for the notes -->
 		<Font
 			cssVariable="--font-sohne-mono"
 			preload={[
@@ -39,7 +39,7 @@ const { title } = Astro.props;
 				{ weight: 500, style: 'normal' },
 			]}
 		/>
-		<Font cssVariable="--font-grape-nuts" />
+		<Font cssVariable="--font-grape-nuts" preload={[{ weight: 400, style: 'normal' }]} />
 		<Font cssVariable="--font-caveat" preload={[{ weight: 400, style: 'normal', subset: 'latin' }]} />
 	</head>
 	<body class="font-sohne">
