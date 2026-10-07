@@ -1,0 +1,95 @@
+---
+import { Image } from 'astro:assets';
+import arrowUp from '../assets/icons/arrow-up.svg';
+import placeholder1 from '../assets/images/blog/placeholder-1.png';
+import placeholder2 from '../assets/images/blog/placeholder-2.png';
+import SectionTitle from './SectionTitle.astro';
+
+// TODO: real posts. The images are the ASCII-art placeholders from the Figma file.
+const posts = [
+	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder1 },
+	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder2 },
+	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder1 },
+	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder2 },
+];
+
+const IMG_H = 228; // image height; the full-bleed hairline sits right under it
+---
+
+<section aria-labelledby="blogs-title">
+	<SectionTitle id="blogs-title">
+		Blogs
+		<div slot="actions" class="flex gap-1 pb-0.5">
+			{
+				(['prev', 'next'] as const).map((dir) => (
+					<button
+						type="button"
+						data-blog-nav={dir}
+						aria-label={dir === 'prev' ? 'Previous posts' : 'Next posts'}
+						class="flex size-7 items-center justify-center text-white transition-opacity hover:opacity-70 disabled:opacity-30"
+					>
+						<svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true" class:list={[dir === 'next' && 'rotate-180']}>
+							<path d="M8 1h1v1h-1zM8 2h1v1h-1zM8 3h1v1h-1zM8 4h1v1h-1zM8 5h1v1h-1zM8 6h1v1h-1zM8 7h1v1h-1zM8 8h1v1h-1zM8 9h1v1h-1zM8 10h1v1h-1zM8 11h1v1h-1zM7 2h1v1h-1zM6 3h1v1h-1zM5 4h1v1h-1zM4 5h1v1h-1zM3 6h1v1h-1zM4 7h1v1h-1zM5 8h1v1h-1zM6 9h1v1h-1zM7 10h1v1h-1z" />
+						</svg>
+					</button>
+				))
+			}
+		</div>
+	</SectionTitle>
+
+	<div class="relative">
+		<span aria-hidden="true" class="absolute inset-x-[-50vw] h-[2px] bg-line" style={`top:${IMG_H}px`}></span>
+
+		<!-- Embla: the viewport clips, the container moves. Slides pad 4px on the left (cancelled by the
+		     container's negative margin) so neighbouring cards' borders form the double rule. -->
+		<div class="relative -mx-[2px] overflow-hidden" data-blog-viewport>
+			<ul class="-ml-1 flex touch-pan-y">
+				{
+					posts.map(({ title, excerpt, href, image }) => (
+						<li class="min-w-0 flex-[0_0_85%] pl-1 sm:flex-[0_0_50%]">
+							<a href={href} class="group relative block h-full border-x-2 border-line pb-6">
+								<Image
+									src={image}
+									alt=""
+									width={760}
+									height={IMG_H * 2}
+									format="webp"
+									draggable="false"
+									class="w-full object-cover"
+									style={`height:${IMG_H}px`}
+								/>
+								<span
+									class="absolute right-0 flex size-8 items-center justify-center border-2 border-line bg-ink transition-colors group-hover:border-tick"
+									style={`top:${IMG_H}px`}
+								>
+									<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
+								</span>
+								<h3 class="mt-2.5 px-1.5 pr-10 text-base tracking-[-0.04em] text-white">{title}</h3>
+								<p class="mt-1 max-w-[270px] px-1.5 text-sm tracking-[-0.04em] text-muted">{excerpt}</p>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</div>
+</section>
+
+<script>
+	import EmblaCarousel from 'embla-carousel';
+
+	const viewport = document.querySelector<HTMLElement>('[data-blog-viewport]');
+	const prev = document.querySelector<HTMLButtonElement>('[data-blog-nav="prev"]');
+	const next = document.querySelector<HTMLButtonElement>('[data-blog-nav="next"]');
+	if (viewport && prev && next) {
+		const embla = EmblaCarousel(viewport, { align: 'start', containScroll: 'trimSnaps' });
+		const update = () => {
+			prev.disabled = !embla.canScrollPrev();
+			next.disabled = !embla.canScrollNext();
+		};
+		prev.addEventListener('click', () => embla.scrollPrev());
+		next.addEventListener('click', () => embla.scrollNext());
+		embla.on('select', update).on('reInit', update);
+		update();
+	}
+</script>
