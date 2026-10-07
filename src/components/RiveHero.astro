@@ -1,13 +1,38 @@
 ---
 // Interactive pixel-art desk scene rendered from public/rive/hero.riv
+import wasmUrl from '@rive-app/canvas/rive.wasm?url';
+// lossless capture of the scene's first frame at the canvas's fixed drawing size (re-capture if hero.riv changes)
+import poster from '../assets/images/hero-poster.webp';
 ---
 
+<!-- start the runtime and scene downloads with the HTML instead of after the script runs -->
+<link rel="preload" href={wasmUrl} as="fetch" type="application/wasm" crossorigin />
+<link rel="preload" href="/rive/hero.riv" as="fetch" crossorigin />
+<link rel="preload" href={poster.src} as="image" fetchpriority="high" />
+
 <div class="relative aspect-video w-full">
+	<!-- still of the first frame, shown until Rive draws. Rive draws at a fixed 1528x859 and the still is painted
+	     into a canvas of the same size, so the browser scales both through the same path and they match pixel for
+	     pixel at any screen density: the swap is invisible. -->
+	<canvas
+		data-hero-poster
+		aria-hidden="true"
+		width={poster.width}
+		height={poster.height}
+		class="absolute inset-0 size-full [image-rendering:pixelated]"></canvas>
+	<script is:inline define:vars={{ posterSrc: poster.src }}>
+		const img = new Image();
+		img.src = posterSrc;
+		img.decode().then(() => document.querySelector('[data-hero-poster]')?.getContext('2d').drawImage(img, 0, 0), () => {});
+	</script>
+	<noscript>
+		<img src={poster.src} alt="" class="absolute inset-0 size-full [image-rendering:pixelated]" />
+	</noscript>
 	<canvas
 		id="hero-rive"
-		class="block size-full outline-none [image-rendering:pixelated]"
-		width="1280"
-		height="720"
+		class="relative block size-full opacity-0 outline-none [image-rendering:pixelated]"
+		width="1528"
+		height="859"
 		tabindex="0"
 		aria-label="Animated pixel-art desk scene"
 	></canvas>
@@ -52,12 +77,12 @@
 				stroke-linejoin="round"
 			>
 				<path d="M3.5 11.2c2.6-.3 5.2-.2 7.6 0l7.8-6.9c.8 6.6.9 14.1.2 21.3l-8-6.6c-2.5.3-5.1.2-7.7-.2-.6-2.5-.5-5.2.1-7.6Z" />
-				<g data-on>
+				<g data-on class="hidden">
 					<path d="M23.5 10.5c1.8 2.6 1.9 6 .1 8.8" />
 					<path d="M27.8 6.4c3.6 4.9 3.7 11.9.2 17.3" />
 					<path d="M32.2 2.8c5.4 7.1 5.4 17 .1 24.6" />
 				</g>
-				<g data-off class="hidden">
+				<g data-off>
 					<path d="M24.8 9.6 34.6 20.4" />
 					<path d="M34.9 9.3c-3.4 3.4-6.6 7.2-10.1 11.4" />
 				</g>
@@ -244,7 +269,14 @@
 			autoBind: true,
 			layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
 			onLoad: () => {
-				rive.resizeDrawingSurfaceToCanvas();
+				// the drawing surface stays at its fixed 1528x859 (no resizeDrawingSurfaceToCanvas) so it matches the
+				// still; once the first frame is drawn, swap them
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => {
+						canvas.classList.remove('opacity-0');
+						document.querySelector('[data-hero-poster]')?.remove();
+					}),
+				);
 				vmi = rive.viewModelInstance;
 				if (!vmi) return;
 
@@ -280,8 +312,6 @@
 				}
 			},
 		});
-
-		window.addEventListener('resize', () => rive.resizeDrawingSurfaceToCanvas());
 
 		// Rive's audio only unlocks on click/touchend/pointerdown, so a first key press stays silent.
 		// Unlock it ourselves inside the key gesture: resume every AudioContext (tracked by the inline
