@@ -7,6 +7,11 @@
   --font-handwritten: var(--font-caveat);
 }
 
+/* thin diagonal hatching, used in the band gutters */
+@utility bg-hatch {
+  background-image: repeating-linear-gradient(135deg, var(--color-line) 0 1px, transparent 1px 8px);
+}
+
 @theme {
   --color-ink: #09090b;
   --color-line: #1f2020;
