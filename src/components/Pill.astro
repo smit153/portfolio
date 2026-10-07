@@ -1,17 +1,9 @@
 ---
-// Small rounded tag. `outline` sits on the page background (experience/projects),
-// `filled` is the raised variant used inside the stack tiles.
-interface Props {
-	tone?: 'outline' | 'filled';
-}
-const { tone = 'outline' } = Astro.props;
+// Small rounded tag on the page background (project skills).
 ---
 
 <span
-	class:list={[
-		'inline-flex h-5 items-center rounded-full border px-2.5 text-[10px] leading-none tracking-[-0.01em] text-[#f3f4f6]',
-		tone === 'outline' ? 'border-line bg-ink' : 'border-[#505967] bg-[#202124]',
-	]}
+	class="inline-flex h-5 items-center rounded-full border border-line bg-ink px-2.5 text-[10px] leading-none tracking-[-0.01em] text-[#f3f4f6]"
 >
 	<slot />
 </span>
