@@ -1,0 +1,46 @@
+---
+import code from '../assets/icons/code.svg';
+import mail from '../assets/icons/mail.svg';
+import location from '../assets/icons/location.svg';
+import phone from '../assets/icons/phone.svg';
+
+// TODO: real contact details
+const items = [
+	{ label: 'Current role', icon: code, value: 'Software Developer @ Updot' },
+	{ label: 'Phone', icon: phone, value: '+91 95746 26040', href: 'tel:+919574626040' },
+	{ label: 'Location', icon: location, value: 'Banglore, India' },
+	{ label: 'Email', icon: mail, value: 'smit.sojitra.dev@gmail.com', href: 'mailto:smit.sojitra.dev@gmail.com' },
+];
+---
+
+<section aria-label="Contact details" class="relative grid grid-cols-1 sm:grid-cols-2">
+	<!-- top hairline: full bleed, edge to edge -->
+	<span aria-hidden="true" class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line"></span>
+	{
+		items.map(({ label, icon, value, href }, i) => {
+			const Tag = href ? 'a' : 'div';
+			return (
+				<Tag
+					href={href}
+					class:list={[
+						'flex items-center gap-4 px-5 py-2 text-white',
+						// extra room above the first row and below the last, keeping the gap between rows tight
+						i === 0 && 'pt-5',
+						i === 1 && 'sm:pt-5',
+						i === items.length - 2 && 'sm:pb-5',
+						i === items.length - 1 && 'pb-5',
+						// dotted divider between the two columns (sm and up)
+						i % 2 === 0 && 'sm:border-r-2 sm:border-dotted sm:border-line',
+						href && 'transition-opacity hover:opacity-70',
+					]}
+				>
+					<img src={icon.src} alt="" width="24" height="24" class="block size-6 shrink-0" />
+					<span class="min-w-0">
+						<span class="sr-only">{label}: </span>
+						<span class="block truncate text-base tracking-[-0.02em]">{value}</span>
+					</span>
+				</Tag>
+			);
+		})
+	}
+</section>
