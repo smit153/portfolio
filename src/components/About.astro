@@ -1,4 +1,6 @@
 ---
+import SectionTitle from './SectionTitle.astro';
+
 // TODO: replace the [bracketed] placeholders with real copy and links
 const projects = [
 	{ name: '[Project One]', href: '#', note: '[metric, e.g. 1k+ stars]' },
@@ -9,11 +11,7 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 ---
 
 <section aria-labelledby="about-title">
-	<!-- title row, closed by a full-bleed hairline -->
-	<div class="relative px-5 pb-1 pt-3">
-		<h2 id="about-title" class="font-grape text-[28px] leading-none text-white">So, who am I?</h2>
-		<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
-	</div>
+	<SectionTitle id="about-title">So, who am I?</SectionTitle>
 
 	<ul
 		class="list-disc space-y-2 py-6 pl-10 pr-5 text-[15px] leading-[28px] tracking-[-0.01em] text-white marker:text-tick"

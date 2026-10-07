@@ -1,0 +1,13 @@
+---
+// Section heading row (Grape Nuts), closed by a full-bleed hairline. Optional `actions` slot sits at the right.
+interface Props {
+	id: string;
+}
+const { id } = Astro.props;
+---
+
+<div class="relative flex items-end justify-between gap-4 px-5 pb-1 pt-3">
+	<h2 id={id} class="font-grape text-[28px] leading-none text-white"><slot /></h2>
+	<slot name="actions" />
+	<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
+</div>
