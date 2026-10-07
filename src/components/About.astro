@@ -1,0 +1,42 @@
+---
+// TODO: replace the [bracketed] placeholders with real copy and links
+const projects = [
+	{ name: '[Project One]', href: '#', note: '[metric, e.g. 1k+ stars]' },
+	{ name: '[Project Two]', href: '#', note: '[metric]' },
+	{ name: '[Project Three]', href: '#', note: '[metric]' },
+];
+const link = 'underline decoration-tick underline-offset-4 transition-colors hover:decoration-white';
+---
+
+<section aria-labelledby="about-title">
+	<!-- title row, closed by a full-bleed hairline -->
+	<div class="relative px-5 pb-1 pt-3">
+		<h2 id="about-title" class="font-grape text-[28px] leading-none text-white">So, who am I?</h2>
+		<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
+	</div>
+
+	<ul
+		class="list-disc space-y-2 py-6 pl-10 pr-5 text-[15px] leading-[28px] tracking-[-0.01em] text-white marker:text-tick"
+	>
+		<li>
+			I'm Smit Sojitra — a Software Developer at Updot with [X]+ years of experience, known for [what you're
+			known for].
+		</li>
+		<li>Passionate about [what drives you] and turning ideas into [polished, thoughtfully crafted products].</li>
+		<li>
+			Creator of{' '}
+			{
+				projects.map(({ name, href, note }, i) => (
+					<>
+						{i === projects.length - 1 ? 'and ' : ''}
+						<a href={href} class={link}>
+							{name}
+						</a>{' '}
+						({note}){i < projects.length - 1 ? ', ' : '.'}
+					</>
+				))
+			}
+		</li>
+	</ul>
+</section>
+
