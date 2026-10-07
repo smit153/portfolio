@@ -17,6 +17,20 @@ const { title } = Astro.props;
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<!-- must run before @rive-app/canvas loads: remember every AudioContext so a key press can resume them -->
+		<script is:inline>
+			window.__audioContexts = [];
+			for (const name of ['AudioContext', 'webkitAudioContext']) {
+				const Base = window[name];
+				if (typeof Base === 'function')
+					window[name] = class extends Base {
+						constructor(...a) {
+							super(...a);
+							window.__audioContexts.push(this);
+						}
+					};
+			}
+		</script>
 		<Font cssVariable="--font-sohne-mono" />
 		<Font cssVariable="--font-grape-nuts" />
 		<Font cssVariable="--font-caveat" />

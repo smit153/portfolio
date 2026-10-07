@@ -11,6 +11,80 @@
 		tabindex="0"
 		aria-label="Animated pixel-art desk scene"
 	></canvas>
+
+	<!-- handwritten notes in the side gutters (only where there's room); arrows stop at the column border -->
+	<div class="hidden font-handwritten text-[22px] leading-[1.05] text-doodle select-none xl:block">
+		<!-- left: points at the record player, with the sound toggle under it -->
+		<p class="pointer-events-none absolute right-full top-[236px] mr-12 -rotate-6 whitespace-nowrap text-right">
+			psst… drop the needle,<br />the record player<br />takes requests
+		</p>
+		<svg
+			aria-hidden="true"
+			class="pointer-events-none absolute right-full top-[318px] mr-1"
+			width="56"
+			height="40"
+			viewBox="0 0 56 40"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.6"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
+			<path d="M4 4c6 10 15 19 27 24 7 3 14 4.5 21 5" />
+			<path d="M45 27.5 52 33l-7.5 4.5" />
+		</svg>
+
+		<button
+			id="hero-sound"
+			type="button"
+			aria-pressed="false"
+			class="absolute right-full top-[380px] mr-12 flex -rotate-3 items-center gap-2 transition-opacity hover:opacity-70"
+		>
+			<svg
+				aria-hidden="true"
+				width="30"
+				height="23"
+				viewBox="0 0 40 30"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.6"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M3.5 11.2c2.6-.3 5.2-.2 7.6 0l7.8-6.9c.8 6.6.9 14.1.2 21.3l-8-6.6c-2.5.3-5.1.2-7.7-.2-.6-2.5-.5-5.2.1-7.6Z" />
+				<g data-on>
+					<path d="M23.5 10.5c1.8 2.6 1.9 6 .1 8.8" />
+					<path d="M27.8 6.4c3.6 4.9 3.7 11.9.2 17.3" />
+					<path d="M32.2 2.8c5.4 7.1 5.4 17 .1 24.6" />
+				</g>
+				<g data-off class="hidden">
+					<path d="M24.8 9.6 34.6 20.4" />
+					<path d="M34.9 9.3c-3.4 3.4-6.6 7.2-10.1 11.4" />
+				</g>
+			</svg>
+			<span data-label class="whitespace-nowrap text-lg">sound off</span>
+		</button>
+
+		<!-- right: the whole desk is interactive; arrow sits above the note and hooks up toward the desk -->
+		<svg
+			aria-hidden="true"
+			class="pointer-events-none absolute left-full top-[262px] ml-1"
+			width="60"
+			height="48"
+			viewBox="0 0 60 48"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.6"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
+			<path d="M50 45c-1.5-11-7-20-16-26.5C26 13 16 10 6 9" />
+			<path d="M13.5 3.5 5.5 9l7.5 6" />
+		</svg>
+		<p class="pointer-events-none absolute left-full top-[318px] ml-12 rotate-[5deg] whitespace-nowrap">
+			this whole desk is alive!<br />open the book, drag a note,<br />or just start typing
+		</p>
+	</div>
 </div>
 
 <script>
@@ -21,6 +95,13 @@
 	import keys from '../data/keyboard-keys.json';
 
 	type Point = [number, number];
+
+	declare global {
+		interface Window {
+			__audioContexts?: AudioContext[];
+			miniaudio?: { unlock?: () => void };
+		}
+	}
 
 	// serve the runtime from our own bundle instead of the default CDN
 	RuntimeLoader.setWasmUrl(wasmUrl);
@@ -85,6 +166,51 @@
 		let selfFired = 0;
 		let typed = '';
 		let bookOpen = false;
+
+		// sounds play inside Rive (DeskAudio script); the page only stores the mute choice in the ViewModel
+		let muted = false;
+		try {
+			muted = localStorage.getItem('desk-muted') === '1';
+		} catch {}
+		const soundBtn = document.querySelector<HTMLButtonElement>('#hero-sound');
+		// browsers keep audio blocked until the first click/tap, and Rive's audio engine only unlocks on
+		// those events, so the toggle shows "off" until then even if the visitor hasn't muted it
+		let audioReady = false;
+		const isOn = () => audioReady && !muted;
+		const showSound = () => {
+			if (!soundBtn) return;
+			const on = isOn();
+			soundBtn.setAttribute('aria-pressed', String(on));
+			soundBtn.querySelector('[data-on]')?.classList.toggle('hidden', !on);
+			soundBtn.querySelector('[data-off]')?.classList.toggle('hidden', on);
+			const label = soundBtn.querySelector('[data-label]');
+			if (label) label.textContent = on ? 'sound on' : 'sound off';
+		};
+		const applyMuted = () => {
+			const p = vmi?.boolean('muted');
+			if (p) p.value = muted;
+		};
+		const unlockEvents = ['click', 'touchend'] as const;
+		const markAudioReady = (render = true) => {
+			if (audioReady) return;
+			audioReady = true;
+			unlockEvents.forEach((t) => document.removeEventListener(t, onFirstGesture, true));
+			if (render) showSound();
+		};
+		// a press on the toggle itself is handled (and re-rendered) by its own click handler
+		const onFirstGesture = (e: Event) => markAudioReady(!soundBtn?.contains(e.target as Node));
+		unlockEvents.forEach((t) => document.addEventListener(t, onFirstGesture, true));
+		showSound();
+		soundBtn?.addEventListener('click', () => {
+			// flip what the visitor sees: a first press on "sound off" (blocked, not muted) turns sound on
+			const wasOn = soundBtn.getAttribute('aria-pressed') === 'true';
+			muted = wasOn;
+			showSound();
+			applyMuted();
+			try {
+				localStorage.setItem('desk-muted', muted ? '1' : '0');
+			} catch {}
+		});
 		const down = new Set<number>();
 
 		const setKeys = () => {
@@ -124,6 +250,7 @@
 
 				const mobile = vmi.boolean('isMobile');
 				if (mobile) mobile.value = isMobile;
+				applyMuted();
 
 				// the monitor's power trigger fires from the Rive click listener or from typing; page-fired
 				// toggles update monitorOn up front and skip their (async) echo
@@ -155,6 +282,36 @@
 		});
 
 		window.addEventListener('resize', () => rive.resizeDrawingSurfaceToCanvas());
+
+		// Rive's audio only unlocks on click/touchend/pointerdown, so a first key press stays silent.
+		// Unlock it ourselves inside the key gesture: resume every AudioContext (tracked by the inline
+		// script in Layout.astro), poke the runtime's internal miniaudio unlock if it exists, and set the
+		// public `volume`, which makes the runtime re-run its audio check right away.
+		const RIVE_VOLUME = 1; // runtime default; match it if we ever change rive.volume
+		const NOT_A_GESTURE = new Set([
+			'Escape', 'Shift', 'Control', 'Alt', 'AltGraph', 'Meta', 'OS', 'CapsLock', 'NumLock', 'ScrollLock',
+			'Fn', 'FnLock', 'Hyper', 'Super', 'Symbol', 'SymbolLock', 'Dead', 'Unidentified',
+		]);
+		const audioContexts = () => window.__audioContexts ?? [];
+		const audioUnlocked = () => !!window.miniaudio && audioContexts().every((c) => c.state !== 'suspended');
+		const unlockAudioOnKey = (e: KeyboardEvent) => {
+			if (!e.isTrusted || e.repeat || !e.key || NOT_A_GESTURE.has(e.key)) return;
+			if (navigator.userActivation && !navigator.userActivation.isActive) return;
+			for (const c of audioContexts()) if (c.state === 'suspended') c.resume().catch(() => {});
+			const mini = window.miniaudio; // runtime internal, may disappear in an update
+			if (mini && typeof mini.unlock === 'function') {
+				try {
+					mini.unlock();
+				} catch {}
+			}
+			rive.volume = RIVE_VOLUME;
+			markAudioReady();
+			// stay subscribed until Rive's output exists and nothing is suspended (Safari may need a second key)
+			setTimeout(() => {
+				if (audioUnlocked()) window.removeEventListener('keydown', unlockAudioOnKey, true);
+			}, 250);
+		};
+		window.addEventListener('keydown', unlockAudioOnKey, true);
 
 		// typing on the real keyboard presses the drawn keys and types on the monitor
 		const isFormField = (t: EventTarget | null) =>
