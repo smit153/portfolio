@@ -1,12 +1,24 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Band from '../components/Band.astro';
+import ProfileRow from '../components/ProfileRow.astro';
+import RiveHero from '../components/RiveHero.astro';
 ---
 
-<Layout title="Portfolio">
-	<main class="min-h-screen flex items-center justify-center bg-slate-900">
-		<div class="text-center">
-			<h1 class="text-4xl font-bold text-sky-400">Astro + Tailwind</h1>
-			<p class="mt-4 font-grape text-2xl text-slate-300">Grape Nuts</p>
+<Layout title="Smit Sojitra">
+	<div class="relative min-h-screen overflow-x-clip bg-ink">
+		<!-- column guides -->
+		<div
+			aria-hidden="true"
+			class="pointer-events-none absolute inset-y-0 left-1/2 w-full max-w-[768px] -translate-x-1/2 border-x-2 border-line"
+		>
 		</div>
-	</main>
+
+		<Band />
+		<main class="relative mx-auto w-full max-w-[768px] px-[2px]">
+			<RiveHero />
+			<ProfileRow />
+		</main>
+		<Band />
+	</div>
 </Layout>
