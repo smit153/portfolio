@@ -13,9 +13,7 @@ const items = [
 ];
 ---
 
-<section aria-label="Contact details" class="relative grid grid-cols-1 sm:grid-cols-2">
-	<!-- top hairline: full bleed, edge to edge -->
-	<span aria-hidden="true" class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line"></span>
+<section aria-label="Contact details" class="grid grid-cols-1 sm:grid-cols-2">
 	{
 		items.map(({ label, icon, value, href }, i) => {
 			const Tag = href ? 'a' : 'div';

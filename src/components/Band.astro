@@ -1,17 +1,19 @@
 ---
-// Full-bleed 25px band between two hairlines, with tick marks where it crosses the column guides
+// 25px band between two full-bleed hairlines, with tick marks where it crosses the column guides.
+// Drop it anywhere inside the page column; it reaches out over the column borders and screen edges itself.
 ---
 
-<div aria-hidden="true" class="relative h-[27px] border-y-2 border-line">
-	<div class="relative mx-auto -mt-[2px] h-[27px] w-full max-w-[768px]">
-		<span class="absolute left-0 top-0 h-[6px] w-[2px] bg-tick"></span>
-		<span class="absolute bottom-0 left-0 h-[6px] w-[2px] bg-tick"></span>
-		<span class="absolute left-0 top-0 h-[2px] w-[6px] bg-tick"></span>
-		<span class="absolute bottom-0 left-0 h-[2px] w-[6px] bg-tick"></span>
+<div aria-hidden="true" class="relative -mx-[2px] h-[27px]">
+	<span class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line"></span>
+	<span class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
 
-		<span class="absolute right-0 top-0 h-[6px] w-[2px] bg-tick"></span>
-		<span class="absolute bottom-0 right-0 h-[6px] w-[2px] bg-tick"></span>
-		<span class="absolute right-0 top-0 h-[2px] w-[6px] bg-tick"></span>
-		<span class="absolute bottom-0 right-0 h-[2px] w-[6px] bg-tick"></span>
-	</div>
+	<span class="absolute left-0 top-0 h-[6px] w-[2px] bg-tick"></span>
+	<span class="absolute bottom-0 left-0 h-[6px] w-[2px] bg-tick"></span>
+	<span class="absolute left-0 top-0 h-[2px] w-[6px] bg-tick"></span>
+	<span class="absolute bottom-0 left-0 h-[2px] w-[6px] bg-tick"></span>
+
+	<span class="absolute right-0 top-0 h-[6px] w-[2px] bg-tick"></span>
+	<span class="absolute bottom-0 right-0 h-[6px] w-[2px] bg-tick"></span>
+	<span class="absolute right-0 top-0 h-[2px] w-[6px] bg-tick"></span>
+	<span class="absolute bottom-0 right-0 h-[2px] w-[6px] bg-tick"></span>
 </div>

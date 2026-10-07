@@ -1,26 +1,29 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import About from '../components/About.astro';
 import Band from '../components/Band.astro';
+import GithubGraph from '../components/GithubGraph.astro';
 import InfoGrid from '../components/InfoGrid.astro';
 import ProfileRow from '../components/ProfileRow.astro';
 import RiveHero from '../components/RiveHero.astro';
+import Separator from '../components/Separator.astro';
 ---
 
 <Layout title="Smit Sojitra">
-	<div class="relative min-h-screen overflow-x-clip bg-ink">
-		<!-- column guides -->
-		<div
-			aria-hidden="true"
-			class="pointer-events-none absolute inset-y-0 left-1/2 w-full max-w-[768px] -translate-x-1/2 border-x-2 border-line"
-		>
-		</div>
-
-		<Band />
-		<main class="relative mx-auto w-full max-w-[768px] px-[2px]">
+	<div class="min-h-screen overflow-x-clip bg-ink">
+		<!-- the page column: its side borders are the full-height column guides -->
+		<main class="relative mx-auto min-h-screen w-full max-w-[768px] border-x-2 border-line">
+			<Band />
 			<RiveHero />
 			<ProfileRow />
+			<Separator />
 			<InfoGrid />
+			<Band />
+			
+			<About />
+			<Separator />
+			<GithubGraph />
+			<Band />
 		</main>
-		<Band />
 	</div>
 </Layout>
