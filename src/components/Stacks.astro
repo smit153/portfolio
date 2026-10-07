@@ -1,0 +1,94 @@
+---
+import dotenv from '../assets/logos/dotenv.svg';
+import pandacss from '../assets/logos/pandacss.svg';
+import payload from '../assets/logos/payload.svg';
+import sanity from '../assets/logos/sanity.svg';
+import shadcn from '../assets/logos/shadcn.svg';
+import strapi from '../assets/logos/strapi.svg';
+import webflow from '../assets/logos/webflow.svg';
+import SectionTitle from './SectionTitle.astro';
+
+// TODO: swap in your real stack; the logos are the ones from the Figma file.
+// `size` is the logo box in px, matched to each logo's optical size in the design.
+const tools = [
+	{ name: 'Sanity', category: 'CMS', logo: sanity, size: 30 },
+	{ name: 'Strapi', category: 'CMS', logo: strapi, size: 21 },
+	{ name: 'Payload', category: 'CMS', logo: payload, size: 20 },
+	{ name: 'Webflow', category: 'CMS', logo: webflow, size: 29 },
+	{ name: 'shadcn/ui', category: 'Design', logo: shadcn, size: 24 },
+	{ name: 'Panda CSS', category: 'Design', logo: pandacss, size: 24 },
+	{ name: 'dotenv', category: 'Devtool', logo: dotenv, size: 18 },
+];
+
+const categories = [...new Set(tools.map((t) => t.category))].map((name) => ({
+	name,
+	count: tools.filter((t) => t.category === name).length,
+}));
+const filters = [{ name: 'All', count: tools.length }, ...categories];
+---
+
+<section aria-labelledby="stacks-title">
+	<SectionTitle id="stacks-title">Stacks</SectionTitle>
+
+	<div class="sm:flex">
+		<!-- category filter: a row on phones, a column beside the grid from sm up -->
+		<ul
+			class="flex gap-4 overflow-x-auto border-b-2 border-line px-5 py-3 [scrollbar-width:none] sm:w-[160px] sm:shrink-0 sm:flex-col sm:gap-[11px] sm:border-b-0 sm:border-r-2 sm:px-2 sm:py-3"
+			data-stack-filters
+		>
+			{
+				filters.map(({ name, count }, i) => (
+					<li class="shrink-0">
+						<button
+							type="button"
+							data-filter={name}
+							aria-pressed={i === 0 ? 'true' : 'false'}
+							class="flex w-full items-center justify-between gap-3 text-xs tracking-[-0.04em] text-muted transition-colors hover:text-white aria-pressed:text-white"
+						>
+							{name}
+							<span class="flex size-[18px] items-center justify-center border border-line text-[10px] text-[#f3f4f6]">
+								{count}
+							</span>
+						</button>
+					</li>
+				))
+			}
+		</ul>
+
+		<ul class="grid flex-1 grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2 p-2" data-stack-grid>
+			{
+				tools.map(({ name, category, logo, size }) => (
+					<li
+						data-category={category}
+						class="flex h-24 flex-col items-center justify-center border border-line bg-ink data-[hidden]:hidden"
+					>
+						<span class="flex size-8 items-center justify-center">
+							<img
+								src={logo.src}
+								alt=""
+								width={size}
+								height={size}
+								style={`width:${size}px;height:${size}px`}
+								class="object-contain grayscale"
+							/>
+						</span>
+						<span class="mt-2 text-xs tracking-[-0.04em] text-white">{name}</span>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</section>
+
+<script>
+	// clicking a category shows only its tiles; "All" shows everything
+	const buttons = document.querySelectorAll<HTMLButtonElement>('[data-stack-filters] button');
+	const tiles = document.querySelectorAll<HTMLElement>('[data-stack-grid] > li');
+	buttons.forEach((btn) =>
+		btn.addEventListener('click', () => {
+			const filter = btn.dataset.filter;
+			buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+			tiles.forEach((tile) => tile.toggleAttribute('data-hidden', filter !== 'All' && tile.dataset.category !== filter));
+		}),
+	);
+</script>
