@@ -10,6 +10,9 @@ const SCALE = 0.13; // terrain units per cell
 const CONTOUR = 0.08;
 const MOMENT = 7; // the terrain's time, frozen
 const RAMP = [' ', '·', ':', '/', '+', '*', '#', '%', '@']; // dim to bright
+// quiet greys: from the hatch line colour (--color-line) to only a little lighter, so the slits don't pop
+const GREY_MIN = 31;
+const GREY_MAX = 72;
 
 /** brightness 0-1: the terrain's height, much brighter on its contour lines */
 function contours(x: number, y: number) {
@@ -50,7 +53,7 @@ export function startBandSlits() {
 				const v = contours(x, y);
 				const i = Math.min(RAMP.length - 1, Math.floor(v * RAMP.length));
 				if (!i) continue;
-				const grey = Math.round(40 + 170 * v);
+				const grey = Math.round(GREY_MIN + (GREY_MAX - GREY_MIN) * v);
 				g.fillStyle = `rgb(${grey},${grey},${grey})`;
 				g.fillText(RAMP[i], x, y);
 			}
