@@ -27,7 +27,7 @@ const RING_LIFE = 1.6; // s
 const GLOW_RADIUS = 46; // px
 const GLOW = 70; // brightness added at the centre
 
-export function wave(x: number, y: number, t: number) {
+function wave(x: number, y: number, t: number) {
 	let a = Math.sin(0.8 * x + 0.3 * t) * Math.cos(0.6 * y + 0.2 * t) * 0.5;
 	a += 0.25 * Math.sin(1.6 * x + 1.2 * y + 0.15 * t);
 	a += Math.sin(0.3 * x - 0.4 * t) * Math.cos(0.4 * y + 0.25 * t) * 0.6;
