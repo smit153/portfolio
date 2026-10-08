@@ -5,7 +5,7 @@ import SectionTitle from './SectionTitle.astro';
 const BOOK_A_CALL = '#';
 ---
 
-<section aria-labelledby="contact-title">
+<section aria-labelledby="contact-title" class="relative">
 	<SectionTitle id="contact-title">[Contact title]</SectionTitle>
 
 	<!-- text on the left, the call to action on the right (stacked on small screens), both kept up top: the empty
@@ -22,4 +22,12 @@ const BOOK_A_CALL = '#';
 			Book a Call
 		</a>
 	</div>
+
+	<!-- handwritten note in the right gutter beside the cat's stage, like the hero's (only where there's room) -->
+	<p
+		aria-hidden="true"
+		class="pointer-events-none absolute bottom-6 left-full ml-12 hidden rotate-3 select-none whitespace-nowrap font-handwritten text-[22px] leading-[1.05] text-doodle xl:block"
+	>
+		pet the cat,<br />it's been guarding<br />the footer all day
+	</p>
 </section>

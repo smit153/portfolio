@@ -87,6 +87,8 @@ class DeskCat {
 	/** each animation's opaque area in the cell (x0, y0, x1, y1), the only part that takes clicks */
 	solid = {} as Record<AnimName, [number, number, number, number]>;
 	clip = '';
+	/** held, but lowered all the way onto the strip: shown sitting there instead of dangling */
+	perched = false;
 
 	constructor(readonly sheet: HTMLImageElement) {
 		const { cv } = this;
@@ -187,7 +189,7 @@ class DeskCat {
 		}
 		// the lines run edge to edge, so it can land outside the column; it usually walks back in on its own (see act)
 		const half = (CW * SCALE) / 2;
-		this.x = Math.min(document.documentElement.scrollWidth - half, Math.max(half, x));
+		this.x = Math.min(document.documentElement.clientWidth - half, Math.max(half, x));
 		this.vx = this.vy = 0;
 		this.set('idle');
 		if (bounce) this.squash(0.78);
@@ -266,7 +268,7 @@ class DeskCat {
 		// since continuous fractional scaling makes pixel art shimmer
 		const sy = this.sy;
 		const sx = 1 + (1 - this.sy) * 0.6;
-		const held = this.mode === 'held';
+		const held = this.mode === 'held' && !this.perched;
 		// held: hang from the chest under the pointer; otherwise stand the feet on the line
 		const anchor = held ? GRIP : a.base;
 		const left = this.x - (CW * SCALE) / 2;
@@ -295,7 +297,7 @@ class DeskCat {
 	/** tell the page where it stands, only when that changes */
 	reported: number | null = null;
 	report() {
-		const x = this.mode === 'ground' ? Math.round(this.x) : null;
+		const x = this.mode === 'ground' || this.perched ? Math.round(this.x) : null;
 		if (x === this.reported) return;
 		this.reported = x;
 		document.dispatchEvent(new CustomEvent('pet:pos', { detail: { x } }));
@@ -316,6 +318,17 @@ class DeskCat {
 			this.y += this.vy * dt;
 			this.x += this.vx * dt;
 			this.vx *= 0.98;
+			// a throw stays on screen: soft bounce off the sides, and no higher than the top of the window
+			const wide = this.clampWide(this.x);
+			if (wide !== this.x) {
+				this.x = wide;
+				this.vx *= -0.3;
+			}
+			const ceiling = scrollY + 8 + meta.anims[this.anim].base * SCALE;
+			if (this.y < ceiling) {
+				this.y = ceiling;
+				this.vy = Math.max(0, this.vy);
+			}
 			const under = this.floors
 				.filter((f) => f.y >= prev - 1 && f.y <= this.y) // floors are full-bleed lines, so any x lands
 				.sort((a, b) => a.y - b.y)[0];
@@ -504,10 +517,21 @@ class DeskCat {
 				this.vx = this.vx * 0.5 + (e.pageX - lastMove.x) * k * 0.5;
 				this.vy = this.vy * 0.5 + (e.pageY - lastMove.y) * k * 0.5;
 				lastMove = { x: e.pageX, y: e.pageY, t: now };
-				this.x = e.pageX;
-				// the lowest floor is the bottom of its world: the dangling feet stop at it
+				this.x = this.clampWide(e.pageX);
+				// the lowest floor is the bottom of its world: lowered onto it, the cat sits down there instead of
+				// dangling, and stands back up into the held pose once lifted a little (the gap stops flicker)
 				const bottom = Math.max(...this.floors.map((f) => f.y));
-				this.y = Math.min(e.pageY, bottom - (meta.anims.held.base - GRIP) * SCALE);
+				const feet = e.pageY + (meta.anims.held.base - GRIP) * SCALE;
+				if (!this.perched && feet >= bottom - 4) {
+					this.perched = true;
+					this.set('sit');
+					this.squash(0.9);
+				} else if (this.perched && feet < bottom - 16) {
+					this.perched = false;
+					this.set('held');
+					this.squash(1.08);
+				}
+				this.y = this.perched ? bottom : e.pageY;
 			}
 		});
 		const release = (e: PointerEvent) => {
@@ -515,7 +539,13 @@ class DeskCat {
 			const quick = performance.now() - down.t < 300;
 			down = null;
 			cv.style.cursor = 'grab';
-			if (this.mode === 'held') {
+			if (this.perched) {
+				// let go while set down on the strip: it just stays sitting there
+				this.perched = false;
+				const f = this.floors.reduce((a, b) => (b.y > a.y ? b : a));
+				this.land(f, this.x, false);
+				this.set('sit');
+			} else if (this.mode === 'held') {
 				// let go: it drops from where its feet hang, keeping a little of the throw
 				this.mode = 'fall';
 				this.y += (meta.anims.held.base - GRIP) * SCALE;
