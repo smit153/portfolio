@@ -14,7 +14,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 <Layout title="Writing · Smit Sojitra">
 	<div class="min-h-screen overflow-x-clip bg-ink">
-		<main class="relative mx-auto min-h-screen w-full max-w-[768px] border-x-2 border-line">
+		<!-- a full-height column, so the strip below sits at the bottom of the window when there is little content -->
+		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
 			<Band />
 			<PageTitle>Writing</PageTitle>
 			<ol>
@@ -76,7 +77,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 					))
 				}
 			</ol>
-			<AsciiField />
+			<AsciiField class="mt-auto" />
 		</main>
 	</div>
 </Layout>
