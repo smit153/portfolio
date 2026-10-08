@@ -10,7 +10,7 @@ interface Props {
 	petHome?: boolean;
 	class?: string;
 }
-const { line = 'top', petHome = false, class: className } = Astro.props;
+const { line = 'both', petHome = false, class: className } = Astro.props;
 ---
 
 <div
@@ -18,7 +18,7 @@ const { line = 'top', petHome = false, class: className } = Astro.props;
 	data-pet-home={petHome ? '' : undefined}
 	data-pet-floor={petHome ? '' : undefined}
 	aria-hidden="true"
-	class:list={['relative h-40', className]}
+	class:list={['relative h-30', className]}
 >
 	<!-- the ink background covers the column guides, so the field runs unbroken edge to edge -->
 	<canvas class="absolute inset-y-0 left-1/2 h-full w-screen -translate-x-1/2 bg-ink"></canvas>
