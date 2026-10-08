@@ -17,7 +17,7 @@ const { projects, openFirst = true } = Astro.props;
 ---
 
 <div class="tree px-5 pb-6 pt-5">
-	<div class="flex h-[30px] items-center gap-2.5 text-muted">
+	<div class="flex h-[30px] items-center gap-2.5 text-body text-muted">
 		<PixelIcon name="folder" class="text-tick" />
 		<span>root</span>
 	</div>
@@ -74,12 +74,12 @@ const { projects, openFirst = true } = Astro.props;
 										<span class="fval flex gap-4">
 											{p.repo && (
 												<a href={p.repo} target="_blank" rel="noopener noreferrer" class="link">
-													repo <img src={arrowUp.src} alt="" width="9" height="10" class="rotate-[38deg]" />
+													repo <img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
 												</a>
 											)}
 											{p.live && (
 												<a href={p.live} target="_blank" rel="noopener noreferrer" class="link">
-													live <img src={arrowUp.src} alt="" width="9" height="10" class="rotate-[38deg]" />
+													live <img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
 												</a>
 											)}
 										</span>
@@ -134,16 +134,16 @@ const { projects, openFirst = true } = Astro.props;
 	}
 	/* projects have padding (and from the second on, a line) above their row, so their elbows sit lower */
 	.proj::after {
-		top: 21px;
+		top: 24px;
 	}
 	.proj:last-child::before {
-		height: 22px;
+		height: 25px;
 	}
 	.proj + .proj::after {
-		top: 23px;
+		top: 26px;
 	}
 	.proj + .proj:last-child::before {
-		height: 24px;
+		height: 27px;
 	}
 	/* a line between projects, from the trunk out to the column wall, so open ones read as separate blocks */
 	.proj > details {
@@ -198,7 +198,7 @@ const { projects, openFirst = true } = Astro.props;
 	}
 	/* centred on the elbow */
 	summary :global(.ico) {
-		margin-top: -1px;
+		margin-top: 2px;
 		color: var(--color-tick);
 		transition: color 0.2s;
 	}
@@ -208,8 +208,8 @@ const { projects, openFirst = true } = Astro.props;
 	}
 	.name {
 		display: inline-block;
-		font-size: 18px;
-		line-height: 1.25;
+		font-size: var(--text-heading);
+		line-height: var(--text-heading--line-height);
 		letter-spacing: -0.01em;
 		color: #fff;
 		transition: transform 0.2s ease;
@@ -228,7 +228,8 @@ const { projects, openFirst = true } = Astro.props;
 		overflow: hidden;
 		white-space: nowrap;
 		text-overflow: ellipsis;
-		font-size: 13px;
+		font-size: var(--text-body);
+		line-height: var(--text-body--line-height);
 		letter-spacing: -0.04em;
 		color: var(--color-muted);
 	}
@@ -239,7 +240,8 @@ const { projects, openFirst = true } = Astro.props;
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		font-size: 12px;
+		font-size: var(--text-small);
+		line-height: var(--text-small--line-height);
 		color: var(--color-tick);
 		transition: color 0.2s;
 	}
@@ -266,12 +268,13 @@ const { projects, openFirst = true } = Astro.props;
 		padding: 5px 0;
 	}
 	.fname {
-		font-size: 13px;
+		font-size: var(--text-small);
+		line-height: var(--text-small--line-height);
 		color: var(--color-muted);
 	}
 	.fval {
-		font-size: 14px;
-		line-height: 1.6;
+		font-size: var(--text-body);
+		line-height: var(--text-body--line-height);
 		letter-spacing: -0.01em;
 		color: #fff;
 	}

@@ -20,7 +20,7 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 						aria-label={dir === 'prev' ? 'Previous posts' : 'Next posts'}
 						class="flex size-7 items-center justify-center text-white transition-opacity hover:opacity-70 disabled:opacity-30"
 					>
-						<svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true" class:list={[dir === 'next' && 'rotate-180']}>
+						<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" shape-rendering="crispEdges" aria-hidden="true" class:list={[dir === 'next' && 'rotate-180']}>
 							<path d="M8 1h1v1h-1zM8 2h1v1h-1zM8 3h1v1h-1zM8 4h1v1h-1zM8 5h1v1h-1zM8 6h1v1h-1zM8 7h1v1h-1zM8 8h1v1h-1zM8 9h1v1h-1zM8 10h1v1h-1zM8 11h1v1h-1zM7 2h1v1h-1zM6 3h1v1h-1zM5 4h1v1h-1zM4 5h1v1h-1zM3 6h1v1h-1zM4 7h1v1h-1zM5 8h1v1h-1zM6 9h1v1h-1zM7 10h1v1h-1z" />
 						</svg>
 					</button>
@@ -54,10 +54,10 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 									class="absolute right-0 flex size-8 items-center justify-center border-2 border-line bg-ink transition-colors group-hover:border-tick"
 									style={`top:${IMG_H}px`}
 								>
-									<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
+									<img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
 								</span>
-								<h3 class="mt-2.5 px-1.5 pr-10 text-base tracking-[-0.04em] text-white">{title}</h3>
-								<p class="mt-1 max-w-[270px] px-1.5 text-sm tracking-[-0.04em] text-muted">{excerpt}</p>
+								<h3 class="mt-2.5 px-1.5 pr-10 text-heading tracking-[-0.04em] text-white">{title}</h3>
+								<p class="mt-1 max-w-[270px] px-1.5 text-body tracking-[-0.04em] text-muted">{excerpt}</p>
 							</a>
 						</li>
 					))
