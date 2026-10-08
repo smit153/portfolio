@@ -1,10 +1,30 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 
+import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
+  // blog posts are MDX: Markdown with interactive components dropped in
+  integrations: [mdx()],
+  markdown: {
+    // code in posts stays in the site's greys: keywords white, strings light, comments dim
+    shikiConfig: {
+      theme: {
+        name: 'mono',
+        type: 'dark',
+        colors: { 'editor.background': '#0e0e10', 'editor.foreground': '#a3a3a3' },
+        tokenColors: [
+          { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#5a5a5a', fontStyle: 'italic' } },
+          { scope: ['keyword', 'storage', 'keyword.operator.new', 'constant.language'], settings: { foreground: '#ffffff' } },
+          { scope: ['string', 'constant.numeric', 'constant.other'], settings: { foreground: '#d4d4d4' } },
+          { scope: ['entity.name.function', 'support.function', 'variable.other.property', 'meta.object-literal.key'], settings: { foreground: '#e7e7e7' } },
+          { scope: ['punctuation', 'keyword.operator'], settings: { foreground: '#8d8d8d' } }
+        ]
+      }
+    }
+  },
   fonts: [
     {
       provider: fontProviders.local(),

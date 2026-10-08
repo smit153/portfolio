@@ -1,0 +1,93 @@
+---
+// A small pill floating at the bottom of a post: the section you're reading and how far through the post you
+// are. Click it to open the list of sections and jump to one. It hides near the top and the end.
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+	sections: MarkdownHeading[];
+}
+const { sections } = Astro.props;
+---
+
+{
+	sections.length > 1 && (
+		<div data-section-pill class="pill pointer-events-none fixed bottom-5 left-1/2 z-40 w-[min(360px,calc(100vw-32px))] -translate-x-1/2 opacity-0 transition-opacity duration-300">
+			<ol data-pill-list hidden class="mb-2 max-h-[50vh] overflow-y-auto border border-line bg-ink py-2">
+				{sections.map((s, i) => (
+					<li>
+						<a href={`#${s.slug}`} data-pill-link={s.slug} class="flex gap-3 px-4 py-1.5 text-small text-muted transition-colors hover:text-white aria-[current=true]:text-white">
+							<span class="text-tick">{String(i + 1).padStart(2, '0')}</span>
+							<span>{s.text}</span>
+						</a>
+					</li>
+				))}
+			</ol>
+			<button type="button" data-pill-toggle aria-expanded="false" class="flex h-11 w-full items-center gap-3 border border-line bg-ink px-4 text-left">
+				<svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" class="shrink-0 -rotate-90">
+					<circle cx="9" cy="9" r="7" fill="none" stroke="var(--color-line)" stroke-width="2" />
+					<circle data-pill-ring cx="9" cy="9" r="7" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="43.98" stroke-dashoffset="43.98" />
+				</svg>
+				<span data-pill-text class="min-w-0 flex-1 truncate text-small text-white">{sections[0].text}</span>
+				<span data-pill-count class="text-small text-tick">01 / {String(sections.length).padStart(2, '0')}</span>
+			</button>
+		</div>
+	)
+}
+
+<style>
+	/* only clickable once it's showing */
+	.pill.on {
+		pointer-events: auto;
+		opacity: 1;
+	}
+</style>
+
+<script>
+	const pill = document.querySelector<HTMLElement>('[data-section-pill]');
+	if (pill) {
+		const list = pill.querySelector<HTMLElement>('[data-pill-list]')!;
+		const toggle = pill.querySelector<HTMLButtonElement>('[data-pill-toggle]')!;
+		const text = pill.querySelector('[data-pill-text]')!;
+		const count = pill.querySelector('[data-pill-count]')!;
+		const ring = pill.querySelector('[data-pill-ring]')!;
+		const links = [...pill.querySelectorAll<HTMLAnchorElement>('[data-pill-link]')];
+		const heads = links.map((a) => document.getElementById(a.dataset.pillLink!)).filter((h): h is HTMLElement => !!h);
+		const article = document.querySelector<HTMLElement>('article.prose');
+		const total = String(heads.length).padStart(2, '0');
+		const CIRC = 43.98; // 2πr for r = 7
+
+		const update = () => {
+			if (!article) return;
+			const a = article.getBoundingClientRect();
+			// how far through the article, 0 to 1
+			const progress = Math.min(1, Math.max(0, -a.top / Math.max(1, a.height - innerHeight)));
+			ring.setAttribute('stroke-dashoffset', String(CIRC * (1 - progress)));
+			// the current section is the last heading that has scrolled past the upper third of the window
+			let current = 0;
+			heads.forEach((h, i) => {
+				if (h.getBoundingClientRect().top < innerHeight / 3) current = i;
+			});
+			text.textContent = heads[current]?.textContent ?? '';
+			count.textContent = `${String(current + 1).padStart(2, '0')} / ${total}`;
+			links.forEach((l, i) => l.setAttribute('aria-current', String(i === current)));
+			// visible while the article fills the screen: not over the title, not over the end
+			const show = a.top < innerHeight * 0.4 && a.bottom > innerHeight * 0.8;
+			pill.classList.toggle('on', show);
+			if (!show) close();
+		};
+		const close = () => {
+			list.hidden = true;
+			toggle.setAttribute('aria-expanded', 'false');
+		};
+		toggle.addEventListener('click', () => {
+			list.hidden = !list.hidden;
+			toggle.setAttribute('aria-expanded', String(!list.hidden));
+		});
+		links.forEach((l) => l.addEventListener('click', close));
+		document.addEventListener('keydown', (e) => e.key === 'Escape' && close());
+		let queued = 0;
+		addEventListener('scroll', () => (queued ||= requestAnimationFrame(() => ((queued = 0), update()))), { passive: true });
+		addEventListener('resize', update);
+		update();
+	}
+</script>

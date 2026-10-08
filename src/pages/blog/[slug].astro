@@ -1,0 +1,135 @@
+---
+// One blog post: a top row (back, copy link, next), the title block with its meta and cover, the MDX article,
+// previous/next cards, and a floating pill that follows the section you're reading.
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import arrowUp from '../../assets/icons/arrow-up.svg';
+import link from '../../assets/icons/link.svg';
+import AsciiField from '../../components/AsciiField.astro';
+import Band from '../../components/Band.astro';
+import Footer from '../../components/Footer.astro';
+import Header from '../../components/Header.astro';
+import PostMeta from '../../components/blog/PostMeta.astro';
+import SectionPill from '../../components/blog/SectionPill.astro';
+import { getPosts } from '../../lib/posts';
+import '../../styles/prose.css';
+import '../../styles/posts/jev.css';
+import '../../styles/posts/uuid-v7.css';
+import '../../styles/posts/long-session-cost.css';
+
+export async function getStaticPaths() {
+	const posts = await getPosts();
+	return posts.map((post, i) => ({
+		params: { slug: post.id },
+		// the list is newest first: "next" reads on to the older post, "previous" goes back to the newer one
+		props: { post, number: posts.length - i, total: posts.length, newer: posts[i - 1], older: posts[i + 1] },
+	}));
+}
+
+const { post, number, total, newer, older } = Astro.props;
+const { Content, headings } = await render(post);
+const sections = headings.filter((h) => h.depth === 2);
+---
+
+<Layout title={`${post.data.title} · Smit Sojitra`}>
+	<div class="min-h-screen overflow-x-clip bg-ink">
+		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
+			<Header />
+			<Band />
+
+			<!-- back, copy link, next -->
+			<div class="relative flex h-12 items-center justify-between gap-4 px-5">
+				<a href="/blog" class="group flex items-center gap-2 text-small text-muted transition-colors hover:text-white">
+					<img src={arrowUp.src} alt="" width="13" height="14" class="-rotate-90 opacity-70 transition-[opacity,translate] group-hover:-translate-x-0.5 group-hover:opacity-100" />
+					writing
+				</a>
+				<div class="flex items-center gap-2">
+					<button type="button" data-copy-link class="flex h-8 items-center gap-2 border border-line px-3 text-small text-muted transition-colors hover:border-tick hover:text-white">
+						<img src={link.src} alt="" width="14" height="14" class="size-3.5 opacity-80" />
+						<span data-copy-label>copy link</span>
+					</button>
+					{
+						older ? (
+							<a href={older.href} aria-label={`Next post: ${older.data.title}`} title={older.data.title} class="flex size-8 items-center justify-center border border-line transition-colors hover:border-tick">
+								<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-90" />
+							</a>
+						) : (
+							<span aria-hidden="true" class="flex size-8 items-center justify-center border border-line opacity-30">
+								<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-90" />
+							</span>
+						)
+					}
+				</div>
+				<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
+			</div>
+
+			<!-- title block -->
+			<header class="px-5 pb-6 pt-8">
+				<h1 class="text-[28px] leading-9 tracking-[-0.03em] text-white">{post.data.title}</h1>
+				<p class="mt-3 text-[16px] leading-7 tracking-[-0.02em] text-muted">{post.data.description}</p>
+			</header>
+			<div class="relative grid border-t-2 border-line sm:grid-cols-[1fr_280px]">
+				<span aria-hidden="true" class="absolute inset-x-[-50vw] top-[-2px] h-[2px] bg-line"></span>
+				<Image
+					src={post.data.cover}
+					alt={post.data.coverAlt}
+					width={1280}
+					height={720}
+					format="webp"
+					loading="eager"
+					fetchpriority="high"
+					class="aspect-video w-full object-cover [image-rendering:pixelated] sm:border-r-2 sm:border-line"
+				/>
+				<PostMeta post={post} number={number} total={total} class="border-t-2 border-line sm:border-t-0" />
+			</div>
+
+			<!-- the post -->
+			<article class:list={['prose relative border-t-2 border-line px-5 pb-16 pt-8', `post-${post.id}`]}>
+				<span aria-hidden="true" class="absolute inset-x-[-50vw] top-[-2px] h-[2px] bg-line"></span>
+				<Content />
+			</article>
+
+			<!-- previous / next -->
+			<nav aria-label="More posts" class="relative grid border-t-2 border-line sm:grid-cols-2">
+				<span aria-hidden="true" class="absolute inset-x-[-50vw] top-[-2px] h-[2px] bg-line"></span>
+				{
+					[
+						{ post: newer, label: 'previous' },
+						{ post: older, label: 'next' },
+					].map(({ post: p, label }, i) =>
+						p ? (
+							<a href={p.href} class:list={['group flex flex-col gap-1 px-5 py-5 transition-colors hover:bg-[#0e0e10]', i === 1 && 'sm:items-end sm:border-l-2 sm:border-line sm:text-right']}>
+								<span class="text-small text-tick">{label === 'previous' ? '← previous' : 'next →'}</span>
+								<span class="text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">{p.data.title}</span>
+							</a>
+						) : (
+							<span class:list={['px-5 py-5 text-small text-tick', i === 1 && 'sm:border-l-2 sm:border-line sm:text-right']}>
+								{label === 'previous' ? 'this is the newest post' : 'this is the first post'}
+							</span>
+						),
+					)
+				}
+			</nav>
+
+			<AsciiField class="mt-auto" />
+		</main>
+		<Footer />
+	</div>
+	<SectionPill sections={sections} />
+</Layout>
+
+<script>
+	// copy the post's address, and say so for a moment
+	const button = document.querySelector<HTMLButtonElement>('[data-copy-link]');
+	const label = document.querySelector('[data-copy-label]');
+	button?.addEventListener('click', async () => {
+		try {
+			await navigator.clipboard.writeText(location.href.split('#')[0]);
+			if (label) label.textContent = 'copied';
+		} catch {
+			if (label) label.textContent = 'press ctrl+c';
+		}
+		setTimeout(() => label && (label.textContent = 'copy link'), 1600);
+	});
+</script>

@@ -1,0 +1,319 @@
+/* Blog post typography and the shared look of the interactive demos. Used by src/pages/blog/[slug].astro.
+   Article text runs a step above the site's body size (16 / 28) because it is read for minutes, not scanned.
+   Each post's own demo styles are in src/styles/posts/<slug>.css, scoped under .post-<slug>. */
+
+.prose {
+  font-size: 16px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  color: #e7e7e7;
+}
+.prose > * + * {
+  margin-top: 18px;
+}
+.prose h2 {
+  position: relative;
+  margin-top: 56px;
+  padding-top: 22px;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.02em;
+  color: #fff;
+  scroll-margin-top: 24px;
+}
+/* each section starts on one of the site's full-width hairlines */
+.prose h2::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50vw;
+  right: -50vw;
+  height: 2px;
+  background: var(--color-line);
+}
+/* a post that opens on a heading already sits right under the cover's line */
+.prose > span[aria-hidden]:first-child + h2 {
+  margin-top: 0;
+  padding-top: 0;
+}
+.prose > span[aria-hidden]:first-child + h2::before {
+  display: none;
+}
+.prose h3 {
+  margin-top: 32px;
+  font-size: var(--text-heading);
+  line-height: var(--text-heading--line-height);
+  color: #fff;
+}
+.prose a {
+  color: #fff;
+  text-decoration: underline;
+  text-decoration-color: var(--color-tick);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s;
+}
+.prose a:hover {
+  text-decoration-color: #fff;
+}
+.prose strong,
+.prose b {
+  font-weight: 500;
+  color: #fff;
+}
+.prose em {
+  font-style: italic;
+}
+.prose ul,
+.prose ol {
+  padding-left: 22px;
+}
+.prose ul {
+  list-style: square;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose li + li {
+  margin-top: 8px;
+}
+.prose li::marker {
+  color: var(--color-tick);
+}
+/* the site font is already monospace: keep it for code instead of the browser's default mono */
+.prose code,
+.prose pre {
+  font-family: inherit;
+}
+.prose code {
+  padding: 1px 5px;
+  background: var(--color-line);
+  font-size: 0.88em;
+  color: #f3f4f6;
+}
+.prose pre {
+  overflow-x: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--color-line);
+  background: #0e0e10;
+  font-size: 13px;
+  line-height: 22px;
+}
+.prose pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.prose blockquote {
+  padding: 2px 0 2px 16px;
+  border-left: 2px solid #fff;
+  font-size: 18px;
+  line-height: 30px;
+  color: #fff;
+}
+.prose hr {
+  border: 0;
+  border-top: 2px solid var(--color-line);
+  margin: 48px 0;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 20px;
+}
+.prose th,
+.prose td {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--color-line);
+  text-align: left;
+  vertical-align: top;
+}
+.prose th {
+  font-weight: 400;
+  color: var(--color-muted);
+}
+/* wide tables scroll sideways instead of squeezing */
+.prose .table-wrap {
+  overflow-x: auto;
+}
+.prose .lede {
+  color: var(--color-muted);
+}
+.prose .formula {
+  overflow-x: auto;
+  padding: 12px 16px;
+  background: var(--color-line);
+  text-align: center;
+  font-size: 16px;
+}
+.prose .callout {
+  padding-left: 14px;
+  border-left: 2px solid var(--color-tick);
+  color: var(--color-muted);
+}
+.prose .small-note {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-muted);
+}
+
+/* ---------- figures and demos: boxed, in the site's palette ---------- */
+.prose figure,
+.prose .demo {
+  margin-top: 28px;
+  margin-bottom: 28px;
+  padding: 16px;
+  border: 1px solid var(--color-line);
+  background: var(--color-ink);
+  font-size: 14px;
+  line-height: 22px;
+  color: #fff;
+}
+.prose figure svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.prose figure svg text {
+  font-family: var(--font-sohne-mono);
+}
+.prose figcaption {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-muted);
+}
+.prose .demo > h3 {
+  margin: 0 0 2px;
+  font-family: var(--font-grape-nuts);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 400;
+  color: #fff;
+}
+/* "Try it: ..." in the handwritten notes' font */
+.prose .demo .try {
+  margin: 0 0 14px;
+  font-family: var(--font-caveat);
+  font-size: 20px;
+  line-height: 24px;
+  color: var(--color-doodle);
+}
+.prose .demo .note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--color-muted);
+}
+.prose .demo * + * {
+  margin-top: 0;
+}
+.prose .demo button,
+.prose .demo select,
+.prose .demo input[type='text'] {
+  font: inherit;
+  font-size: 13px;
+  color: #fff;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+  padding: 6px 12px;
+}
+.prose .demo button {
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.prose .demo button:hover {
+  border-color: var(--color-muted);
+}
+.prose .demo button.on {
+  background: #fff;
+  border-color: #fff;
+  color: var(--color-ink);
+}
+.prose .demo button:focus-visible,
+.prose .demo input:focus-visible,
+.prose .demo select:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.prose .demo input[type='text'] {
+  width: 100%;
+}
+.prose .demo input[type='range'] {
+  width: 100%;
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.prose .demo input[type='range']::-webkit-slider-runnable-track {
+  height: 2px;
+  background: #383838;
+}
+.prose .demo input[type='range']::-moz-range-track {
+  height: 2px;
+  background: #383838;
+}
+.prose .demo input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -6px;
+  background: #fff;
+  border: 0;
+}
+.prose .demo input[type='range']::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 0;
+}
+.prose .demo input[type='radio'],
+.prose .demo input[type='checkbox'] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin: 0 8px 0 0;
+  border: 1px solid var(--color-muted);
+  background: var(--color-ink);
+  vertical-align: -2px;
+  cursor: pointer;
+}
+.prose .demo input[type='radio']:checked,
+.prose .demo input[type='checkbox']:checked {
+  background: #fff;
+  border-color: #fff;
+  box-shadow: inset 0 0 0 3px var(--color-ink);
+}
+.prose .demo .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.prose .demo .stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.prose .demo .stats b {
+  display: block;
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 400;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.prose .demo th,
+.prose .demo td {
+  border-bottom-color: var(--color-line);
+}
+@media (prefers-reduced-motion: reduce) {
+  .prose .demo * {
+    transition: none !important;
+  }
+}

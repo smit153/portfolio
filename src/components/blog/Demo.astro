@@ -1,0 +1,17 @@
+---
+// A boxed interactive demo inside a post: a handwritten-font title, a one-line "try it", the demo, an optional note.
+interface Props {
+	title: string;
+	/** what to try, in a sentence */
+	tryIt: string;
+	id?: string;
+}
+const { title, tryIt, id } = Astro.props;
+---
+
+<div class="demo" id={id}>
+	<h3>{title}</h3>
+	<p class="try">{tryIt}</p>
+	<slot />
+	{Astro.slots.has('note') && <p class="note"><slot name="note" /></p>}
+</div>
