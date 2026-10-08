@@ -1,9 +1,11 @@
 ---
+// Experience and Education in one section: the title row is the switch ("Experience / Education"),
+// the dim one is the other tab. Jobs open into bullet points; education entries are just the headline facts.
 import updot from '../assets/logos/updot.svg';
-import SectionTitle from './SectionTitle.astro';
+import PixelIcon from './PixelIcon.astro';
 import ToggleIcon from './ToggleIcon.astro';
 
-// TODO: replace the [bracketed] placeholders. `open` decides whether an entry starts expanded.
+// TODO: replace the [bracketed] placeholders. `open` decides whether a job starts expanded.
 const jobs = [
 	{
 		company: 'Updot',
@@ -18,12 +20,55 @@ const jobs = [
 		open: true,
 	},
 ];
+const education = [
+	{
+		school: '[University name]',
+		degree: '[Degree, e.g. B.Tech in Computer Engineering]',
+		location: '[City, India]',
+		start: '[YYYY]',
+		end: '[YYYY]',
+		grade: '[grade or CGPA]',
+	},
+];
+
+const tabs = [
+	{ key: 'experience', label: 'Experience' },
+	{ key: 'education', label: 'Education' },
+];
 ---
 
-<section aria-labelledby="experience-title">
-	<SectionTitle id="experience-title">Experience</SectionTitle>
+<section aria-labelledby="experience-title" data-bg-tabs>
+	<!-- title row: the two titles are the tabs; the hidden h2 names the section (and is what links jump to) -->
+	<div class="relative flex items-end gap-[18px] px-5 pb-1 pt-3">
+		<h2 id="experience-title" class="sr-only">Experience and education</h2>
+		<div role="tablist" aria-label="Experience or education" class="flex items-end gap-[18px]">
+			{
+				tabs.map(({ key, label }, i) => (
+					<>
+						{i > 0 && (
+							<span aria-hidden="true" class="font-grape text-[28px] leading-none text-[#2a2a2a]">
+								/
+							</span>
+						)}
+						<button
+							type="button"
+							role="tab"
+							id={`tab-${key}`}
+							aria-controls={`panel-${key}`}
+							aria-selected={i === 0 ? 'true' : 'false'}
+							tabindex={i === 0 ? 0 : -1}
+							class="font-grape text-[28px] leading-none text-[#3a3a3a] transition-colors hover:text-muted aria-selected:text-white"
+						>
+							{label}
+						</button>
+					</>
+				))
+			}
+		</div>
+		<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
+	</div>
 
-	<ol class="divide-y-2 divide-line">
+	<ol id="panel-experience" role="tabpanel" aria-labelledby="tab-experience" class="bg-panel divide-y-2 divide-line">
 		{
 			jobs.map((job) => (
 				<li class="px-5 py-4">
@@ -53,4 +98,70 @@ const jobs = [
 			))
 		}
 	</ol>
+
+	<ol id="panel-education" role="tabpanel" aria-labelledby="tab-education" hidden class="bg-panel divide-y-2 divide-line">
+		{
+			education.map((e) => (
+				<li class="px-5 py-4">
+					<div class="flex items-center gap-[14px]">
+						<PixelIcon name="cap" class="shrink-0 text-[#cfcfcf]" />
+						<h3 class="flex-1 text-heading tracking-[-0.01em] text-white">{e.school}</h3>
+					</div>
+					<div class="pl-[38px]">
+						<p class="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 text-body tracking-[-0.01em]">
+							<span class="text-white">{e.degree}</span>
+							<span class="text-muted">{e.location}</span>
+						</p>
+						<p class="text-body tracking-[-0.01em] text-muted">
+							{e.start} - {e.end} | {e.grade}
+						</p>
+					</div>
+				</li>
+			))
+		}
+	</ol>
 </section>
+
+<style>
+	/* a quick fade when the panel changes */
+	.bg-panel:not([hidden]) {
+		animation: bg-in 0.25s ease both;
+	}
+	@keyframes bg-in {
+		from {
+			opacity: 0;
+			transform: translateY(4px);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.bg-panel:not([hidden]) {
+			animation: none;
+		}
+	}
+</style>
+
+<script>
+	// switch panels; arrow keys move between the tabs, like any tablist
+	document.querySelectorAll<HTMLElement>('[data-bg-tabs]').forEach((section) => {
+		const tabs = [...section.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+		const select = (tab: HTMLButtonElement) => {
+			for (const t of tabs) {
+				const on = t === tab;
+				t.setAttribute('aria-selected', String(on));
+				t.tabIndex = on ? 0 : -1;
+				section.querySelector<HTMLElement>(`#${t.getAttribute('aria-controls')}`)!.hidden = !on;
+			}
+		};
+		tabs.forEach((tab, i) => {
+			tab.addEventListener('click', () => select(tab));
+			tab.addEventListener('keydown', (e) => {
+				const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+				if (!step) return;
+				e.preventDefault();
+				const next = tabs[(i + step + tabs.length) % tabs.length];
+				next.focus();
+				select(next);
+			});
+		});
+	});
+</script>
