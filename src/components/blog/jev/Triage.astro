@@ -1,0 +1,54 @@
+---
+// Jev demo: pick a ticket and see the typed answers a decision model returns (hand-written sample numbers).
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="jev-triage"
+	title="Try it: the triage desk"
+	tryIt="Pick a ticket and see what a System One model returns."
+>
+	<div class="row" data-tickets></div>
+	<p class="ticket" data-ticket-text></p>
+	<div data-ticket-out></div>
+	<Fragment slot="note">The numbers here are illustrative, hand-written to show the shape of the response. They are not live Jev calls.</Fragment>
+</Demo>
+
+<script>
+	const root = document.getElementById('jev-triage');
+	if (root) {
+		const tickets = [
+			{ n: 'Double charge', t: 'My card was charged twice for one order and I want the extra money back.', q: { route: { billing: 0.97, shipping: 0.02, technical: 0.01 }, refund: 0.98, urgency: 2.1 } },
+			{ n: 'Login + refund', t: 'I cannot log in, and I also want a refund for last month.', q: { route: { billing: 0.41, shipping: 0.01, technical: 0.58 }, refund: 0.93, urgency: 2.6 } },
+			{ n: 'Late parcel', t: 'It has been three weeks and my package still has not arrived. Where is it?', q: { route: { billing: 0.02, shipping: 0.96, technical: 0.02 }, refund: 0.22, urgency: 1.8 } },
+			{ n: 'App crash', t: 'The app crashes every time I open the settings page. Production is down for my whole team!', q: { route: { billing: 0.01, shipping: 0.01, technical: 0.98 }, refund: 0.03, urgency: 2.9 } },
+		];
+		const bar = (n: string, v: number, max = 1, f = (x: number) => x.toFixed(2)) =>
+			`<div class="bar"><span class="n">${n}</span><span class="t"><i data-w="${(v / max) * 100}"></i></span><span class="v">${f(v)}</span></div>`;
+		const buttons = root.querySelector('[data-tickets]')!;
+		const show = (i: number) => {
+			const x = tickets[i];
+			buttons.querySelectorAll('button').forEach((b, k) => b.classList.toggle('on', k === i));
+			root.querySelector('[data-ticket-text]')!.textContent = `“${x.t}”`;
+			const top = Object.entries(x.q.route).sort((a, b) => b[1] - a[1])[0];
+			root.querySelector('[data-ticket-out]')!.innerHTML =
+				'<b>choice</b> · route this ticket' +
+				Object.entries(x.q.route).map(([k, v]) => bar(k, v)).join('') +
+				'<div class="label"><b>boolean</b> · is a refund requested?</div>' +
+				bar('P(true)', x.q.refund) +
+				'<div class="label"><b>score</b> · urgency (0 = none, 3 = critical)</div>' +
+				bar('score', x.q.urgency, 3, (v) => v.toFixed(1)) +
+				`<p class="label">→ <span class="pill">${top[1] > 0.9 ? 'auto-route to ' + top[0] : 'low confidence: send to a human'}</span></p>`;
+			// let the bars grow in
+			requestAnimationFrame(() => requestAnimationFrame(() => root.querySelectorAll<HTMLElement>('[data-ticket-out] i').forEach((e) => (e.style.width = e.dataset.w + '%'))));
+		};
+		tickets.forEach((x, i) => {
+			const b = document.createElement('button');
+			b.type = 'button';
+			b.textContent = x.n;
+			b.onclick = () => show(i);
+			buttons.append(b);
+		});
+		show(0);
+	}
+</script>

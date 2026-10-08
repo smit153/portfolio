@@ -1,0 +1,165 @@
+/* UUIDv7 post: its demos. Everything is scoped under .post-uuid-v7. */
+
+/* demo 1: B-tree leaf pages */
+.post-uuid-v7 .pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 44px;
+  margin: 10px 0;
+}
+.post-uuid-v7 .page {
+  display: flex;
+  gap: 4px;
+  min-width: 64px;
+  padding: 4px 6px;
+  border: 1px solid #383838;
+  font-size: 12px;
+  transition: background 0.3s, border-color 0.3s;
+}
+.post-uuid-v7 .page span {
+  min-width: 1.6em;
+  text-align: center;
+}
+.post-uuid-v7 .page span.empty {
+  color: #383838;
+}
+.post-uuid-v7 .page.new {
+  border-color: #c4c4c4;
+  background: var(--color-line);
+}
+.post-uuid-v7 .page.split {
+  border: 2px solid #fff;
+  background: #383838;
+}
+
+/* demo 2: decoder */
+.post-uuid-v7 .uuid {
+  margin: 10px 0;
+  font-size: 15px;
+  line-height: 22px;
+  word-break: break-all;
+}
+.post-uuid-v7 .uuid .ts {
+  color: #fff;
+}
+.post-uuid-v7 .uuid .ver {
+  padding: 0 2px;
+  background: #383838;
+}
+.post-uuid-v7 .uuid .rand {
+  color: var(--color-muted);
+}
+.post-uuid-v7 dl.dec {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+}
+.post-uuid-v7 dl.dec dt {
+  color: var(--color-muted);
+}
+.post-uuid-v7 dl.dec dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+/* demo 3: sort check */
+.post-uuid-v7 .cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .post-uuid-v7 .cols {
+    grid-template-columns: 1fr;
+  }
+}
+.post-uuid-v7 .col {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--color-line);
+}
+.post-uuid-v7 .col h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-muted);
+}
+.post-uuid-v7 .col ol {
+  margin: 0;
+  padding-left: 1.6em;
+  font-size: 11px;
+  line-height: 18px;
+  word-break: break-all;
+}
+.post-uuid-v7 .verdict {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.post-uuid-v7 .verdict.ok {
+  color: #fff;
+}
+.post-uuid-v7 .verdict.bad {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+/* bars: benchmark A and the size demo */
+.post-uuid-v7 .bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+  font-size: 12px;
+}
+.post-uuid-v7 .bar .lbl {
+  flex: none;
+  width: 92px;
+}
+.post-uuid-v7 .bar .track {
+  flex: 1;
+  min-width: 0;
+  height: 16px;
+  background: var(--color-line);
+}
+.post-uuid-v7 .bar .fill {
+  display: block;
+  height: 100%;
+  transition: width 0.3s;
+}
+.post-uuid-v7 .bar .val {
+  flex: none;
+  width: 78px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.post-uuid-v7 .f-light {
+  background: #c4c4c4;
+}
+.post-uuid-v7 .f-mid {
+  background: #8d8d8d;
+}
+.post-uuid-v7 .f-dark {
+  background: #5a5a5a;
+}
+.post-uuid-v7 .group + .group {
+  margin-top: 12px;
+}
+
+/* demo 5: chooser */
+.post-uuid-v7 .choice label {
+  display: block;
+  margin: 6px 0;
+}
+.post-uuid-v7 .result {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-left: 2px solid #fff;
+  background: var(--color-line);
+}
+
+/* comparison table: centre the yes/no columns */
+.post-uuid-v7 .compare th:not(:first-child),
+.post-uuid-v7 .compare td:not(:first-child) {
+  text-align: center;
+}

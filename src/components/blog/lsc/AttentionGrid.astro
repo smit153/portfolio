@@ -1,0 +1,106 @@
+---
+// Long-session-cost demo 1: a sentence's tokens as an n × n attention grid, with the causal mask and a doubling counter.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="lsc-grid"
+	title="Demo 1: the attention grid"
+	tryIt={`Type a longer sentence and watch the grid fill up. Click a word to see which tokens it compares itself with. Then press "Double it" a few times.`}
+>
+	<input type="text" data-text value="the test failed because it could not find the config file" aria-label="Sentence to split into tokens" />
+	<div class="toks" data-toks></div>
+	<div class="row"><button type="button" data-mask class="on">Causal mask: on</button></div>
+	<div class="grid" data-grid aria-label="Attention grid"></div>
+	<div class="legend">
+		<span><i style="background:var(--cell-on)"></i>a dot product the model computes</span>
+		<span><i style="background:var(--cell-hot)"></i>the row for the word you clicked</span>
+		<span><i style="background:var(--cell);opacity:.5"></i>masked (future token)</span>
+	</div>
+	<div class="stats">
+		<div><b data-o="n">0</b>tokens</div>
+		<div><b data-o="pairs">0</b>dot products</div>
+		<div><b data-o="per">0</b>per token, on average</div>
+	</div>
+	<hr />
+	<div class="row"><button type="button" data-double>Double it</button><button type="button" data-reset>Back to 1,000</button></div>
+	<div class="stats">
+		<div><b data-o="bign">1,000</b>context length</div>
+		<div><b data-o="bigpairs">500,500</b>dot products (one head, one layer)</div>
+		<div><b data-o="ratio">1×</b>vs. 1,000 tokens</div>
+	</div>
+	<Fragment slot="note">
+		The sentence is split on spaces to keep it readable. Real tokenizers split text differently, and real models repeat this grid in every head of every layer. The counts are exact for the grid itself.
+	</Fragment>
+</Demo>
+
+<script>
+	import { big, fmt } from './format';
+
+	const root = document.getElementById('lsc-grid');
+	if (root) {
+		const $ = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+		const out = (k: string, v: string) => ($(`[data-o="${k}"]`).textContent = v);
+		const input = $<HTMLInputElement>('[data-text]');
+		let masked = true;
+		let sel = -1;
+		let bigN = 1000;
+
+		const renderBig = () => {
+			const p = masked ? (bigN * (bigN + 1)) / 2 : bigN * bigN;
+			const p0 = masked ? (1000 * 1001) / 2 : 1e6;
+			out('bign', fmt(bigN));
+			out('bigpairs', big(p));
+			out('ratio', fmt(p / p0) + '×');
+		};
+		const render = () => {
+			const t = input.value.trim().split(/\s+/).filter(Boolean).slice(0, 24);
+			const n = t.length;
+			if (sel >= n) sel = -1;
+			const toks = $('[data-toks]');
+			toks.innerHTML = '';
+			t.forEach((w, i) => {
+				const b = document.createElement('button');
+				b.type = 'button';
+				b.className = 'tok' + (i === sel ? ' sel' : '');
+				b.textContent = w;
+				b.onclick = () => {
+					sel = sel === i ? -1 : i;
+					render();
+				};
+				toks.append(b);
+			});
+			const grid = $('[data-grid]');
+			grid.style.gridTemplateColumns = `repeat(${Math.max(n, 1)}, minmax(0, 22px))`;
+			let cells = '';
+			for (let r = 0; r < n; r++)
+				for (let c = 0; c < n; c++) {
+					const on = !masked || c <= r;
+					cells += `<div class="c ${on ? (r === sel ? 'hot' : 'on') : 'off'}" title="${t[r]} → ${t[c]}${on ? '' : ' (masked)'}"></div>`;
+				}
+			grid.innerHTML = cells;
+			const pairs = masked ? (n * (n + 1)) / 2 : n * n;
+			out('n', fmt(n));
+			out('pairs', fmt(pairs));
+			out('per', n ? (pairs / n).toFixed(1) : '0');
+			const mask = $('[data-mask]');
+			mask.textContent = `Causal mask: ${masked ? 'on' : 'off'}`;
+			mask.classList.toggle('on', masked);
+			renderBig();
+		};
+		input.addEventListener('input', render);
+		$('[data-mask]').onclick = () => {
+			masked = !masked;
+			render();
+		};
+		$('[data-double]').onclick = () => {
+			if (bigN < 1024000) bigN *= 2;
+			renderBig();
+		};
+		$('[data-reset]').onclick = () => {
+			bigN = 1000;
+			renderBig();
+		};
+		render();
+	}
+</script>

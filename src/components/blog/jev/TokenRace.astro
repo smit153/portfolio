@@ -1,0 +1,49 @@
+---
+// Jev demo: an LLM typing its answer token by token against Jev filling its whole answer at once.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="jev-race"
+	title="Try it: the token race"
+	tryIt="Same task, two ways. Press run and watch which one finishes."
+>
+	<div class="race">
+		<div><b>LLM (sequential)</b><div data-llm style="margin-top:8px"></div></div>
+		<div><b>Jev (parallel)</b><div data-jev style="margin-top:8px"></div></div>
+	</div>
+	<div class="row" style="margin-top:14px"><button type="button" data-run>▶ Run</button><span class="race-msg" data-msg></span></div>
+	<Fragment slot="note">Left is an LLM generating a verbose answer token by token. Right is Jev filling its whole answer at once. Illustrative animation, not to scale.</Fragment>
+</Demo>
+
+<script>
+	const root = document.getElementById('jev-race');
+	if (root) {
+		const words = 'The customer is asking for a refund because they were charged twice, so this ticket should be routed to the billing team with medium urgency.'.split(' ');
+		const fields = ['route: billing', 'refund: 0.98', 'urgency: 2.1', 'language: en'];
+		const llm = root.querySelector('[data-llm]')!;
+		const jev = root.querySelector('[data-jev]')!;
+		const msg = root.querySelector('[data-msg]')!;
+		llm.innerHTML = words.map((w) => `<span class="tok l">${w}</span>`).join('');
+		jev.innerHTML = fields.map((w) => `<span class="tok j">${w}</span>`).join('');
+		let timer = 0;
+		root.querySelector<HTMLButtonElement>('[data-run]')!.onclick = () => {
+			clearInterval(timer);
+			root.querySelectorAll('.tok').forEach((e) => e.classList.remove('on'));
+			msg.textContent = '';
+			setTimeout(() => {
+				jev.querySelectorAll('.tok').forEach((e) => e.classList.add('on'));
+				msg.textContent = 'Jev is done. The LLM is still typing…';
+			}, 250);
+			const l = [...llm.querySelectorAll('.tok')];
+			let i = 0;
+			timer = window.setInterval(() => {
+				if (i < l.length) l[i++].classList.add('on');
+				else {
+					clearInterval(timer);
+					msg.textContent = 'LLM finished (and it still needs parsing).';
+				}
+			}, 180);
+		};
+	}
+</script>

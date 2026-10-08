@@ -1,0 +1,119 @@
+---
+// Long-session-cost demo 2: step a reply out token by token, with and without the KV cache, and count the work.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="lsc-kv"
+	title="Demo 2: generating with and without a KV cache"
+	tryIt="Press Step to generate one token at a time with the cache on, then reset, turn the cache off and step again. Watch the counters."
+>
+	<div class="row">
+		<button type="button" data-cache class="on">KV cache: on</button>
+		<button type="button" data-step>Step</button>
+		<button type="button" data-play>Play</button>
+		<button type="button" data-reset>Reset</button>
+	</div>
+	<div class="toks" data-toks></div>
+	<div class="grid" data-grid aria-label="Attention work per generation step"></div>
+	<div class="legend">
+		<span><i style="background:var(--cell-pre)"></i>prefill (the prompt, done once)</span>
+		<span><i style="background:var(--cell-hot)"></i>computed in this step</span>
+		<span><i style="background:var(--cell-on)"></i>computed earlier</span>
+	</div>
+	<div class="stats">
+		<div><b data-o="step">0</b>this step: dot products</div>
+		<div><b data-o="dp">0</b>total dot products</div>
+		<div><b data-o="kv">0</b>total K,V vectors computed</div>
+	</div>
+	<p class="note" data-extra></p>
+	<Fragment slot="note">Counts are for one head in one layer and come straight from the grid. The tokens are placeholders.</Fragment>
+</Demo>
+
+<script>
+	import { big, fmt } from './format';
+
+	const root = document.getElementById('lsc-kv');
+	if (root) {
+		const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+		const P = 5; // prompt tokens
+		const G = 11; // tokens to generate
+		const N = P + G;
+		const prompt = ['fix', 'the', 'failing', 'login', 'test'];
+		let cache = true;
+		let step = 0;
+		let totDp = 0;
+		let totKv = 0;
+		let lastDp = 0;
+		let timer = 0;
+
+		// scaled up: a 100,000-token prompt and a 1,000-token reply. Doesn't depend on the toggle, so work it out once.
+		const Pp = 100000;
+		let dpOn = (Pp * (Pp + 1)) / 2;
+		let dpOff = dpOn;
+		for (let i = 1; i <= 1000; i++) {
+			dpOn += Pp + i;
+			dpOff += ((Pp + i) * (Pp + i + 1)) / 2;
+		}
+		$('[data-extra]').textContent = `Scaled up to a 100,000-token prompt and a 1,000-token reply: about ${big(dpOn)} dot products with the cache, about ${big(dpOff)} without. Same reply, roughly ${fmt(dpOff / dpOn)}× the attention work.`;
+
+		const render = () => {
+			const n = P + step;
+			$('[data-toks]').innerHTML = Array.from({ length: n }, (_, i) => `<span class="tok${i >= P ? ' gen' : ''}">${i < P ? prompt[i] : 'tok' + (i - P + 1)}</span>`).join('');
+			const grid = $('[data-grid]');
+			grid.style.gridTemplateColumns = `repeat(${N}, minmax(0, 22px))`;
+			let cells = '';
+			for (let r = 0; r < N; r++)
+				for (let c = 0; c < N; c++) {
+					let cls = 'off';
+					if (r < n && c <= r) cls = step === 0 ? 'pre' : !cache || r === n - 1 ? 'hot' : r < P ? 'pre' : 'on';
+					cells += `<div class="c ${cls}"></div>`;
+				}
+			grid.innerHTML = cells;
+			$('[data-o="step"]').textContent = fmt(lastDp);
+			$('[data-o="dp"]').textContent = fmt(totDp);
+			$('[data-o="kv"]').textContent = fmt(totKv);
+			const btn = $('[data-cache]');
+			btn.textContent = `KV cache: ${cache ? 'on' : 'off'}`;
+			btn.classList.toggle('on', cache);
+		};
+		const stop = () => {
+			clearInterval(timer);
+			timer = 0;
+			$('[data-play]').textContent = 'Play';
+		};
+		const reset = () => {
+			step = 0;
+			totDp = lastDp = (P * (P + 1)) / 2;
+			totKv = P;
+			stop();
+			render();
+		};
+		const doStep = () => {
+			if (step >= G) return stop();
+			step++;
+			const pos = P + step;
+			// with the cache: one new row. without: the whole triangle again.
+			lastDp = cache ? pos : (pos * (pos + 1)) / 2;
+			totKv += cache ? 1 : pos;
+			totDp += lastDp;
+			render();
+		};
+		$('[data-cache]').onclick = () => {
+			cache = !cache;
+			reset();
+		};
+		$('[data-step]').onclick = () => {
+			stop();
+			doStep();
+		};
+		$('[data-reset]').onclick = reset;
+		$('[data-play]').onclick = () => {
+			if (timer) return stop();
+			if (step >= G) reset();
+			$('[data-play]').textContent = 'Pause';
+			timer = window.setInterval(() => (step >= G ? stop() : doStep()), 600);
+		};
+		reset();
+	}
+</script>

@@ -1,0 +1,289 @@
+---
+// Long-session-cost demo 4: what each message in a session costs, from Anthropic's published prices and cache multipliers.
+import Demo from '../Demo.astro';
+
+const sliders = [
+	['turns', 'Messages in session', 10, 150, 1, 80],
+	['start', 'Starting context (system prompt, tools, CLAUDE.md)', 2000, 100000, 1000, 20000],
+	['add', 'Tokens added per message (your text + tool results)', 500, 20000, 250, 3000],
+	['output', 'Visible reply per message', 100, 5000, 100, 800],
+	['think', 'Thinking per message (billed as output)', 0, 20000, 250, 1500],
+	['reqs', 'API requests per message (tool calls)', 1, 12, 1, 4],
+	['breakAt', 'Break before message', 0, 150, 1, 0],
+	['breakMin', 'Break length', 1, 120, 1, 20],
+	['clearAt', '/clear before message', 0, 150, 1, 0],
+	['compactAt', '/compact before message', 0, 150, 1, 0],
+] as const;
+---
+
+<Demo
+	id="lsc-sim"
+	title="Demo 4: session cost simulator"
+	tryIt="Start with the defaults and compare message 8 with message 80. Then turn caching off, add a 20-minute break, or drop a /clear in the middle and see what happens to the curve."
+>
+	<div class="ctl">
+		<label
+			>Model<select data-model>
+				<option value="opus55">Claude Opus 5.5</option>
+				<option value="sonnet55" selected>Claude Sonnet 5.5</option>
+				<option value="haiku45">Claude Haiku 4.5</option>
+			</select></label
+		>
+		{
+			sliders.slice(0, 6).map(([k, label, min, max, step, value]) => (
+				<label>
+					{label}: <b data-v={k} />
+					<input type="range" data-s={k} min={min} max={max} step={step} value={value} data-default={value} />
+				</label>
+			))
+		}
+		<label
+			>Cache lifetime<select data-ttl>
+				<option value="5" selected>5 minutes (API key default)</option>
+				<option value="60">1 hour (subscription default, 2× write)</option>
+			</select></label
+		>
+		{
+			sliders.slice(6).map(([k, label, min, max, step, value]) => (
+				<label>
+					{label}: <b data-v={k} />
+					<input type="range" data-s={k} min={min} max={max} step={step} value={value} data-default={value} />
+				</label>
+			))
+		}
+	</div>
+	<div class="row"><button type="button" data-cache class="on">Prompt caching: on</button><button type="button" data-defaults>Reset to defaults</button></div>
+	<div class="stats">
+		<div><b data-o="m8"></b>message 8</div>
+		<div><b data-o="mlast"></b><span data-o="lastlbl">message 80</span></div>
+		<div><b data-o="ratio"></b>ratio</div>
+		<div><b data-o="total"></b>whole session</div>
+		<div><b data-o="nocache"></b>same session, no caching</div>
+	</div>
+	<div class="legend">
+		<span><i style="background:var(--s1)"></i>cache read</span><span><i style="background:var(--s2)"></i>cache write</span>
+		<span><i style="background:var(--s3)"></i>uncached input</span><span><i style="background:var(--s4)"></i>output + thinking</span>
+	</div>
+	<div class="chart" data-chart><div class="tip" data-tip></div></div>
+	<div data-warn></div>
+	<details><summary>Show the numbers</summary><div class="table-wrap num"><table data-table></table></div></details>
+	<Fragment slot="note">
+		<b>Sample values, not live data or a measurement.</b> This is a model built from Anthropic's published prices and multipliers. It assumes each request reads the previous request from cache and writes only the new tail, that thinking from earlier messages isn't carried forward, and that /compact makes a 3,000-token summary. It ignores tool-definition overhead, auto-compaction, subagents and subscription limits. Check your own numbers with <code>/usage</code> in Claude Code.
+	</Fragment>
+</Demo>
+
+<script>
+	import { chartWidth, el, fmt, money, txt } from './format';
+
+	// $ per million tokens, Anthropic pricing page (checked October 2026)
+	const MODELS = {
+		opus55: { inp: 4, read: 0.2, out: 20 },
+		sonnet55: { inp: 2, read: 0.2, out: 10 },
+		haiku45: { inp: 1, read: 0.1, out: 5 },
+	};
+	type Params = {
+		model: keyof typeof MODELS;
+		ttl: number;
+		cache: boolean;
+		turns: number;
+		start: number;
+		add: number;
+		output: number;
+		think: number;
+		reqs: number;
+		breakAt: number;
+		breakMin: number;
+		clearAt: number;
+		compactAt: number;
+	};
+	type Part = 'read' | 'write' | 'fresh' | 'out';
+
+	function simulate(p: Params) {
+		const m = MODELS[p.model];
+		const wMult = p.ttl === 60 ? 2 : 1.25;
+		let ctx = p.start;
+		let cached = 0;
+		return Array.from({ length: p.turns }, (_, i) => {
+			const k = i + 1;
+			const t = { read: 0, write: 0, fresh: 0, out: 0, events: [] as string[] };
+			if (p.clearAt && k === p.clearAt) {
+				ctx = p.start;
+				cached = Math.min(cached, p.start);
+				t.events.push('clear');
+			}
+			if (p.breakAt && k === p.breakAt && p.breakMin > p.ttl) {
+				cached = 0;
+				t.events.push('cold');
+			}
+			if (p.compactAt && k === p.compactAt) {
+				// the summary request reads everything, then the session restarts from the summary
+				const input = ctx + 50;
+				if (p.cache) {
+					t.read += cached;
+					t.write += input - cached;
+				} else t.fresh += input;
+				t.out += 3000;
+				ctx = p.start + 3000;
+				cached = p.cache ? Math.min(cached, p.start) : 0;
+				t.events.push('compact');
+			}
+			for (let j = 0; j < p.reqs; j++) {
+				ctx += p.add / p.reqs;
+				if (p.cache) {
+					t.read += cached;
+					t.write += ctx - cached;
+					cached = ctx;
+				} else t.fresh += ctx;
+				t.out += (p.output + p.think) / p.reqs;
+				ctx += p.output / p.reqs;
+			}
+			const cost: Record<Part, number> = {
+				read: (t.read * m.read) / 1e6,
+				write: (t.write * m.inp * wMult) / 1e6,
+				fresh: (t.fresh * m.inp) / 1e6,
+				out: (t.out * m.out) / 1e6,
+			};
+			return { cost, total: cost.read + cost.write + cost.fresh + cost.out, ctxEnd: ctx, events: t.events };
+		});
+	}
+
+	const root = document.getElementById('lsc-sim');
+	if (root) {
+		const $ = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+		const out = (k: string, v: string) => ($(`[data-o="${k}"]`).textContent = v);
+		const sliders = [...root.querySelectorAll<HTMLInputElement>('[data-s]')];
+		const model = $<HTMLSelectElement>('[data-model]');
+		const ttl = $<HTMLSelectElement>('[data-ttl]');
+		const BANDS: [Part, string, string][] = [
+			['read', 'cache read', 'var(--s1)'],
+			['write', 'cache write', 'var(--s2)'],
+			['fresh', 'uncached input', 'var(--s3)'],
+			['out', 'output + thinking', 'var(--s4)'],
+		];
+		let cacheOn = true;
+		const H = 260;
+		const L = 50;
+		const R = 10;
+		const T = 12;
+		const B = 34;
+		let W = 640;
+		const host = $('[data-chart]');
+		const tip = $('[data-tip]');
+		const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Cost of each message, stacked by cache read, cache write, uncached input and output' });
+		host.insertBefore(svg, tip);
+
+		const params = () => {
+			const p = { model: model.value, ttl: +ttl.value, cache: cacheOn } as Params;
+			sliders.forEach((s) => ((p as Record<string, unknown>)[s.dataset.s!] = +s.value));
+			return p;
+		};
+		const labels = (p: Params) => {
+			const v = (k: string, s: string) => ($(`[data-v="${k}"]`).textContent = s);
+			v('turns', String(p.turns));
+			(['start', 'add', 'output', 'think'] as const).forEach((k) => v(k, fmt(p[k]) + ' tokens'));
+			v('reqs', String(p.reqs));
+			v('breakAt', p.breakAt ? `message ${p.breakAt}` : 'no break');
+			v('breakMin', `${p.breakMin} min`);
+			v('clearAt', p.clearAt ? `message ${p.clearAt}` : 'never');
+			v('compactAt', p.compactAt ? `message ${p.compactAt}` : 'never');
+		};
+
+		const render = () => {
+			const p = params();
+			labels(p);
+			const r = simulate(p);
+			const total = r.reduce((a, t) => a + t.total, 0);
+			const totalN = simulate({ ...p, cache: false }).reduce((a, t) => a + t.total, 0);
+			const last = Math.min(80, p.turns);
+			const m8 = r[7]?.total ?? 0;
+			const ml = r[last - 1].total;
+			out('m8', money(m8));
+			out('lastlbl', `message ${last}`);
+			out('mlast', money(ml));
+			out('ratio', m8 ? (ml / m8).toFixed(1) + '×' : 'n/a');
+			out('total', money(total));
+			out('nocache', money(totalN));
+			$('[data-warn]').innerHTML =
+				Math.max(...r.map((t) => t.ctxEnd)) > 1e6 ? `<div class="warnbox">Context passes 1,000,000 tokens, the model's limit. A real session would auto-compact before this point.</div>` : '';
+
+			// stacked bars, one per message
+			W = chartWidth(host);
+			svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+			svg.innerHTML = '';
+			const maxY = Math.max(...r.map((t) => t.total)) * 1.08 || 1;
+			const stepY = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10].find((s) => maxY / s <= 5) ?? 20;
+			const yOf = (v: number) => T + (1 - v / maxY) * (H - T - B);
+			for (let v = 0; v <= maxY; v += stepY) {
+				el('line', { x1: L, x2: W - R, y1: yOf(v), y2: yOf(v), class: 'svg-line' }, svg);
+				txt(svg, L - 6, yOf(v) + 4, '$' + v.toFixed(stepY < 1 ? 2 : 0), { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
+			}
+			const bw = (W - L - R) / p.turns;
+			const gap = bw > 4 ? 1 : 0;
+			r.forEach((t, i) => {
+				let y0 = yOf(0);
+				const x = L + i * bw;
+				BANDS.forEach(([k, , c]) => {
+					const h = yOf(0) - yOf(t.cost[k]);
+					if (h > 0.2) {
+						el('rect', { x: x + gap / 2, y: y0 - h, width: Math.max(bw - gap, 0.5), height: h, fill: c }, svg);
+						y0 -= h;
+					}
+				});
+				if (t.events.length)
+					txt(svg, x + bw / 2, y0 - 4, t.events.includes('clear') ? 'clear' : t.events.includes('compact') ? 'compact' : 'break', { 'text-anchor': 'middle', 'font-size': 10, class: 'svg-muted' });
+			});
+			[8, last].forEach((k) => k <= p.turns && txt(svg, L + (k - 0.5) * bw, H - 18, '#' + k, { 'text-anchor': 'middle', 'font-size': 11, class: 'svg-fg' }));
+			txt(svg, L, H - 2, 'message 1', { 'font-size': 11, class: 'svg-muted' });
+			txt(svg, W - R, H - 2, `message ${p.turns}`, { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
+
+			const hit = el('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
+			const hl = el('rect', { y: T, height: H - T - B, fill: 'var(--fg)', opacity: 0, 'pointer-events': 'none' }, svg);
+			hit.addEventListener('pointermove', (e) => {
+				const rect = svg.getBoundingClientRect();
+				const sx = ((e.clientX - rect.left) * W) / rect.width;
+				const i = Math.max(0, Math.min(p.turns - 1, Math.floor((sx - L) / bw)));
+				const t = r[i];
+				hl.setAttribute('x', String(L + i * bw));
+				hl.setAttribute('width', String(bw));
+				hl.setAttribute('opacity', '0.08');
+				tip.style.display = 'block';
+				tip.innerHTML =
+					`<b>Message ${i + 1}: ${money(t.total)}</b><br>context ≈ ${fmt(t.ctxEnd)} tokens` +
+					BANDS.map(([k, n, c]) => `<br><i style="display:inline-block;width:9px;height:9px;background:${c};margin-right:6px"></i>${n}: ${money(t.cost[k])}`).join('') +
+					(t.events.length ? `<br><i>${t.events.join(', ')}</i>` : '');
+				tip.style.left = Math.max(0, Math.min(e.clientX - host.getBoundingClientRect().left + 12, host.clientWidth - 200)) + 'px';
+				tip.style.top = '8px';
+			});
+			hit.addEventListener('pointerleave', () => {
+				tip.style.display = 'none';
+				hl.setAttribute('opacity', '0');
+			});
+
+			const sum = (k: Part) => r.reduce((a, t) => a + t.cost[k], 0);
+			$('[data-table]').innerHTML =
+				'<thead><tr><th>Part of the bill</th><th>Cost</th><th>Share</th></tr></thead><tbody>' +
+				BANDS.map(([k, n]) => `<tr><td>${n}</td><td>${money(sum(k))}</td><td>${total ? ((sum(k) / total) * 100).toFixed(0) : 0}%</td></tr>`).join('') +
+				`<tr><td><b>Total</b></td><td><b>${money(total)}</b></td><td>100%</td></tr></tbody>`;
+			const btn = $('[data-cache]');
+			btn.textContent = `Prompt caching: ${cacheOn ? 'on' : 'off'}`;
+			btn.classList.toggle('on', cacheOn);
+		};
+
+		sliders.forEach((s) => s.addEventListener('input', render));
+		model.addEventListener('change', render);
+		ttl.addEventListener('change', render);
+		$('[data-cache]').onclick = () => {
+			cacheOn = !cacheOn;
+			render();
+		};
+		$('[data-defaults]').onclick = () => {
+			sliders.forEach((s) => (s.value = s.dataset.default!));
+			model.value = 'sonnet55';
+			ttl.value = '5';
+			cacheOn = true;
+			render();
+		};
+		addEventListener('resize', render);
+		render();
+	}
+</script>

@@ -1,0 +1,27 @@
+---
+// UUIDv7: bars for a third-party benchmark (5M rows, Postgres). Static, scaled within each group.
+const groups = [
+	{ name: 'Index size', rows: [['bigint', 37.5, '107 MB', 'f-mid'], ['v4', 100, '285 MB', 'f-dark'], ['v7', 41.4, '118 MB', 'f-light']] },
+	{ name: 'Average insert time', rows: [['bigint', 25.8, '0.8 ms', 'f-mid'], ['v4', 100, '3.1 ms', 'f-dark'], ['v7', 29, '0.9 ms', 'f-light']] },
+] as const;
+---
+
+<div class="demo">
+	<h3>Benchmark A: 5 million rows, Postgres</h3>
+	<p class="try">Figures from a third-party blog post (linked in the sources), not from my machine. Bars are scaled within each group.</p>
+	{
+		groups.map((g) => (
+			<div class="group">
+				<b>{g.name}</b>
+				{g.rows.map(([label, width, value, fill]) => (
+					<div class="bar">
+						<span class="lbl">{label}</span>
+						<span class="track"><span class={`fill ${fill}`} style={`width:${width}%`} /></span>
+						<span class="val">{value}</span>
+					</div>
+				))}
+			</div>
+		))
+	}
+	<p class="note">The author notes the result assumes a steady clock and doesn't cover clock skew across several nodes.</p>
+</div>

@@ -1,0 +1,39 @@
+---
+// UUIDv7 demo 5: three checkboxes about your table, one suggested key type.
+import Demo from '../Demo.astro';
+---
+
+<div class="choice">
+	<Demo
+		id="uuid-choose"
+		title="Demo 5: which key should this table use?"
+		tryIt="Tick the boxes that match your table and read the suggestion. It's my rule of thumb from this post, not a law."
+	>
+		<label><input type="checkbox" data-c="writers" /> More than one writer, or IDs get generated outside the database</label>
+		<label><input type="checkbox" data-c="exposed" /> The ID shows up in URLs or API responses</label>
+		<label><input type="checkbox" data-c="secret" /> The value is meant to be a secret (reset link, session, invite code)</label>
+		<div class="result" data-out aria-live="polite"></div>
+	</Demo>
+</div>
+
+<script>
+	const root = document.getElementById('uuid-choose');
+	if (root) {
+		const on = (k: string) => root.querySelector<HTMLInputElement>(`[data-c="${k}"]`)!.checked;
+		const recommend = () => {
+			if (on('secret'))
+				return "Don't use any primary key as a secret. Give the row a separate random token from a cryptographic generator (a v4 UUID or 32 random bytes), and keep your v7 or integer key for the primary key.";
+			if (on('writers') || on('exposed'))
+				return (
+					'UUIDv7. ' +
+					(on('writers') ? 'Any node can mint one without asking the database. ' : '') +
+					(on('exposed') ? "It's hard to enumerate, unlike 1042, 1043, 1044. " : '') +
+					'You still need an authorization check on every lookup.'
+				);
+			return "A bigint auto-increment (identity) column. One node, IDs stay inside the database: it's the smallest and simplest option. Revisit if you add writers or expose the ID.";
+		};
+		const update = () => (root.querySelector('[data-out]')!.textContent = recommend());
+		root.querySelectorAll('input').forEach((i) => i.addEventListener('change', update));
+		update();
+	}
+</script>

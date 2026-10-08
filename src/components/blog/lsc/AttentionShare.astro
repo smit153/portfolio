@@ -1,0 +1,109 @@
+---
+// Long-session-cost demo 3: attention's share of per-token compute against context length (Kaplan et al.'s approximation).
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="lsc-share"
+	title="Demo 3: when does attention take over?"
+	tryIt="Pick a model width, then drag the context length from a short chat to a full 1M-token session. Hover over the curve to read values."
+>
+	<div class="ctl">
+		<label>Model width (d_model): <b data-o="d">8,192</b><input type="range" data-d min="0" max="5" step="1" value="3" aria-label="Model width" /></label>
+		<label>Context length: <b data-o="n">32,000</b> tokens<input type="range" data-n min="0" max="1000" step="1" value="500" aria-label="Context length" /></label>
+	</div>
+	<div class="stats">
+		<div><b data-o="share">0%</b>attention's share of compute per token</div>
+		<div><b data-o="mult">1×</b>compute per token vs. an empty context</div>
+		<div><b data-o="even">0</b>break-even context</div>
+	</div>
+	<div class="chart" data-chart><div class="tip" data-tip></div></div>
+	<Fragment slot="note">
+		Based on Kaplan et al.'s approximation for a standard dense transformer. Anthropic doesn't publish Claude's architecture, and production models often use tricks that change these numbers, so read this as the shape of the curve, not a measurement of any real model.
+	</Fragment>
+</Demo>
+
+<script>
+	import { chartWidth, el, fmt, txt } from './format';
+
+	const root = document.getElementById('lsc-share');
+	if (root) {
+		const $ = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+		const widths = [1024, 2048, 4096, 8192, 12288, 16384];
+		const nMin = 3; // log10 of 1,000 tokens
+		const nMax = 6; // log10 of 1M
+		const H = 230;
+		const L = 46;
+		const R = 14;
+		const T = 12;
+		const B = 34;
+		let W = 640;
+		const host = $('[data-chart]');
+		const tip = $('[data-tip]');
+		const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': "Attention's share of per-token compute as context grows" });
+		host.insertBefore(svg, tip);
+		const dIn = $<HTMLInputElement>('[data-d]');
+		const nIn = $<HTMLInputElement>('[data-n]');
+		const nOf = (v: number) => 10 ** (nMin + ((nMax - nMin) * v) / 1000);
+		const xOf = (n: number) => L + ((Math.log10(n) - nMin) / (nMax - nMin)) * (W - L - R);
+		const yOf = (s: number) => T + (1 - s) * (H - T - B);
+		// context part over fixed part is n / 12d; equal at n = 12 × d_model
+		const share = (n: number, d: number) => {
+			const r = n / (12 * d);
+			return r / (1 + r);
+		};
+
+		const render = () => {
+			const d = widths[+dIn.value];
+			const n = nOf(+nIn.value);
+			$('[data-o="d"]').textContent = fmt(d);
+			$('[data-o="n"]').textContent = fmt(n);
+			$('[data-o="share"]').textContent = (share(n, d) * 100).toFixed(1) + '%';
+			$('[data-o="mult"]').textContent = (1 + n / (12 * d)).toFixed(2) + '×';
+			$('[data-o="even"]').textContent = fmt(12 * d) + ' tokens';
+			W = chartWidth(host);
+			svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+			svg.innerHTML = '';
+			[0, 0.25, 0.5, 0.75, 1].forEach((s) => {
+				el('line', { x1: L, x2: W - R, y1: yOf(s), y2: yOf(s), class: 'svg-line' }, svg);
+				txt(svg, L - 6, yOf(s) + 4, s * 100 + '%', { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
+			});
+			([[1e3, '1k'], [1e4, '10k'], [1e5, '100k'], [1e6, '1M']] as const).forEach(([v, l]) => txt(svg, xOf(v), H - 14, l, { 'text-anchor': 'middle', 'font-size': 11, class: 'svg-muted' }));
+			txt(svg, W - R, H - 2, 'context length (tokens, log scale)', { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
+			let path = '';
+			for (let i = 0; i <= 200; i++) {
+				const nn = 10 ** (nMin + ((nMax - nMin) * i) / 200);
+				path += `${i ? 'L' : 'M'}${xOf(nn).toFixed(1)} ${yOf(share(nn, d)).toFixed(1)}`;
+			}
+			el('path', { d: path, fill: 'none', stroke: 'var(--fg)', 'stroke-width': 2 }, svg);
+			if (12 * d <= 1e6) {
+				const ex = xOf(12 * d);
+				el('line', { x1: ex, x2: ex, y1: yOf(0), y2: yOf(0.5), stroke: 'var(--muted)', 'stroke-dasharray': '3 3' }, svg);
+				txt(svg, ex + 6, yOf(0.06), 'equal split', { 'font-size': 11, class: 'svg-muted' });
+			}
+			el('rect', { x: xOf(n) - 5, y: yOf(share(n, d)) - 5, width: 10, height: 10, fill: 'var(--fg)', stroke: '#09090b', 'stroke-width': 2 }, svg);
+			const hit = el('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
+			const cross = el('line', { y1: T, y2: H - B, stroke: 'var(--muted)', opacity: 0, 'pointer-events': 'none' }, svg);
+			hit.addEventListener('pointermove', (e) => {
+				const rect = svg.getBoundingClientRect();
+				const sx = ((e.clientX - rect.left) * W) / rect.width;
+				const nn = 10 ** (nMin + ((sx - L) / (W - L - R)) * (nMax - nMin));
+				cross.setAttribute('x1', String(sx));
+				cross.setAttribute('x2', String(sx));
+				cross.setAttribute('opacity', '0.6');
+				tip.style.display = 'block';
+				tip.innerHTML = `<b>${fmt(nn)} tokens</b><br>attention: ${(share(nn, d) * 100).toFixed(1)}% of compute`;
+				tip.style.left = Math.min(e.clientX - host.getBoundingClientRect().left + 12, host.clientWidth - 170) + 'px';
+				tip.style.top = '8px';
+			});
+			hit.addEventListener('pointerleave', () => {
+				tip.style.display = 'none';
+				cross.setAttribute('opacity', '0');
+			});
+		};
+		dIn.addEventListener('input', render);
+		nIn.addEventListener('input', render);
+		addEventListener('resize', render);
+		render();
+	}
+</script>

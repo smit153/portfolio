@@ -1,0 +1,78 @@
+---
+// UUIDv7 demo 2: generate or paste a UUID and read the timestamp back out of it.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="uuid-decode"
+	title="Demo 2: take a v7 apart"
+	tryIt={`Press "Generate a v7", then edit the first few characters of the ID and watch the date change. Paste any UUID to see its version.`}
+>
+	<div class="row"><button type="button" data-gen>Generate a v7</button></div>
+	<input type="text" data-in spellcheck="false" autocomplete="off" aria-label="UUID" />
+	<div class="uuid" data-view aria-live="polite"></div>
+	<dl class="dec">
+		<dt>Version</dt><dd data-f="ver"></dd>
+		<dt>Timestamp</dt><dd data-f="ts"></dd>
+		<dt>Age</dt><dd data-f="age"></dd>
+		<dt>Random tail</dt><dd data-f="rand"></dd>
+	</dl>
+	<Fragment slot="note">
+		Generated in your browser with <code>crypto.getRandomValues</code> and your clock. The white part is the millisecond timestamp and it's readable by anyone who holds the ID. More on that below.
+	</Fragment>
+</Demo>
+
+<script>
+	import { parseUuid, uuid7 } from './uuid';
+
+	const root = document.getElementById('uuid-decode');
+	if (root) {
+		const input = root.querySelector<HTMLInputElement>('[data-in]')!;
+		const view = root.querySelector('[data-view]')!;
+		const set = (k: string, v: string) => (root.querySelector(`[data-f="${k}"]`)!.textContent = v);
+		const ago = (s: number) =>
+			s < 0 ? `in the future by ${Math.round(-s)} s` : s < 120 ? `${Math.round(s)} seconds ago` : s < 7200 ? `${Math.round(s / 60)} minutes ago` : s < 172800 ? `${Math.round(s / 3600)} hours ago` : `${Math.round(s / 86400)} days ago`;
+
+		const decode = () => {
+			const p = parseUuid(input.value);
+			view.textContent = '';
+			if (!p) {
+				set('ver', 'Not a valid UUID (need 32 hex digits)');
+				['ts', 'age', 'rand'].forEach((k) => set(k, ''));
+				return;
+			}
+			const h = p.hex;
+			const span = (cls: string, txt: string) => {
+				const s = document.createElement('span');
+				s.className = cls;
+				s.textContent = txt;
+				view.append(s);
+			};
+			if (p.ver === 7) {
+				span('ts', `${h.slice(0, 8)}-${h.slice(8, 12)}`);
+				span('rand', '-');
+				span('ver', h[12]);
+				span('rand', `${h.slice(13, 16)}-${h.slice(16, 20)}-${h.slice(20)}`);
+			} else span('rand', input.value.trim());
+			const kind = p.ver === 7 ? ' (time-ordered)' : p.ver === 4 ? ' (random)' : p.ver === 1 ? ' (v1 timestamp)' : '';
+			set('ver', `Version ${p.ver}${kind}${p.variantOk ? '' : ', unusual variant'}`);
+			if (p.ver === 7) {
+				const d = new Date(p.ts);
+				set('ts', isNaN(d.getTime()) ? 'out of range' : `${d.toISOString()} (${p.ts} ms since 1970)`);
+				set('age', ago((Date.now() - p.ts) / 1000));
+				set('rand', 'up to 74 bits (12 in rand_a, 62 in rand_b); nothing to read here');
+			} else {
+				set('ts', 'No millisecond timestamp in this version');
+				set('age', '');
+				set('rand', '');
+			}
+		};
+		root.querySelector('[data-gen]')!.addEventListener('click', () => {
+			input.value = uuid7();
+			decode();
+		});
+		input.addEventListener('input', decode);
+		input.value = uuid7();
+		decode();
+	}
+</script>

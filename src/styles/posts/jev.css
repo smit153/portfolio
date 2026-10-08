@@ -1,0 +1,114 @@
+/* Jev post: its demos and cards. Everything is scoped under .post-jev. */
+
+/* the three question types, and the use cases: small boxed cards */
+.post-jev .uc {
+  display: grid;
+  gap: 10px;
+}
+.post-jev .uc > div {
+  padding: 12px 14px;
+  border: 1px solid var(--color-line);
+  font-size: 14px;
+  line-height: 22px;
+}
+.post-jev .uc b {
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* bars: label, track, value */
+.post-jev .bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0;
+  font-size: 13px;
+}
+.post-jev .bar .n {
+  width: 92px;
+}
+.post-jev .bar .t {
+  flex: 1;
+  height: 12px;
+  background: var(--color-line);
+  overflow: hidden;
+}
+.post-jev .bar .t i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #c4c4c4;
+  transition: width 0.5s;
+}
+.post-jev .bar .v {
+  width: 44px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.post-jev .pill {
+  display: inline-block;
+  padding: 1px 9px;
+  background: var(--color-line);
+  font-size: 12px;
+  color: #f3f4f6;
+}
+.post-jev .ticket {
+  margin: 14px 0 6px;
+  font-style: italic;
+  color: var(--color-muted);
+}
+.post-jev .label {
+  margin-top: 10px;
+}
+
+/* token race */
+.post-jev .race {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .post-jev .race {
+    grid-template-columns: 1fr;
+  }
+}
+.post-jev .tok {
+  display: inline-block;
+  padding: 2px 7px;
+  margin: 2px;
+  background: var(--color-line);
+  font-size: 12px;
+  opacity: 0.15;
+  transition: opacity 0.2s;
+}
+.post-jev .tok.on {
+  opacity: 1;
+}
+.post-jev .tok.j.on {
+  background: #8d8d8d;
+  color: var(--color-ink);
+}
+.post-jev .tok.l.on {
+  background: #fff;
+  color: var(--color-ink);
+}
+.post-jev .race-msg {
+  font-family: var(--font-caveat);
+  font-size: 18px;
+  color: var(--color-doodle);
+}
+
+/* PageLens: passages that light up above the threshold */
+.post-jev .pass {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-left: 3px solid #383838;
+  transition: all 0.3s;
+}
+.post-jev .pass.hit {
+  border-left-color: #fff;
+  background: var(--color-line);
+}
+.post-jev .pass.dim {
+  opacity: 0.4;
+}

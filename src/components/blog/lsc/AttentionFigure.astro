@@ -1,0 +1,55 @@
+---
+// Long-session-cost figure: one query compared with four keys, softmaxed into weights, summed into an output.
+---
+
+<figure>
+	<svg viewBox="0 0 680 270" role="img" aria-labelledby="f1t f1d">
+		<title id="f1t">How one attention step works</title>
+		<desc id="f1d">Four tokens each produce a query, key and value. The query of the last token is compared with the keys of all four tokens, giving four scores. Softmax turns the scores into weights, and the output is the weighted sum of the four values.</desc>
+		<defs>
+			<marker id="lsc-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#8d8d8d"></path></marker>
+		</defs>
+		<g font-size="13">
+			<text x="20" y="28" class="svg-muted">tokens</text>
+			<rect x="20" y="40" width="90" height="34" class="svg-card"></rect><text x="65" y="62" text-anchor="middle" class="svg-fg">the</text>
+			<rect x="20" y="84" width="90" height="34" class="svg-card"></rect><text x="65" y="106" text-anchor="middle" class="svg-fg">test</text>
+			<rect x="20" y="128" width="90" height="34" class="svg-card"></rect><text x="65" y="150" text-anchor="middle" class="svg-fg">failed</text>
+			<rect x="20" y="172" width="90" height="34" fill="#383838" stroke="#fff"></rect><text x="65" y="194" text-anchor="middle" class="svg-fg">it</text>
+
+			<text x="150" y="28" class="svg-muted">keys</text>
+			<g fill="#8d8d8d">
+				<rect x="150" y="47" width="46" height="20"></rect><rect x="150" y="91" width="46" height="20"></rect>
+				<rect x="150" y="135" width="46" height="20"></rect><rect x="150" y="179" width="46" height="20"></rect>
+			</g>
+			<g fill="#09090b" font-size="11" text-anchor="middle">
+				<text x="173" y="61">K₁</text><text x="173" y="105">K₂</text><text x="173" y="149">K₃</text><text x="173" y="193">K₄</text>
+			</g>
+			<rect x="150" y="226" width="46" height="20" fill="#fff"></rect><text x="173" y="240" text-anchor="middle" fill="#09090b" font-size="11">Q₄</text>
+			<text x="206" y="240" class="svg-muted" font-size="12">query of "it"</text>
+			<g stroke="#383838" stroke-width="1.5" fill="none">
+				<path d="M196 236 C 240 236, 240 57, 280 57"></path><path d="M196 236 C 240 236, 240 101, 280 101"></path>
+				<path d="M196 236 C 240 236, 240 145, 280 145"></path><path d="M196 236 C 240 236, 240 189, 280 189"></path>
+			</g>
+
+			<text x="282" y="28" class="svg-muted">scores</text>
+			<text x="290" y="62" class="svg-fg">0.4</text><text x="290" y="106" class="svg-fg">3.1</text>
+			<text x="290" y="150" class="svg-fg">1.2</text><text x="290" y="194" class="svg-fg">0.9</text>
+
+			<text x="372" y="28" class="svg-muted">softmax</text>
+			<g fill="#c4c4c4">
+				<rect x="372" y="49" width="7" height="16"></rect><rect x="372" y="93" width="100" height="16"></rect>
+				<rect x="372" y="137" width="15" height="16"></rect><rect x="372" y="181" width="11" height="16"></rect>
+			</g>
+			<g class="svg-muted" font-size="12">
+				<text x="385" y="62">0.05</text><text x="482" y="106">0.75</text><text x="393" y="150">0.11</text><text x="389" y="194">0.08</text>
+			</g>
+
+			<path d="M524 125 L 548 125" stroke="#8d8d8d" stroke-width="1.5" marker-end="url(#lsc-ar)"></path>
+			<rect x="552" y="96" width="124" height="58" class="svg-card"></rect>
+			<text x="614" y="119" text-anchor="middle" class="svg-fg">output</text>
+			<text x="614" y="136" text-anchor="middle" class="svg-fg">for "it"</text>
+			<text x="614" y="150" text-anchor="middle" class="svg-muted" font-size="10">Σ weight × V</text>
+		</g>
+	</svg>
+	<figcaption>One query against every key. The scores here are made up to show the flow. In a real model the weights come from learned vectors, and this happens in many "heads" and many layers at once.</figcaption>
+</figure>

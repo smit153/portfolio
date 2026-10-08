@@ -1,0 +1,106 @@
+---
+// UUIDv7 demo 1: leaf pages of a toy B-tree filling up with sequential or random keys.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="uuid-btree"
+	title="Demo 1: watch the index fill up"
+	tryIt={`Pick a key style, press "Insert 20", then switch style and compare pages, splits and how full the pages are.`}
+>
+	<div class="row">
+		<button type="button" data-mode="seq" class="on">Sequential (auto-increment or v7)</button>
+		<button type="button" data-mode="rand">Random (v4)</button>
+	</div>
+	<div class="row">
+		<button type="button" data-add="1">Insert 1</button>
+		<button type="button" data-add="20">Insert 20</button>
+		<button type="button" data-reset>Reset</button>
+	</div>
+	<div class="pages" data-pages aria-live="polite"></div>
+	<div class="stats">
+		<div><b data-stat="n">0</b>keys</div>
+		<div><b data-stat="p">0</b>pages</div>
+		<div><b data-stat="s">0</b>mid-page splits</div>
+		<div><b data-stat="f">0%</b>average fullness</div>
+	</div>
+	<Fragment slot="note">
+		Simulation with 4 keys per page so you can see it. Real pages hold hundreds of keys, and real engines are more subtle. The pattern, though, is the same. A grey page is a new page added at the right edge. A thick white outline is a full page that had to split in the middle. Random keys here are numbers from 0 to 999.
+	</Fragment>
+</Demo>
+
+<script>
+	const root = document.getElementById('uuid-btree');
+	if (root) {
+		const CAP = 4;
+		let leaves: number[][] = [[]];
+		let splits = 0;
+		let n = 0;
+		let counter = 0;
+		let mode = 'seq';
+
+		// insert one key; returns which page changed and how
+		const insert = (key: number) => {
+			let idx = leaves.findIndex((l) => l.length && l[l.length - 1] >= key);
+			if (idx < 0) idx = leaves.length - 1;
+			const leaf = leaves[idx];
+			const change = { idx, split: false, append: false };
+			if (leaf.length < CAP) {
+				leaf.push(key);
+				leaf.sort((a, b) => a - b);
+			} else if (idx === leaves.length - 1 && key > leaf[leaf.length - 1]) {
+				// past the right edge: start a fresh page, nothing moves
+				leaves.splice(idx + 1, 0, [key]);
+				change.idx = idx + 1;
+				change.append = true;
+			} else {
+				// full page in the middle: split it in half
+				const all = [...leaf, key].sort((a, b) => a - b);
+				const mid = Math.ceil(all.length / 2);
+				leaves.splice(idx, 1, all.slice(0, mid), all.slice(mid));
+				splits++;
+				change.split = true;
+			}
+			n++;
+			return change;
+		};
+
+		const draw = (ch: ReturnType<typeof insert> | null) => {
+			root.querySelector('[data-pages]')!.innerHTML = leaves
+				.map((leaf, i) => {
+					const cls = ch?.split && (i === ch.idx || i === ch.idx + 1) ? ' split' : ch?.append && i === ch.idx ? ' new' : '';
+					const cells = Array.from({ length: CAP }, (_, k) => (k < leaf.length ? `<span>${leaf[k]}</span>` : '<span class="empty">.</span>'));
+					return `<div class="page${cls}">${cells.join('')}</div>`;
+				})
+				.join('');
+			const stat = (k: string, v: string | number) => (root.querySelector(`[data-stat="${k}"]`)!.textContent = String(v));
+			stat('n', n);
+			stat('p', leaves.length);
+			stat('s', splits);
+			stat('f', Math.round((n / (leaves.length * CAP)) * 100) + '%');
+		};
+
+		const reset = () => {
+			leaves = [[]];
+			splits = n = counter = 0;
+			draw(null);
+		};
+
+		root.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach((b) =>
+			b.addEventListener('click', () => {
+				mode = b.dataset.mode!;
+				root.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b));
+				reset();
+			}),
+		);
+		root.querySelectorAll<HTMLButtonElement>('[data-add]').forEach((b) =>
+			b.addEventListener('click', () => {
+				let ch = null;
+				for (let i = 0; i < +b.dataset.add! && n < 80; i++) ch = insert(mode === 'seq' ? ++counter * 10 : Math.floor(Math.random() * 1000));
+				draw(ch);
+			}),
+		);
+		root.querySelector('[data-reset]')!.addEventListener('click', reset);
+		reset();
+	}
+</script>

@@ -1,0 +1,51 @@
+---
+// UUIDv7 demo 3: make six v4s and six v7s a few ms apart and check whether text order matches creation order.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="uuid-sort"
+	title="Demo 3: do they sort?"
+	tryIt="Press the button. Six IDs of each kind are made a few milliseconds apart, then checked to see whether plain text order matches creation order."
+>
+	<div class="row"><button type="button" data-go>Generate 6 of each</button></div>
+	<div class="cols">
+		<div class="col"><h4>v4 (random), in creation order</h4><ol data-list="v4"></ol><div class="verdict" data-verdict="v4"></div></div>
+		<div class="col"><h4>v7, in creation order</h4><ol data-list="v7"></ol><div class="verdict" data-verdict="v7"></div></div>
+	</div>
+	<Fragment slot="note">
+		Six v4 values could land in order by luck, but the odds are 1 in 720. The v7 side waits a few milliseconds between IDs. Made within the same millisecond, ordering depends on how the generator handles ties, which is what RFC 9562 section 6.2 is about.
+	</Fragment>
+</Demo>
+
+<script>
+	import { uuid4, uuid7 } from './uuid';
+
+	const root = document.getElementById('uuid-sort');
+	if (root) {
+		const show = (k: string, ids: string[]) => {
+			root.querySelector(`[data-list="${k}"]`)!.innerHTML = ids.map((u) => `<li>${u}</li>`).join('');
+			const sorted = [...ids].sort();
+			const ok = sorted.every((u, i) => u === ids[i]);
+			const v = root.querySelector(`[data-verdict="${k}"]`)!;
+			v.textContent = ok ? 'Already in sorted order' : 'Out of order when sorted as text';
+			v.className = `verdict ${ok ? 'ok' : 'bad'}`;
+		};
+		let running = false;
+		root.querySelector('[data-go]')!.addEventListener('click', () => {
+			if (running) return;
+			running = true;
+			const v4: string[] = [];
+			const v7: string[] = [];
+			const step = () => {
+				v4.push(uuid4());
+				v7.push(uuid7());
+				if (v4.length < 6) return setTimeout(step, 4);
+				show('v4', v4);
+				show('v7', v7);
+				running = false;
+			};
+			step();
+		});
+	}
+</script>

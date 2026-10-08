@@ -1,0 +1,55 @@
+---
+// UUIDv7 demo 4: raw key bytes for int, bigint and uuid at a row count picked on a log slider.
+import Demo from '../Demo.astro';
+const keys = [
+	['int (4 B)', 4, 25, 'f-mid'],
+	['bigint (8 B)', 8, 50, 'f-mid'],
+	['uuid (16 B)', 16, 100, 'f-light'],
+] as const;
+---
+
+<Demo id="uuid-size" title="Demo 4: what does 16 bytes cost you?" tryIt="Drag the slider to change the row count and compare the raw key bytes for each type.">
+	<label style="display:block">Rows: <b data-rows></b></label>
+	<input type="range" data-range min="5" max="10" step="0.05" value="7" aria-label="Row count" />
+	<div style="margin-top:10px">
+		{
+			keys.map(([label, bytes, width, fill]) => (
+				<div class="bar">
+					<span class="lbl">{label}</span>
+					<span class="track"><span class={`fill ${fill}`} data-fill={bytes} style={`width:${width}%`} /></span>
+					<span class="val" data-val={bytes} />
+				</div>
+			))
+		}
+	</div>
+	<Fragment slot="note">
+		Simple arithmetic: rows times key size, one copy of the key. A real index adds per-entry overhead and free space, so actual sizes are larger. An <code>int</code> tops out near 2.1 billion values.
+	</Fragment>
+</Demo>
+
+<script>
+	const root = document.getElementById('uuid-size');
+	if (root) {
+		const range = root.querySelector<HTMLInputElement>('[data-range]')!;
+		const fmtBytes = (n: number) => {
+			const u = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+			let i = 0;
+			while (n >= 1000 && i < u.length - 1) (n /= 1000), i++;
+			return `${n >= 100 ? n.toFixed(0) : n >= 10 ? n.toFixed(1) : n.toFixed(2)} ${u[i]}`;
+		};
+		const fmtRows = (n: number) =>
+			n >= 1e9 ? `${(n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 1)} billion` : n >= 1e6 ? `${(n / 1e6).toFixed(n % 1e6 === 0 ? 0 : 1)} million` : Math.round(n).toLocaleString('en-US');
+		const update = () => {
+			const rows = Math.round(10 ** +range.value);
+			const over = rows > 2147483647; // an int runs out here
+			root.querySelector('[data-rows]')!.textContent = fmtRows(rows);
+			root.querySelectorAll<HTMLElement>('[data-val]').forEach((v) => {
+				const b = +v.dataset.val!;
+				v.textContent = b === 4 && over ? 'overflows' : fmtBytes(rows * b);
+			});
+			root.querySelector<HTMLElement>('[data-fill="4"]')!.style.width = over ? '0%' : '25%';
+		};
+		range.addEventListener('input', update);
+		update();
+	}
+</script>

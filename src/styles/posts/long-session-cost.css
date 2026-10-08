@@ -1,0 +1,182 @@
+/* Long-session-cost post: its demos and figures. Everything is scoped under .post-long-session-cost.
+   The demos colour things with these tokens; the four series greys stay apart even when stacked. */
+.post-long-session-cost {
+  --fg: #fff;
+  --muted: #8d8d8d;
+  --rule: #1f2020;
+  --s1: #8d8d8d; /* cache read */
+  --s2: #fff; /* cache write / new */
+  --s3: #c4c4c4; /* uncached input */
+  --s4: #383838; /* output + thinking */
+  --cell: #1f2020;
+  --cell-on: #8d8d8d;
+  --cell-hot: #fff;
+  --cell-pre: #5a5a5a;
+}
+
+.post-long-session-cost .svg-fg {
+  fill: var(--fg);
+}
+.post-long-session-cost .svg-muted {
+  fill: var(--muted);
+}
+.post-long-session-cost .svg-line {
+  stroke: var(--rule);
+}
+.post-long-session-cost .svg-card {
+  fill: var(--color-ink);
+  stroke: #383838;
+}
+
+/* sliders and selects laid out two to a row */
+.post-long-session-cost .ctl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 18px;
+  margin-bottom: 12px;
+}
+@media (max-width: 560px) {
+  .post-long-session-cost .ctl {
+    grid-template-columns: 1fr;
+  }
+}
+.post-long-session-cost .ctl label {
+  display: block;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+}
+.post-long-session-cost .ctl label b {
+  font-weight: 400;
+  color: var(--fg);
+}
+.post-long-session-cost .ctl select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+.post-long-session-cost .stats {
+  margin: 10px 0;
+}
+.post-long-session-cost .stats div {
+  min-width: 110px;
+}
+
+/* attention grids */
+.post-long-session-cost .grid {
+  display: grid;
+  gap: 2px;
+  max-width: 100%;
+  margin: 10px 0;
+}
+.post-long-session-cost .grid .c {
+  aspect-ratio: 1;
+  background: var(--cell);
+  transition: background 0.2s;
+}
+.post-long-session-cost .grid .c.on {
+  background: var(--cell-on);
+}
+.post-long-session-cost .grid .c.pre {
+  background: var(--cell-pre);
+}
+.post-long-session-cost .grid .c.hot {
+  background: var(--cell-hot);
+}
+.post-long-session-cost .grid .c.off {
+  background: var(--cell);
+  opacity: 0.5;
+}
+.post-long-session-cost .toks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0;
+}
+.post-long-session-cost .demo .tok {
+  padding: 2px 7px;
+  border: 1px solid #383838;
+  background: var(--color-ink);
+  font-size: 12px;
+  line-height: 18px;
+}
+.post-long-session-cost .demo .tok.sel {
+  border-color: #fff;
+  background: #383838;
+}
+.post-long-session-cost .demo .tok.gen {
+  border-style: dashed;
+  border-color: #5a5a5a;
+}
+.post-long-session-cost .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.post-long-session-cost .legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.post-long-session-cost .demo hr {
+  margin: 14px 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+
+/* charts with a hover tooltip */
+.post-long-session-cost .chart {
+  position: relative;
+}
+.post-long-session-cost .chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.post-long-session-cost .chart svg text {
+  font-family: var(--font-sohne-mono);
+}
+.post-long-session-cost .tip {
+  position: absolute;
+  z-index: 2;
+  display: none;
+  padding: 6px 9px;
+  border: 1px solid #383838;
+  background: var(--color-ink);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.post-long-session-cost .warnbox {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--muted);
+  background: var(--rule);
+  font-size: 13px;
+}
+.post-long-session-cost details summary {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.post-long-session-cost details summary:hover {
+  color: #fff;
+}
+.post-long-session-cost .demo table {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+/* money columns line up on the right */
+.post-long-session-cost .num th:not(:first-child),
+.post-long-session-cost .num td:not(:first-child) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

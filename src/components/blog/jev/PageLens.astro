@@ -1,0 +1,45 @@
+---
+// Jev demo: a miniature PageLens. Each passage has a relevance score; a threshold slider decides which match.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="jev-lens"
+	title="Try it: PageLens, miniature"
+	tryIt="Drag the threshold to decide which passages count as matches."
+>
+	<p>Query: <b>"why did the deploy fail?"</b>. Each passage below got its own score question.</p>
+	<label style="display:block;margin-top:12px">Minimum score: <b data-th-value>1.50</b> / 3</label>
+	<input type="range" data-th min="0" max="3" step="0.05" value="1.5" aria-label="Minimum score" />
+	<div data-passages style="margin-top:12px"></div>
+	<Fragment slot="note">Scores are sample values in the style of real PageLens output.</Fragment>
+</Demo>
+
+<script>
+	const root = document.getElementById('jev-lens');
+	if (root) {
+		const passages: [string, number][] = [
+			['The deploy failed because the Edge Function imported ../lib/jev.ts, which the builder does not rewrite.', 2.94],
+			['We first tried vercel dev, which failed three different ways in this monorepo.', 1.19],
+			['Vercel treated the project as a static site and complained about a missing public directory.', 2.31],
+			['The extension popup shows ranked passages with a pill for each match kind.', 0.0],
+			['TypeScript is pinned to 6.0.3 because typescript-eslint does not yet support 7.x.', 0.42],
+			['Rate limiting was skipped by explicit decision, since an in-memory limiter is best-effort at best.', 0.05],
+		];
+		const box = root.querySelector('[data-passages]')!;
+		box.innerHTML = passages.map(([t, s]) => `<div class="pass"><span class="pill">${s.toFixed(2)}</span> ${t}</div>`).join('');
+		const range = root.querySelector<HTMLInputElement>('[data-th]')!;
+		const value = root.querySelector('[data-th-value]')!;
+		const update = () => {
+			const v = +range.value;
+			value.textContent = v.toFixed(2);
+			box.querySelectorAll('.pass').forEach((e, i) => {
+				const on = passages[i][1] >= v;
+				e.classList.toggle('hit', on);
+				e.classList.toggle('dim', !on);
+			});
+		};
+		range.oninput = update;
+		update();
+	}
+</script>
