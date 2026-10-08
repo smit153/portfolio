@@ -16,6 +16,14 @@
 :root {
   interpolate-size: allow-keywords;
 }
+
+/* Tailwind's reset gives buttons the plain arrow; every enabled button on the site gets the hand */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
 details::details-content {
   block-size: 0;
   overflow: hidden;
