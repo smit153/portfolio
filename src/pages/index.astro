@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
 import dino from '../assets/icons/dino.svg';
 import About from '../components/About.astro';
 import Band from '../components/Band.astro';
@@ -21,6 +22,7 @@ import Stacks from '../components/Stacks.astro';
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<!-- the page column: its side borders are the full-height column guides -->
 		<main class="relative mx-auto min-h-screen w-full max-w-[768px] border-x-2 border-line">
+			<Header />
 			<Band />
 			<RiveHero />
 			<ProfileRow />

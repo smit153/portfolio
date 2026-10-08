@@ -3,6 +3,7 @@
 // which wall the square image sits on, and a band (with its slit) sits between them.
 import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
 import arrowUp from '../assets/icons/arrow-up.svg';
 import AsciiField from '../components/AsciiField.astro';
 import Band from '../components/Band.astro';
@@ -16,6 +17,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<!-- a full-height column, so the strip below sits at the bottom of the window when there is little content -->
 		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
+			<Header />
 			<Band />
 			<PageTitle>Writing</PageTitle>
 			<ol>

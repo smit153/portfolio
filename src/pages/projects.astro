@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
 import AsciiField from '../components/AsciiField.astro';
 import Band from '../components/Band.astro';
 import PageTitle from '../components/PageTitle.astro';
@@ -11,6 +12,7 @@ import { projects } from '../data/projects';
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<!-- a full-height column, so the strip below sits at the bottom of the window when there is little content -->
 		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
+			<Header />
 			<Band />
 			<PageTitle>Projects</PageTitle>
 			<ProjectTree projects={projects} />

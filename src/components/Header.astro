@@ -1,0 +1,130 @@
+---
+// Top bar: pixel initials (home), links to the sections and pages, and a Ctrl/⌘ K quick-jump box.
+// The quick-jump is deliberately simple for now: type to filter, arrows to move, Enter to go.
+import PixelIcon from './PixelIcon.astro';
+
+const links = [
+	{ label: 'Experience', href: '/#experience-title' },
+	{ label: 'Projects', href: '/projects' },
+	{ label: 'Stacks', href: '/#stacks-title' },
+	{ label: 'Writing', href: '/blog' },
+	{ label: 'Contact', href: '/#contact-title' },
+];
+// everything the quick-jump box can go to
+const jumps = [
+	{ label: 'Home', hint: 'page', href: '/' },
+	{ label: 'About', hint: 'section', href: '/#about-title' },
+	...links.map((l) => ({ ...l, hint: l.href.startsWith('/#') ? 'section' : 'page' })),
+	{ label: 'Résumé', hint: 'pdf', href: '/resume.pdf' },
+	{ label: 'GitHub', hint: 'link', href: 'https://github.com/smit153' },
+];
+---
+
+<header class="relative flex h-14 items-center gap-6 px-5">
+	<a href="/" aria-label="Smit Sojitra, home" class="text-white transition-opacity hover:opacity-70">
+		<PixelIcon name="initials" scale={3} />
+	</a>
+
+	<nav aria-label="Sections" class="ml-auto hidden md:block">
+		<ul class="flex gap-5 text-body text-muted">
+			{
+				links.map(({ label, href }) => (
+					<li>
+						<a href={href} class="transition-colors hover:text-white">
+							{label}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+
+	<span aria-hidden="true" class="hidden h-5 w-px bg-line md:block"></span>
+	<button
+		type="button"
+		data-jump-open
+		aria-label="Jump to a section"
+		class="ml-auto flex items-center gap-2 text-muted transition-colors hover:text-white md:ml-0"
+	>
+		<PixelIcon name="search" />
+		<kbd data-jump-mod class="border border-line px-1.5 text-small leading-5">Ctrl</kbd>
+		<kbd class="border border-line px-1.5 text-small leading-5">K</kbd>
+	</button>
+
+	<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
+</header>
+
+<dialog data-jump class="jump m-auto w-[min(440px,calc(100vw-32px))] border-2 border-line bg-ink p-0 text-white backdrop:bg-black/60">
+	<div class="flex items-center gap-3 border-b-2 border-line px-4">
+		<PixelIcon name="search" class="text-muted" />
+		<input
+			data-jump-input
+			type="text"
+			placeholder="Jump to…"
+			autocomplete="off"
+			class="h-12 flex-1 bg-transparent text-body text-white outline-none placeholder:text-tick"
+		/>
+		<kbd class="border border-line px-1.5 text-small leading-5 text-muted">Esc</kbd>
+	</div>
+	<ul data-jump-list class="max-h-[50vh] overflow-y-auto py-2">
+		{
+			jumps.map(({ label, hint, href }) => (
+				<li>
+					<a href={href} data-jump-item class="flex items-center justify-between px-4 py-2 text-body text-muted aria-selected:bg-[#111113] aria-selected:text-white">
+						<span>{label}</span>
+						<span class="text-small text-tick">{hint}</span>
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</dialog>
+
+<script>
+	const dialog = document.querySelector<HTMLDialogElement>('[data-jump]');
+	const input = document.querySelector<HTMLInputElement>('[data-jump-input]');
+	const items = [...document.querySelectorAll<HTMLAnchorElement>('[data-jump-item]')];
+	const mod = document.querySelector('[data-jump-mod]');
+	if (mod && /Mac|iPhone|iPad/.test(navigator.platform)) mod.textContent = '⌘';
+
+	if (dialog && input) {
+		let active = 0;
+		const visible = () => items.filter((a) => !a.parentElement!.hidden);
+		const select = (i: number) => {
+			const list = visible();
+			active = (i + list.length) % Math.max(1, list.length);
+			items.forEach((a) => a.removeAttribute('aria-selected'));
+			list[active]?.setAttribute('aria-selected', 'true');
+			list[active]?.scrollIntoView({ block: 'nearest' });
+		};
+		const open = () => {
+			input.value = '';
+			items.forEach((a) => (a.parentElement!.hidden = false));
+			dialog.showModal();
+			select(0);
+		};
+
+		document.querySelector('[data-jump-open]')?.addEventListener('click', open);
+		addEventListener('keydown', (e) => {
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+				e.preventDefault();
+				if (dialog.open) dialog.close();
+				else open();
+			}
+		});
+		input.addEventListener('input', () => {
+			const q = input.value.trim().toLowerCase();
+			items.forEach((a) => (a.parentElement!.hidden = !a.textContent!.toLowerCase().includes(q)));
+			select(0);
+		});
+		input.addEventListener('keydown', (e) => {
+			if (e.key === 'ArrowDown') (e.preventDefault(), select(active + 1));
+			else if (e.key === 'ArrowUp') (e.preventDefault(), select(active - 1));
+			else if (e.key === 'Enter') visible()[active]?.click();
+		});
+		// following a link to a section on the same page: close the box first
+		items.forEach((a) => a.addEventListener('click', () => dialog.close()));
+		// a click on the backdrop closes it
+		dialog.addEventListener('click', (e) => e.target === dialog && dialog.close());
+	}
+</script>
