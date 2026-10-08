@@ -1,17 +1,9 @@
 ---
 import { Image } from 'astro:assets';
 import arrowUp from '../assets/icons/arrow-up.svg';
-import placeholder1 from '../assets/images/blog/placeholder-1.png';
-import placeholder2 from '../assets/images/blog/placeholder-2.png';
+import { posts } from '../data/posts';
 import SectionTitle from './SectionTitle.astro';
-
-// TODO: real posts. The images are the ASCII-art placeholders from the Figma file.
-const posts = [
-	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder1 },
-	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder2 },
-	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder1 },
-	{ title: '[Post title]', excerpt: '[One-line summary of the post]', href: '#', image: placeholder2 },
-];
+import SeeAll from './SeeAll.astro';
 
 const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 ---
@@ -73,6 +65,7 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 			</ul>
 		</div>
 	</div>
+	<SeeAll href="/blog">All writing</SeeAll>
 </section>
 
 <script>

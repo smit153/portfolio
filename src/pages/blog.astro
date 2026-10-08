@@ -1,0 +1,180 @@
+---
+// All posts: the home card (image, title, summary, arrow) as a full-width row with a meta block. Rows alternate
+// which wall the square image sits on, and a band (with its slit) sits between them.
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import arrowUp from '../assets/icons/arrow-up.svg';
+import AsciiField from '../components/AsciiField.astro';
+import Band from '../components/Band.astro';
+import PageTitle from '../components/PageTitle.astro';
+import { posts } from '../data/posts';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<Layout title="Writing · Smit Sojitra">
+	<div class="min-h-screen overflow-x-clip bg-ink">
+		<main class="relative mx-auto min-h-screen w-full max-w-[768px] border-x-2 border-line">
+			<Band />
+			<PageTitle>Writing</PageTitle>
+			<ol>
+				{
+					posts.map((post, i) => (
+						<li>
+							{i > 0 && <Band />}
+							<a href={post.href} class:list={['post group', i % 2 && 'flip']}>
+								<div class="img">
+									<Image src={post.image} alt="" width={440} height={440} format="webp" class="size-full object-cover [image-rendering:pixelated]" />
+								</div>
+								<div class="txt">
+									<span class="absolute right-3.5 top-3.5 flex size-8 items-center justify-center border-2 border-line bg-ink transition-colors group-hover:border-tick">
+										<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
+									</span>
+									<h2 class="mb-1.5 mr-10 text-lg leading-snug tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">
+										{post.title}
+									</h2>
+									<p class="text-sm tracking-[-0.04em] text-muted">{post.excerpt}</p>
+									<span class="mt-auto pt-4 text-xs text-white">
+										<span class="border-b border-tick">read the note</span>
+										<img src={arrowUp.src} alt="" width="9" height="10" class="ml-1.5 inline rotate-90 transition-transform group-hover:translate-x-0.5" />
+									</span>
+								</div>
+								<dl class="meta">
+									<div>
+										<dt>filed</dt>
+										<dd>{post.date}</dd>
+									</div>
+									<div>
+										<dt>read</dt>
+										<dd>{post.minutes} min</dd>
+									</div>
+									<div>
+										<dt>words</dt>
+										<dd>{post.words.toLocaleString('en')}</dd>
+									</div>
+									<div>
+										<dt>revision</dt>
+										<dd>{post.revision}</dd>
+									</div>
+									<div class="wide">
+										<dt>tags</dt>
+										<dd>{post.tags.join(' · ')}</dd>
+									</div>
+									<div class="wide last">
+										<dt>note no.</dt>
+										<dd class="flex items-end justify-between">
+											<span>
+												<span class="font-grape text-[26px] leading-none">{pad(i + 1)}</span>
+												<span class="text-tick"> / {pad(posts.length)}</span>
+											</span>
+											<span class="text-tick">by s.s.</span>
+										</dd>
+									</div>
+								</dl>
+							</a>
+						</li>
+					))
+				}
+			</ol>
+			<AsciiField />
+		</main>
+	</div>
+</Layout>
+
+<style>
+	.post {
+		display: grid;
+		grid-template-columns: 220px 1fr 250px;
+	}
+	.post.flip {
+		grid-template-columns: 250px 1fr 220px;
+	}
+	.img {
+		overflow: hidden;
+		border-right: 2px solid var(--color-line);
+	}
+	.img :global(img) {
+		aspect-ratio: 1;
+		transition: transform 0.3s ease;
+	}
+	.post:hover .img :global(img) {
+		transform: scale(1.04);
+	}
+	.txt {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		padding: 18px 20px;
+	}
+	.meta {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-template-rows: auto auto auto 1fr;
+		margin: 0;
+		border-left: 2px solid var(--color-line);
+		font-size: 11px;
+		color: #fff;
+	}
+	.meta > div {
+		padding: 5px 10px;
+		border-bottom: 1px solid var(--color-line);
+	}
+	.meta > div:nth-child(odd) {
+		border-right: 1px solid var(--color-line);
+	}
+	.meta .wide {
+		grid-column: span 2;
+		border-right: 0;
+	}
+	.meta .last {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		border-bottom: 0;
+	}
+	dt {
+		font-size: 9px;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-tick);
+	}
+	dd {
+		margin: 0;
+	}
+	/* flipped rows: meta on the left, image on the right */
+	.flip .meta {
+		order: 1;
+		border-left: 0;
+		border-right: 2px solid var(--color-line);
+	}
+	.flip .txt {
+		order: 2;
+	}
+	.flip .img {
+		order: 3;
+		border-right: 0;
+		border-left: 2px solid var(--color-line);
+	}
+	/* narrow screens: image and text side by side, the meta block underneath */
+	@media (max-width: 700px) {
+		.post,
+		.post.flip {
+			grid-template-columns: 120px 1fr;
+		}
+		.flip .img {
+			order: 0;
+			border-left: 0;
+			border-right: 2px solid var(--color-line);
+		}
+		.flip .txt {
+			order: 0;
+		}
+		.meta,
+		.flip .meta {
+			order: 3;
+			grid-column: span 2;
+			border: 0;
+			border-top: 2px solid var(--color-line);
+		}
+	}
+</style>
