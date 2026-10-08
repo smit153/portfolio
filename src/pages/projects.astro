@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AsciiField from '../components/AsciiField.astro';
+import Band from '../components/Band.astro';
+import PageTitle from '../components/PageTitle.astro';
+import ProjectTree from '../components/ProjectTree.astro';
+import { projects } from '../data/projects';
+---
+
+<Layout title="Projects · Smit Sojitra">
+	<div class="min-h-screen overflow-x-clip bg-ink">
+		<main class="relative mx-auto min-h-screen w-full max-w-[768px] border-x-2 border-line">
+			<Band />
+			<PageTitle>Projects</PageTitle>
+			<ProjectTree projects={projects} />
+			<AsciiField />
+		</main>
+	</div>
+</Layout>

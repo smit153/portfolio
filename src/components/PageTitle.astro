@@ -1,0 +1,13 @@
+---
+// Title row for an inner page: the page's name (as its h1) and a way back home, closed by a full-bleed hairline.
+import arrowUp from '../assets/icons/arrow-up.svg';
+---
+
+<div class="relative flex items-end justify-between gap-4 px-5 pb-1 pt-3">
+	<h1 class="font-grape text-[28px] leading-none text-white"><slot /></h1>
+	<a href="/" class="group flex items-center gap-2 pb-1 text-xs text-muted transition-colors hover:text-white">
+		<img src={arrowUp.src} alt="" width="9" height="10" class="-rotate-90 opacity-70 transition-[opacity,translate] group-hover:-translate-x-0.5 group-hover:opacity-100" />
+		home
+	</a>
+	<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
+</div>
