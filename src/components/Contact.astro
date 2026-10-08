@@ -1,47 +1,25 @@
 ---
-import { Image } from 'astro:assets';
-import noise from '../assets/images/contact/noise.png';
-import noiseMask from '../assets/images/contact/noise-mask.svg';
-import planet from '../assets/images/contact/planet.webp';
 import SectionTitle from './SectionTitle.astro';
 
 // TODO: replace the [bracketed] placeholders and the booking link
 const BOOK_A_CALL = '#';
-
-// soft noise over the globe, faded out towards the edges by a radial mask (two layers, as in Figma)
-const noiseLayer = `background-image:url(${noise.src});background-size:213%;mask-image:url(${noiseMask.src});mask-size:85.7%;mask-position:7.1% 7.2%;mask-repeat:no-repeat`;
 ---
 
 <section aria-labelledby="contact-title">
 	<SectionTitle id="contact-title">[Contact title]</SectionTitle>
 
-	<div class="grid sm:grid-cols-[1fr_minmax(0,368px)]">
-		<div class="flex flex-col gap-6 px-5 pb-4 pt-7">
-			<h3 class="max-w-[200px] text-lg tracking-[-0.04em] text-white">Let’s build something together</h3>
-			<p class="max-w-[260px] text-sm tracking-[-0.04em] text-muted">[A line about the work you’re open to]</p>
-			<a
-				href={BOOK_A_CALL}
-				class="mt-auto inline-flex h-8 w-fit items-center border border-line bg-ink px-[15px] text-sm tracking-[-0.01em] text-[#f3f4f6] transition-colors hover:border-tick"
-			>
-				Book a Call
-			</a>
+	<!-- text on the left, the call to action on the right (stacked on small screens), both kept up top: the empty
+	     space below is the desk cat's stage, since it walks along the strip right under this section -->
+	<div class="flex flex-col gap-5 px-5 pb-24 pt-6 sm:flex-row sm:items-start sm:justify-between">
+		<div class="flex flex-col gap-1.5">
+			<h3 class="text-lg tracking-[-0.04em] text-white">Let’s build something together</h3>
+			<p class="text-sm tracking-[-0.04em] text-muted">[A line about the work you’re open to]</p>
 		</div>
-
-		<div
-			aria-hidden="true"
-			class="relative aspect-square overflow-hidden border-t-2 border-line bg-[#08090a] sm:border-l-2 sm:border-t-0"
+		<a
+			href={BOOK_A_CALL}
+			class="inline-flex h-8 w-fit shrink-0 items-center border border-line bg-ink px-[15px] text-sm tracking-[-0.01em] text-[#f3f4f6] transition-colors hover:border-tick"
 		>
-			<div class="absolute inset-[3.3%] mix-blend-soft-light" style={noiseLayer}></div>
-			<div class="absolute inset-[3.3%] opacity-10" style={noiseLayer}></div>
-			<Image
-				src={planet}
-				alt=""
-				width={1008}
-				height={767}
-				format="webp"
-				class="absolute max-w-none"
-				style="left:-24.2%;top:18.7%;width:125.3%;height:95.3%"
-			/>
-		</div>
+			Book a Call
+		</a>
 	</div>
 </section>
