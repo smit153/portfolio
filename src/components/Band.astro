@@ -1,22 +1,13 @@
 ---
 // 25px band between two full-bleed hairlines, with tick marks where it crosses the column guides.
 // Drop it anywhere inside the page column; it reaches out over the column borders and screen edges itself.
-// Its middle is a slit onto still ASCII art pinned behind the page: a prerendered, seamless tile
-// (scripts/build-band-art.mjs) shown as a fixed background, so it's there on the first frame with no script.
-import art from '../assets/band-art.png';
-
-// the tile is drawn at 2x, so show it at half its pixel size
-const slit = `background-image:url(${art.src});background-size:${art.width / 2}px ${art.height / 2}px`;
+// Inside, one run of diagonal hatching on black from screen edge to screen edge, column included.
 ---
 
 <div aria-hidden="true" class="relative -mx-[2px] h-[27px]">
-	<span data-band-slit class="absolute inset-x-0 inset-y-[2px] bg-black bg-repeat bg-fixed" style={slit}></span>
+	<span class="absolute inset-x-[-50vw] inset-y-[2px] bg-black bg-hatch"></span>
 	<span class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line"></span>
 	<span class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
-
-	<!-- diagonal hatching on black in the gutters on either side of the column, so the band reads as one black strip -->
-	<span class="absolute inset-y-[2px] right-full w-[50vw] bg-black bg-hatch"></span>
-	<span class="absolute inset-y-[2px] left-full w-[50vw] bg-black bg-hatch"></span>
 
 	<span class="absolute left-0 top-0 h-[6px] w-[2px] bg-tick"></span>
 	<span class="absolute bottom-0 left-0 h-[6px] w-[2px] bg-tick"></span>
@@ -31,8 +22,3 @@ const slit = `background-image:url(${art.src});background-size:${art.width / 2}p
 	<!-- optional decoration inside the band, e.g. <Band><img class="absolute right-4 top-1/2 -translate-y-1/2" … /></Band> -->
 	<slot />
 </div>
-
-<script>
-	import { pinSlitsOnIOS } from '../lib/band-slits';
-	pinSlitsOnIOS();
-</script>
