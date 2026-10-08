@@ -1,11 +1,11 @@
 ---
+// The short version of who I am, summarised from my LinkedIn About.
 import SectionTitle from './SectionTitle.astro';
 
-// TODO: replace the [bracketed] placeholders with real copy and links
 const projects = [
-	{ name: '[Project One]', href: '#', note: '[metric, e.g. 1k+ stars]' },
-	{ name: '[Project Two]', href: '#', note: '[metric]' },
-	{ name: '[Project Three]', href: '#', note: '[metric]' },
+	{ name: 'Oshi', href: '/projects/oshi', note: 'a sliding puzzle you can play without JavaScript' },
+	{ name: 'ModelMux', href: '/projects/modelmux', note: 'coding CLIs behind an OpenAI-compatible API' },
+	{ name: 'Doodlesy', href: '/projects/doodlesy', note: 'multiplayer draw and guess' },
 ];
 const link = 'underline decoration-tick underline-offset-4 transition-colors hover:decoration-white';
 ---
@@ -13,14 +13,11 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 <section aria-labelledby="about-title">
 	<SectionTitle id="about-title">So, who am I?</SectionTitle>
 
-	<ul
-		class="list-disc space-y-2 py-6 pl-10 pr-5 text-body tracking-[-0.01em] text-white marker:text-tick"
-	>
-		<li>
-			I'm Smit Sojitra — a Software Developer at Updot with [X]+ years of experience, known for [what you're
-			known for].
-		</li>
-		<li>Passionate about [what drives you] and turning ideas into [polished, thoughtfully crafted products].</li>
+	<ul class="list-disc space-y-2 py-6 pl-10 pr-5 text-body tracking-[-0.01em] text-white marker:text-tick">
+		<li>I'm Smit Sojitra, a software developer at Updot with 3+ years of building products that solve real problems.</li>
+		<li>I work across full-stack and backend engineering, AI agents and LLM workflows, cloud infrastructure and DevOps.</li>
+		<li>I start with the problem, pick the right tech for it, and take products from idea to production.</li>
+		<li>Right now I'm building and exploring products around AI, automation and modern software systems.</li>
 		<li>
 			Creator of{' '}
 			{
@@ -37,4 +34,3 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 		</li>
 	</ul>
 </section>
-

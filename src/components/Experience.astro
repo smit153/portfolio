@@ -5,29 +5,75 @@ import updot from '../assets/logos/updot.svg';
 import PixelIcon from './PixelIcon.astro';
 import ToggleIcon from './ToggleIcon.astro';
 
-// TODO: replace the [bracketed] placeholders. `open` decides whether a job starts expanded.
-const jobs = [
+// From LinkedIn. Dates are "MM.YYYY"; the duration is worked out from them, counting both end months like
+// LinkedIn does. A job without points shows just its headline facts; `open` decides whether one starts expanded.
+interface Job {
+	company: string;
+	/** without a logo, the job gets the pixel briefcase */
+	logo?: ImageMetadata;
+	location?: string;
+	role: string;
+	type?: string;
+	start: string;
+	/** omit for a current job */
+	end?: string;
+	points: string[];
+	open?: boolean;
+}
+const jobs: Job[] = [
 	{
 		company: 'Updot',
 		logo: updot,
 		location: 'Bangalore, India',
 		role: 'Software Developer',
 		type: 'Full time',
-		start: '[MM.YYYY]',
-		end: 'Present',
-		duration: '[duration]',
-		points: ['[What you built or owned]', '[The impact it had]', '[Another responsibility]'],
+		start: '06.2024',
+		points: [],
+	},
+	{
+		company: 'Upraised',
+		location: 'Remote',
+		role: 'Software Developer',
+		start: '07.2023',
+		end: '01.2024',
+		points: [
+			'Built an AI-driven recruiting platform on the MERN stack that automates recruitment work.',
+			'Worked across the frontend and backend, with React.js for the interactive interfaces.',
+			'Added AI features that made candidate sourcing and selection faster.',
+		],
 		open: true,
 	},
+	{
+		company: 'Mastork Technologies',
+		role: 'Software Developer',
+		start: '01.2023',
+		end: '03.2023',
+		points: [
+			'Started as a React Native developer, building mobile apps.',
+			'Moved to the MERN stack, building web apps with MongoDB, Express.js, React.js and Node.js.',
+		],
+	},
 ];
+
+/** "06.2024" to "06.2024" is 1 month; "06.2024" to now is however long it has been */
+function duration(start: string, end?: string) {
+	const [sm, sy] = start.split('.').map(Number);
+	const now = new Date();
+	const [em, ey] = end ? end.split('.').map(Number) : [now.getMonth() + 1, now.getFullYear()];
+	const months = (ey - sy) * 12 + (em - sm) + 1;
+	const y = Math.floor(months / 12);
+	const m = months % 12;
+	const part = (n: number, unit: string) => (n ? `${n} ${unit}${n === 1 ? '' : 's'}` : '');
+	return [part(y, 'year'), part(m, 'month')].filter(Boolean).join(' ');
+}
+
 const education = [
 	{
-		school: '[University name]',
-		degree: '[Degree, e.g. B.Tech in Computer Engineering]',
-		location: '[City, India]',
-		start: '[YYYY]',
-		end: '[YYYY]',
-		grade: '[grade or CGPA]',
+		school: 'Amity University Jaipur',
+		degree: 'B.Tech in Computer Science',
+		location: 'Jaipur, India',
+		start: '2020',
+		end: '2024',
 	},
 ];
 
@@ -70,32 +116,46 @@ const tabs = [
 
 	<ol id="panel-experience" role="tabpanel" aria-labelledby="tab-experience" class="bg-panel divide-y-2 divide-line">
 		{
-			jobs.map((job) => (
-				<li class="px-5 py-4">
-					<details class="group" open={job.open}>
-						<summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-							<div class="flex items-center gap-[14px]">
+			jobs.map((job) => {
+				const head = (
+					<>
+						<div class="flex items-center gap-[14px]">
+							{job.logo ? (
 								<img src={job.logo.src} alt="" width="24" height="24" class="size-6 shrink-0" />
-								<h3 class="flex-1 text-heading tracking-[-0.01em] text-white">{job.company}</h3>
-								<ToggleIcon />
-							</div>
-							<div class="pl-[38px]">
-								<p class="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 text-body tracking-[-0.01em]">
-									<span class="text-white">{job.role}</span>
-									<span class="text-muted">{job.location}</span>
-								</p>
-								<p class="text-body tracking-[-0.01em] text-muted">
-									{job.type} | {job.start} - {job.end} | {job.duration}
-								</p>
-							</div>
-						</summary>
-
-						<ul class="mt-3 list-disc pl-[59px] text-body tracking-[-0.01em] text-white marker:text-tick">
-							{job.points.map((point) => <li>{point}</li>)}
-						</ul>
-					</details>
-				</li>
-			))
+							) : (
+								<PixelIcon name="briefcase" class="shrink-0 text-[#cfcfcf]" />
+							)}
+							<h3 class="flex-1 text-heading tracking-[-0.01em] text-white">{job.company}</h3>
+							{job.points.length > 0 && <ToggleIcon />}
+						</div>
+						<div class="pl-[38px]">
+							<p class="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 text-body tracking-[-0.01em]">
+								<span class="text-white">{job.role}</span>
+								{job.location && <span class="text-muted">{job.location}</span>}
+							</p>
+							<p class="text-body tracking-[-0.01em] text-muted">
+								{[job.type, `${job.start} - ${job.end ?? 'Present'}`, duration(job.start, job.end)].filter(Boolean).join(' | ')}
+							</p>
+						</div>
+					</>
+				);
+				return (
+					<li class="px-5 py-4">
+						{job.points.length > 0 ? (
+							<details class="group" open={job.open}>
+								<summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden">{head}</summary>
+								<ul class="mt-3 list-disc pl-[59px] text-body tracking-[-0.01em] text-white marker:text-tick">
+									{job.points.map((point) => (
+										<li>{point}</li>
+									))}
+								</ul>
+							</details>
+						) : (
+							head
+						)}
+					</li>
+				);
+			})
 		}
 	</ol>
 
@@ -113,7 +173,7 @@ const tabs = [
 							<span class="text-muted">{e.location}</span>
 						</p>
 						<p class="text-body tracking-[-0.01em] text-muted">
-							{e.start} - {e.end} | {e.grade}
+							{e.start} - {e.end}
 						</p>
 					</div>
 				</li>
