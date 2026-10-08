@@ -1,0 +1,54 @@
+---
+// Full-width footer: the needle field (see src/lib/needle-field.ts) over a quiet line with © year, the time in
+// Bangalore and the links.
+const LINKS = [
+	{ label: 'GitHub', href: 'https://github.com/smit153' },
+	{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/smit-sojitra/' },
+	{ label: 'X', href: 'https://x.com/smit_sojitra153' },
+	{ label: 'DEV', href: 'https://dev.to/smit153' },
+	{ label: 'Email', href: 'mailto:smit.sojitra.dev@gmail.com' },
+];
+const year = new Date().getFullYear();
+---
+
+<!-- no top border: the ascii strip above already ends in a line -->
+<footer class="relative bg-ink">
+	<canvas data-needle-field aria-hidden="true" class="block w-full touch-pan-y"></canvas>
+	<p
+		aria-hidden="true"
+		class="pointer-events-none absolute right-10 top-4 hidden -rotate-3 font-handwritten text-[20px] leading-none text-doodle xl:block"
+	>
+		they all look at you
+	</p>
+
+	<div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2.5 border-t-2 border-line px-6 py-3.5 text-small text-tick">
+		<span>© {year} <span class="text-muted">Smit Sojitra</span></span>
+		<span>bangalore <time data-local-time class="text-muted">--:--</time> IST</span>
+		<ul class="flex gap-[18px]">
+			{
+				LINKS.map(({ label, href }) => (
+					<li>
+						<a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" class="text-muted transition-colors hover:text-white">
+							{label}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</div>
+</footer>
+
+<script>
+	import { startNeedleField } from '../lib/needle-field';
+
+	const canvas = document.querySelector<HTMLCanvasElement>('[data-needle-field]');
+	if (canvas) startNeedleField(canvas, 'SMIT SOJITRA');
+
+	// the time where I am, kept current
+	const time = document.querySelector('[data-local-time]');
+	const tick = () => {
+		if (time) time.textContent = new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' });
+	};
+	tick();
+	setInterval(tick, 15000);
+</script>

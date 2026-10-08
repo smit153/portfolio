@@ -3,6 +3,7 @@
 // which wall the square image sits on, and a band (with its slit) sits between them.
 import { Image } from 'astro:assets';
 import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import arrowUp from '../assets/icons/arrow-up.svg';
 import AsciiField from '../components/AsciiField.astro';
@@ -81,6 +82,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 			</ol>
 			<AsciiField class="mt-auto" />
 		</main>
+		<Footer />
 	</div>
 </Layout>
 
