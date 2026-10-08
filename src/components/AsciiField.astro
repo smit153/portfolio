@@ -1,0 +1,32 @@
+---
+// Full-bleed drifting ASCII terrain (see src/lib/ascii-field.ts). Drop it anywhere inside the page column; it
+// reaches out over the column borders and screen edges itself, like Band.
+// With `petHome`, its top line is the desk cat's floor: the only place the cat stands, and the lowest it can be
+// dragged. Only that strip reacts to the cat.
+interface Props {
+	/** which edges get a full-bleed hairline */
+	line?: 'top' | 'bottom' | 'both' | 'none';
+	/** make this strip the desk cat's home (only one per page) */
+	petHome?: boolean;
+	class?: string;
+}
+const { line = 'top', petHome = false, class: className } = Astro.props;
+---
+
+<div
+	data-ascii-field
+	data-pet-home={petHome ? '' : undefined}
+	data-pet-floor={petHome ? '' : undefined}
+	aria-hidden="true"
+	class:list={['relative h-40', className]}
+>
+	<!-- the ink background covers the column guides, so the field runs unbroken edge to edge -->
+	<canvas class="absolute inset-y-0 left-1/2 h-full w-screen -translate-x-1/2 bg-ink"></canvas>
+	{(line === 'top' || line === 'both') && <span class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line" />}
+	{(line === 'bottom' || line === 'both') && <span class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line" />}
+</div>
+
+<script>
+	import { startAsciiField } from '../lib/ascii-field';
+	document.querySelectorAll<HTMLElement>('[data-ascii-field]').forEach(startAsciiField);
+</script>
