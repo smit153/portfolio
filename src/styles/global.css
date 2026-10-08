@@ -7,9 +7,9 @@
   --font-handwritten: var(--font-caveat);
 }
 
-/* thin diagonal hatching, used in the band gutters */
+/* thin, widely spaced diagonal hatching on the band gutters: mostly black, just a hint of texture */
 @utility bg-hatch {
-  background-image: repeating-linear-gradient(135deg, var(--color-line) 0 1px, transparent 1px 8px);
+  background-image: repeating-linear-gradient(135deg, var(--color-line) 0 1px, transparent 1px 16px);
 }
 
 /* smooth open/close for <details> entries where the browser supports it (others just snap) */
