@@ -1,9 +1,11 @@
 ---
 // 25px band between two full-bleed hairlines, with tick marks where it crosses the column guides.
 // Drop it anywhere inside the page column; it reaches out over the column borders and screen edges itself.
+// Its middle is a slit: it shows a slice of the still ASCII art pinned behind the page (src/lib/band-slits.ts).
 ---
 
 <div aria-hidden="true" class="relative -mx-[2px] h-[27px]">
+	<canvas data-band-slit class="absolute inset-x-0 inset-y-[2px] h-[23px] w-full bg-black"></canvas>
 	<span class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line"></span>
 	<span class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
 
@@ -24,3 +26,8 @@
 	<!-- optional decoration inside the band, e.g. <Band><img class="absolute right-4 top-1/2 -translate-y-1/2" … /></Band> -->
 	<slot />
 </div>
+
+<script>
+	import { startBandSlits } from '../lib/band-slits';
+	startBandSlits();
+</script>
