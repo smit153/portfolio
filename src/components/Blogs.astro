@@ -11,7 +11,8 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 <section aria-labelledby="blogs-title">
 	<SectionTitle id="blogs-title">
 		Blogs
-		<div slot="actions" class="flex gap-1 pb-0.5">
+		<!-- centred between the line above the title row and the hairline under it (the 2px at the bottom) -->
+		<div slot="actions" class="absolute bottom-[2px] right-3 top-0 flex items-center gap-1">
 			{
 				(['prev', 'next'] as const).map((dir) => (
 					<button
