@@ -1,9 +1,11 @@
 ---
 import { Image } from 'astro:assets';
 import arrowUp from '../assets/icons/arrow-up.svg';
-import { posts } from '../data/posts';
+import { getPosts } from '../lib/posts';
 import SectionTitle from './SectionTitle.astro';
 import SeeAll from './SeeAll.astro';
+
+const posts = await getPosts();
 
 const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 ---
@@ -38,11 +40,11 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 		<div class="relative -mx-[2px] overflow-hidden" data-blog-viewport>
 			<ul class="-ml-1 flex touch-pan-y">
 				{
-					posts.map(({ title, excerpt, href, image }) => (
+					posts.map(({ data: { title, description, cover }, href }) => (
 						<li class="min-w-0 flex-[0_0_85%] pl-1 sm:flex-[0_0_50%]">
 							<a href={href} class="group relative block h-full border-x-2 border-line pb-6">
 								<Image
-									src={image}
+									src={cover}
 									alt=""
 									width={760}
 									height={IMG_H * 2}
@@ -58,7 +60,7 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 									<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
 								</span>
 								<h3 class="mt-2.5 px-1.5 pr-10 text-heading tracking-[-0.04em] text-white">{title}</h3>
-								<p class="mt-1 max-w-[270px] px-1.5 text-body tracking-[-0.04em] text-muted">{excerpt}</p>
+								<p class="mt-1 max-w-[270px] px-1.5 text-body tracking-[-0.04em] text-muted">{description}</p>
 							</a>
 						</li>
 					))

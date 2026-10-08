@@ -9,9 +9,10 @@ import arrowUp from '../assets/icons/arrow-up.svg';
 import AsciiField from '../components/AsciiField.astro';
 import Band from '../components/Band.astro';
 import PageTitle from '../components/PageTitle.astro';
-import { posts } from '../data/posts';
+import PostMeta from '../components/blog/PostMeta.astro';
+import { getPosts } from '../lib/posts';
 
-const pad = (n: number) => String(n).padStart(2, '0');
+const posts = await getPosts();
 ---
 
 <Layout title="Writing · Smit Sojitra">
@@ -28,53 +29,22 @@ const pad = (n: number) => String(n).padStart(2, '0');
 							{i > 0 && <Band />}
 							<a href={post.href} class:list={['post group', i % 2 && 'flip']}>
 								<div class="img">
-									<Image src={post.image} alt="" width={440} height={440} format="webp" class="size-full object-cover [image-rendering:pixelated]" />
+									<Image src={post.data.cover} alt="" width={440} height={440} format="webp" class="size-full object-cover [image-rendering:pixelated]" />
 								</div>
 								<div class="txt">
 									<span class="absolute right-3.5 top-3.5 flex size-8 items-center justify-center border-2 border-line bg-ink transition-colors group-hover:border-tick">
 										<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
 									</span>
 									<h2 class="mb-1.5 mr-10 text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">
-										{post.title}
+										{post.data.title}
 									</h2>
-									<p class="text-body tracking-[-0.04em] text-muted">{post.excerpt}</p>
+									<p class="text-body tracking-[-0.04em] text-muted">{post.data.description}</p>
 									<span class="mt-auto pt-4 text-small text-white">
 										<span class="border-b border-tick">read the note</span>
 										<img src={arrowUp.src} alt="" width="13" height="14" class="ml-1.5 inline rotate-90 transition-transform group-hover:translate-x-0.5" />
 									</span>
 								</div>
-								<dl class="meta">
-									<div>
-										<dt>filed</dt>
-										<dd>{post.date}</dd>
-									</div>
-									<div>
-										<dt>read</dt>
-										<dd>{post.minutes} min</dd>
-									</div>
-									<div>
-										<dt>words</dt>
-										<dd>{post.words.toLocaleString('en')}</dd>
-									</div>
-									<div>
-										<dt>revision</dt>
-										<dd>{post.revision}</dd>
-									</div>
-									<div class="wide">
-										<dt>tags</dt>
-										<dd>{post.tags.join(' · ')}</dd>
-									</div>
-									<div class="wide last">
-										<dt>note no.</dt>
-										<dd class="flex items-end justify-between">
-											<span>
-												<span class="font-grape text-[26px] leading-none">{pad(i + 1)}</span>
-												<span class="text-tick"> / {pad(posts.length)}</span>
-											</span>
-											<span class="text-tick">by s.s.</span>
-										</dd>
-									</div>
-								</dl>
+								<PostMeta post={post} number={posts.length - i} total={posts.length} class="meta-col" />
 							</a>
 						</li>
 					))
@@ -111,45 +81,12 @@ const pad = (n: number) => String(n).padStart(2, '0');
 		flex-direction: column;
 		padding: 18px 20px;
 	}
-	.meta {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		grid-template-rows: auto auto auto 1fr;
-		margin: 0;
+	/* the meta block's column (its own styles are in PostMeta) */
+	.post :global(.meta-col) {
 		border-left: 2px solid var(--color-line);
-		font-size: var(--text-small);
-		line-height: var(--text-small--line-height);
-		color: #fff;
-	}
-	.meta > div {
-		padding: 5px 10px;
-		border-bottom: 1px solid var(--color-line);
-	}
-	.meta > div:nth-child(odd) {
-		border-right: 1px solid var(--color-line);
-	}
-	.meta .wide {
-		grid-column: span 2;
-		border-right: 0;
-	}
-	.meta .last {
-		display: flex;
-		flex-direction: column;
-		justify-content: flex-end;
-		border-bottom: 0;
-	}
-	dt {
-		font-size: var(--text-tiny);
-		line-height: var(--text-tiny--line-height);
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: var(--color-tick);
-	}
-	dd {
-		margin: 0;
 	}
 	/* flipped rows: meta on the left, image on the right */
-	.flip .meta {
+	.flip :global(.meta-col) {
 		order: 1;
 		border-left: 0;
 		border-right: 2px solid var(--color-line);
@@ -176,8 +113,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
 		.flip .txt {
 			order: 0;
 		}
-		.meta,
-		.flip .meta {
+		.post :global(.meta-col),
+		.flip :global(.meta-col) {
 			order: 3;
 			grid-column: span 2;
 			border: 0;

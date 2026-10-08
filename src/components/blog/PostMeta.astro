@@ -1,0 +1,87 @@
+---
+// A post's meta block, like the corner of a technical drawing: filed, read, words, revision, tags, note no.
+// Used on the /blog cards and at the top of each post.
+import { formatDate, type Post } from '../../lib/posts';
+
+interface Props {
+	post: Post;
+	/** 1-based position in the list, and how many there are */
+	number: number;
+	total: number;
+	class?: string;
+}
+const { post, number, total, class: className } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<dl class:list={['meta', className]}>
+	<div>
+		<dt>filed</dt>
+		<dd>{formatDate(post.data.date)}</dd>
+	</div>
+	<div>
+		<dt>read</dt>
+		<dd>{post.minutes} min</dd>
+	</div>
+	<div>
+		<dt>words</dt>
+		<dd>{post.words.toLocaleString('en')}</dd>
+	</div>
+	<div>
+		<dt>revision</dt>
+		<dd>{post.data.revision}</dd>
+	</div>
+	<div class="wide">
+		<dt>tags</dt>
+		<dd>{post.data.tags.join(' · ')}</dd>
+	</div>
+	<div class="wide last">
+		<dt>note no.</dt>
+		<dd class="flex items-end justify-between">
+			<span>
+				<span class="font-grape text-[26px] leading-none">{pad(number)}</span>
+				<span class="text-tick"> / {pad(total)}</span>
+			</span>
+			<span class="text-tick">by s.s.</span>
+		</dd>
+	</div>
+</dl>
+
+<style>
+	.meta {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		grid-template-rows: auto auto auto 1fr;
+		margin: 0;
+		font-size: var(--text-small);
+		line-height: var(--text-small--line-height);
+		color: #fff;
+	}
+	.meta > div {
+		padding: 5px 10px;
+		border-bottom: 1px solid var(--color-line);
+	}
+	.meta > div:nth-child(odd) {
+		border-right: 1px solid var(--color-line);
+	}
+	.meta .wide {
+		grid-column: span 2;
+		border-right: 0;
+	}
+	.meta .last {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		border-bottom: 0;
+	}
+	dt {
+		font-size: var(--text-tiny);
+		line-height: var(--text-tiny--line-height);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-tick);
+	}
+	dd {
+		margin: 0;
+	}
+</style>
