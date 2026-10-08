@@ -1,0 +1,50 @@
+/* Project pages: the case study is .prose, plus numbered sections and the drawn diagrams. */
+
+/* "01", "02"... before each section heading, like the reference's numbered sections */
+.case {
+  counter-reset: section;
+}
+.case h2 {
+  counter-increment: section;
+  padding-left: 40px;
+}
+.case h2::after {
+  content: counter(section, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  top: 22px;
+  font-size: 14px;
+  color: var(--color-tick);
+}
+.case > span[aria-hidden]:first-child + h2::after {
+  top: 0;
+}
+
+/* a mermaid diagram, once drawn: centred, never wider than the column, and scrolls if it must */
+.case .diagram {
+  overflow-x: auto;
+  padding: 20px 16px;
+}
+.case .diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+/* mermaid tints some labels from its own palette and gives nodes a glow: plain white text, flat boxes */
+.case .diagram .node foreignObject *,
+.case .diagram .nodeLabel {
+  color: #fff !important;
+}
+.case .diagram .node :is(rect, polygon, path) {
+  filter: none !important;
+}
+.case .diagram .edgeLabel,
+.case .diagram .edgeLabel p {
+  font-size: 11px;
+  color: var(--color-muted) !important;
+}
+/* until it's drawn, the source waits quietly instead of flashing as code */
+.case pre:has(> code.language-mermaid) {
+  color: var(--color-tick);
+}

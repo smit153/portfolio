@@ -9,6 +9,8 @@ export default defineConfig({
   // blog posts are MDX: Markdown with interactive components dropped in
   integrations: [mdx()],
   markdown: {
+    // mermaid blocks stay plain text: the project pages draw them as diagrams in the browser
+    syntaxHighlight: { type: 'shiki', excludeLangs: ['mermaid'] },
     // code in posts stays in the site's greys: keywords white, strings light, comments dim
     shikiConfig: {
       theme: {

@@ -1,0 +1,122 @@
+---
+// A project's meta block, in the same technical-drawing style as a post's: type, status, built, updated, metric,
+// role (once known) and links.
+import type { Project } from '../../lib/projects';
+import arrowUp from '../../assets/icons/arrow-up.svg';
+
+interface Props {
+	project: Project;
+	class?: string;
+}
+const { project, class: className } = Astro.props;
+const p = project.data;
+// every row sizes to its content except the links row, which takes the rest of the cover's height
+const rows = 2 + (p.role ? 1 : 0) + (p.metric ? 1 : 0);
+// "https://oshi.blue153.deno.net/" reads as "oshi.blue153.deno.net"
+const bare = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+---
+
+<dl class:list={['meta', className]} style={`grid-template-rows: repeat(${rows}, auto) 1fr`}>
+	<div>
+		<dt>type</dt>
+		<dd>{p.type}</dd>
+	</div>
+	<div>
+		<dt>status</dt>
+		<dd>{p.status}</dd>
+	</div>
+	<div>
+		<dt>built</dt>
+		<dd>{p.built}</dd>
+	</div>
+	<div>
+		<dt>updated</dt>
+		<dd>{p.updated}</dd>
+	</div>
+	{
+		p.role && (
+			<div class="wide">
+				<dt>role</dt>
+				<dd>{p.role}</dd>
+			</div>
+		)
+	}
+	{
+		p.metric && (
+			<div class="wide">
+				<dt>by the numbers</dt>
+				<dd>{p.metric}</dd>
+			</div>
+		)
+	}
+	<div class="wide last">
+		<dt>links</dt>
+		<dd class="flex flex-col gap-1">
+			{
+				p.live && (
+					<a href={p.live} target="_blank" rel="noopener noreferrer" class="link">
+						<span class="text-tick">visit</span> {bare(p.live)}
+						<img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
+					</a>
+				)
+			}
+			{
+				p.source && (
+					<a href={p.source} target="_blank" rel="noopener noreferrer" class="link">
+						<span class="text-tick">source</span> {bare(p.source).replace('github.com/', 'github/')}
+						<img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
+					</a>
+				)
+			}
+		</dd>
+	</div>
+</dl>
+
+<style>
+	.meta {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		margin: 0;
+		font-size: var(--text-small);
+		line-height: var(--text-small--line-height);
+		color: #fff;
+	}
+	.meta > div {
+		padding: 5px 10px;
+		border-bottom: 1px solid var(--color-line);
+	}
+	.meta > div:nth-child(odd):not(.wide) {
+		border-right: 1px solid var(--color-line);
+	}
+	.meta .wide {
+		grid-column: span 2;
+	}
+	/* the links fill whatever height is left, sitting at the bottom like the post's note no. */
+	.meta .last {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		border-bottom: 0;
+	}
+	dt {
+		font-size: var(--text-tiny);
+		line-height: var(--text-tiny--line-height);
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--color-tick);
+	}
+	dd {
+		margin: 0;
+	}
+	.link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		width: fit-content;
+		border-bottom: 1px solid var(--color-tick);
+		transition: border-color 0.2s;
+	}
+	.link:hover {
+		border-color: #fff;
+	}
+</style>

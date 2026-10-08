@@ -1,0 +1,53 @@
+---
+// Draws the page's ```mermaid code blocks as diagrams, in the site's greys. Mermaid is big, so it's only loaded
+// when a page has a diagram. Without JavaScript the diagram's source stays readable as a code block.
+---
+
+<script>
+	const blocks = [...document.querySelectorAll<HTMLElement>('pre:has(> code.language-mermaid)')];
+	if (blocks.length) draw(blocks);
+
+	async function draw(blocks: HTMLElement[]) {
+		const { default: mermaid } = await import('mermaid');
+		const font = getComputedStyle(document.body).fontFamily;
+		mermaid.initialize({
+			startOnLoad: false,
+			theme: 'base',
+			securityLevel: 'strict',
+			fontFamily: font,
+			flowchart: { curve: 'linear', padding: 12, nodeSpacing: 36, rankSpacing: 44 },
+			themeVariables: {
+				darkMode: true,
+				fontFamily: font,
+				fontSize: '13px',
+				background: '#09090b',
+				primaryColor: '#0e0e10',
+				primaryBorderColor: '#5a5a5a',
+				primaryTextColor: '#ffffff',
+				secondaryColor: '#0e0e10',
+				tertiaryColor: '#0e0e10',
+				lineColor: '#5a5a5a',
+				textColor: '#a3a3a3',
+				edgeLabelBackground: '#09090b',
+				nodeTextColor: '#ffffff',
+				mainBkg: '#0e0e10',
+				nodeBorder: '#5a5a5a',
+			},
+		});
+		for (const [i, pre] of blocks.entries()) {
+			try {
+				const { svg } = await mermaid.render(`diagram-${i}`, pre.textContent ?? '');
+				const figure = document.createElement('figure');
+				figure.className = 'diagram';
+				figure.innerHTML = svg;
+				pre.replaceWith(figure);
+				// a wide diagram keeps a readable size on a narrow screen and scrolls sideways instead of shrinking
+				const svgEl = figure.querySelector('svg');
+				const width = svgEl?.viewBox.baseVal.width ?? 0;
+				if (svgEl && width > figure.clientWidth * 1.3) svgEl.style.minWidth = `${Math.round(width * 0.75)}px`;
+			} catch {
+				// a diagram that won't parse stays as its source
+			}
+		}
+	}
+</script>
