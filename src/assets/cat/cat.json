@@ -1,0 +1,38 @@
+{
+	"cell": [
+		60,
+		66
+	],
+	"anims": {
+		"walk": {
+			"row": 0,
+			"frames": 8,
+			"top": 9,
+			"base": 49
+		},
+		"idle": {
+			"row": 1,
+			"frames": 8,
+			"top": 7,
+			"base": 49
+		},
+		"sit": {
+			"row": 2,
+			"frames": 1,
+			"top": 12,
+			"base": 50
+		},
+		"sleep": {
+			"row": 3,
+			"frames": 1,
+			"top": 23,
+			"base": 50
+		},
+		"held": {
+			"row": 4,
+			"frames": 4,
+			"top": 0,
+			"base": 66
+		}
+	}
+}

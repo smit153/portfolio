@@ -236,6 +236,7 @@ import poster from '../assets/images/hero-poster.webp';
 			try {
 				localStorage.setItem('desk-muted', muted ? '1' : '0');
 			} catch {}
+			document.dispatchEvent(new Event('desk-muted')); // the desk cat listens for this too
 		});
 		const down = new Set<number>();
 
