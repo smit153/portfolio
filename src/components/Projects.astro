@@ -1,13 +1,15 @@
 ---
-// Home: the featured projects as a file tree (see src/data/projects.ts), with a link to the full list.
-import { featuredProjects } from '../data/projects';
+// Home: the featured projects as a file tree (from src/content/projects), with a link to the full list.
+import { getProjects } from '../lib/projects';
 import ProjectTree from './ProjectTree.astro';
 import SectionTitle from './SectionTitle.astro';
 import SeeAll from './SeeAll.astro';
+
+const featured = (await getProjects()).filter((p) => p.data.featured);
 ---
 
 <section aria-labelledby="projects-title">
 	<SectionTitle id="projects-title">Projects</SectionTitle>
-	<ProjectTree projects={featuredProjects} />
+	<ProjectTree projects={featured} />
 	<SeeAll href="/projects">All projects</SeeAll>
 </section>

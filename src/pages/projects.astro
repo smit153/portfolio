@@ -6,7 +6,9 @@ import AsciiField from '../components/AsciiField.astro';
 import Band from '../components/Band.astro';
 import PageTitle from '../components/PageTitle.astro';
 import ProjectTree from '../components/ProjectTree.astro';
-import { projects } from '../data/projects';
+import { getProjects } from '../lib/projects';
+
+const projects = await getProjects();
 ---
 
 <Layout title="Projects · Smit Sojitra">

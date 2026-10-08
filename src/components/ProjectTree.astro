@@ -1,9 +1,9 @@
 ---
 // Projects as a file tree: one row per project (its pixel icon, name, a short line, status), opening into its
-// README (summary), NOTES (points), stack and links. Any number can be open at once.
+// README (summary), NOTES (points), stack and links (its case study page, repo, live site). Any number can be open at once.
 // Connector lines: every list draws one trunk down its left, and every item an elbow into it.
 import arrowUp from '../assets/icons/arrow-up.svg';
-import type { Project } from '../data/projects';
+import type { Project } from '../lib/projects';
 import Pill from './Pill.astro';
 import PixelIcon from './PixelIcon.astro';
 
@@ -22,13 +22,13 @@ const { projects, openFirst = true } = Astro.props;
 	</div>
 	<ul>
 		{
-			projects.map((p, i) => (
+			projects.map(({ data: p, href }, i) => (
 				<li class="proj">
 					<details class="group" open={openFirst && i === 0}>
 						<summary>
 							<PixelIcon name={p.icon} class="ico" />
 							<span class="min-w-0">
-								<span class="name">{p.name}</span>
+								<span class="name">{p.title}</span>
 								<span class="tagline">{p.tagline}</span>
 							</span>
 							<span class="side">
@@ -47,7 +47,7 @@ const { projects, openFirst = true } = Astro.props;
 								<div class="file">
 									<span class="fname">NOTES.md</span>
 									<ul class="points fval">
-										{p.points.map((point) => (
+										{p.notes.map((point) => (
 											<li>{point}</li>
 										))}
 									</ul>
@@ -57,7 +57,7 @@ const { projects, openFirst = true } = Astro.props;
 								<div class="file">
 									<span class="fname">stack</span>
 									<ul class="skills flex flex-wrap gap-[3px]" aria-label="Skills">
-										{p.skills.map((skill) => (
+										{p.stack.map((skill) => (
 											<li>
 												<Pill>{skill}</Pill>
 											</li>
@@ -65,25 +65,26 @@ const { projects, openFirst = true } = Astro.props;
 									</ul>
 								</div>
 							</li>
-							{(p.repo || p.live) && (
-								<li>
-									<div class="file">
-										<span class="fname">links</span>
-										<span class="fval flex gap-4">
-											{p.repo && (
-												<a href={p.repo} target="_blank" rel="noopener noreferrer" class="link">
-													repo <img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
-												</a>
-											)}
-											{p.live && (
-												<a href={p.live} target="_blank" rel="noopener noreferrer" class="link">
-													live <img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
-												</a>
-											)}
-										</span>
-									</div>
-								</li>
-							)}
+							<li>
+								<div class="file">
+									<span class="fname">links</span>
+									<span class="fval flex flex-wrap gap-x-4 gap-y-1">
+										<a href={href} class="link">
+											case study <img src={arrowUp.src} alt="" width="13" height="14" class="rotate-90" />
+										</a>
+										{p.source && (
+											<a href={p.source} target="_blank" rel="noopener noreferrer" class="link">
+												repo <img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
+											</a>
+										)}
+										{p.live && (
+											<a href={p.live} target="_blank" rel="noopener noreferrer" class="link">
+												live <img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
+											</a>
+										)}
+									</span>
+								</div>
+							</li>
 						</ul>
 					</details>
 				</li>
