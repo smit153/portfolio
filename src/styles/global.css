@@ -32,8 +32,8 @@ details[open]::details-content {
 
 @theme {
   /* the type scale (from the Figma file): section titles are Grape Nuts 28px; everything else uses these four */
-  --text-heading: 18px; /* project, company, card and contact headings */
-  --text-heading--line-height: 28px;
+  --text-heading: 16px; /* project, company, card and contact headings */
+  --text-heading--line-height: 24px;
   --text-body: 14px; /* descriptions, bullets, paragraphs */
   --text-body--line-height: 26px;
   --text-small: 12px; /* labels, status, file names, captions, small links */

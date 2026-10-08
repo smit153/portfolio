@@ -134,16 +134,16 @@ const { projects, openFirst = true } = Astro.props;
 	}
 	/* projects have padding (and from the second on, a line) above their row, so their elbows sit lower */
 	.proj::after {
-		top: 24px;
+		top: 22px;
 	}
 	.proj:last-child::before {
-		height: 25px;
+		height: 23px;
 	}
 	.proj + .proj::after {
-		top: 26px;
+		top: 24px;
 	}
 	.proj + .proj:last-child::before {
-		height: 27px;
+		height: 25px;
 	}
 	/* a line between projects, from the trunk out to the column wall, so open ones read as separate blocks */
 	.proj > details {
@@ -198,7 +198,7 @@ const { projects, openFirst = true } = Astro.props;
 	}
 	/* centred on the elbow */
 	summary :global(.ico) {
-		margin-top: 2px;
+		margin-top: 0;
 		color: var(--color-tick);
 		transition: color 0.2s;
 	}
