@@ -1,9 +1,56 @@
 ---
-// Small rounded tag on the page background (project skills).
+// Small tag on the page background (project skills), with pixel-stepped round ends instead of a smooth curve.
+// The outline and fill are two layers cut to the same stepped shape, the fill 1px inside the outline.
+
+// a quarter circle on a pixel grid: how far each 2px row of the corner sits in from the side, top row first
+const STEPS = [6, 3, 1];
+const ROW = 2;
+const corner = (sx: 1 | -1, sy: 1 | -1) => {
+	// walks one corner from its horizontal edge to its vertical edge; x/y are offsets from that corner
+	const x = (n: number) => (sx > 0 ? `${n}px` : `calc(100% - ${n}px)`);
+	const y = (n: number) => (sy > 0 ? `${n}px` : `calc(100% - ${n}px)`);
+	const pts: string[] = [];
+	STEPS.forEach((inset, i) => {
+		pts.push(`${x(inset)} ${y(i * ROW)}`, `${x(inset)} ${y((i + 1) * ROW)}`);
+	});
+	pts.push(`${x(0)} ${y(STEPS.length * ROW)}`);
+	return pts;
+};
+// clockwise from the top-left: each corner's points run from its horizontal edge to its vertical edge,
+// so the left-hand corners are walked backwards
+const shape = [...corner(-1, 1), ...corner(-1, -1).reverse(), ...corner(1, -1), ...corner(1, 1).reverse()];
+const clip = `polygon(${shape.join(', ')})`;
 ---
 
-<span
-	class="inline-flex h-5 items-center rounded-full border border-line bg-ink px-2.5 text-tiny leading-none tracking-[-0.01em] text-[#f3f4f6]"
->
+<span class="pill text-small tracking-[-0.01em] text-[#f3f4f6]" style={`--pill-clip:${clip}`}>
 	<slot />
 </span>
+
+<style>
+	.pill {
+		position: relative;
+		isolation: isolate;
+		display: inline-flex;
+		align-items: center;
+		height: 24px;
+		padding: 0 11px;
+		line-height: 1;
+	}
+	.pill::before,
+	.pill::after {
+		content: '';
+		position: absolute;
+		z-index: -1;
+		clip-path: var(--pill-clip);
+	}
+	/* the outline: a step lighter than the page lines, so the pixel corners read */
+	.pill::before {
+		inset: 0;
+		background: #3a3a3a;
+	}
+	/* the fill, 1px inside */
+	.pill::after {
+		inset: 1px;
+		background: var(--color-ink);
+	}
+</style>

@@ -6,7 +6,6 @@ import arrowUp from '../assets/icons/arrow-up.svg';
 import type { Project } from '../data/projects';
 import Pill from './Pill.astro';
 import PixelIcon from './PixelIcon.astro';
-import ToggleIcon from './ToggleIcon.astro';
 
 interface Props {
 	projects: Project[];
@@ -35,7 +34,6 @@ const { projects, openFirst = true } = Astro.props;
 							<span class="side">
 								{p.featured && <PixelIcon name="star" scale={1} class="text-white" />}
 								<span>{p.status}</span>
-								<ToggleIcon />
 							</span>
 						</summary>
 						<ul class="files">
@@ -74,12 +72,12 @@ const { projects, openFirst = true } = Astro.props;
 										<span class="fval flex gap-4">
 											{p.repo && (
 												<a href={p.repo} target="_blank" rel="noopener noreferrer" class="link">
-													repo <img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
+													repo <img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
 												</a>
 											)}
 											{p.live && (
 												<a href={p.live} target="_blank" rel="noopener noreferrer" class="link">
-													live <img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
+													live <img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
 												</a>
 											)}
 										</span>
@@ -240,8 +238,8 @@ const { projects, openFirst = true } = Astro.props;
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		font-size: var(--text-small);
-		line-height: var(--text-small--line-height);
+		font-size: var(--text-body);
+		line-height: var(--text-body--line-height);
 		color: var(--color-tick);
 		transition: color 0.2s;
 	}
