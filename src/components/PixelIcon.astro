@@ -1,0 +1,25 @@
+---
+// A pixel icon from src/lib/pixel-icons.ts, `scale` screen pixels per square (a whole number keeps it crisp).
+import { pixelIcons, type PixelIconName } from '../lib/pixel-icons';
+
+interface Props {
+	name: PixelIconName;
+	scale?: number;
+	class?: string;
+}
+const { name, scale = 2, class: className } = Astro.props;
+const rows = pixelIcons[name];
+const w = rows[0].length;
+const h = rows.length;
+const d = rows.flatMap((row, y) => [...row].map((c, x) => (c === '#' ? `M${x} ${y}h1v1h-1z` : ''))).join('');
+---
+
+<svg
+	aria-hidden="true"
+	width={w * scale}
+	height={h * scale}
+	viewBox={`0 0 ${w} ${h}`}
+	fill="currentColor"
+	shape-rendering="crispEdges"
+	class:list={['block', className]}><path d={d} /></svg
+>

@@ -1,0 +1,318 @@
+---
+// Projects as a file tree: one row per project (its pixel icon, name, a short line, status), opening into its
+// README (summary), NOTES (points), stack and links. Any number can be open at once.
+// Connector lines: every list draws one trunk down its left, and every item an elbow into it.
+import arrowUp from '../assets/icons/arrow-up.svg';
+import type { Project } from '../data/projects';
+import Pill from './Pill.astro';
+import PixelIcon from './PixelIcon.astro';
+import ToggleIcon from './ToggleIcon.astro';
+
+interface Props {
+	projects: Project[];
+	/** start with the first project open */
+	openFirst?: boolean;
+}
+const { projects, openFirst = true } = Astro.props;
+---
+
+<div class="tree px-5 pb-6 pt-5">
+	<div class="flex h-[30px] items-center gap-2.5 text-muted">
+		<PixelIcon name="folder" class="text-tick" />
+		<span>root</span>
+	</div>
+	<ul>
+		{
+			projects.map((p, i) => (
+				<li class="proj">
+					<details class="group" open={openFirst && i === 0}>
+						<summary>
+							<PixelIcon name={p.icon} class="ico" />
+							<span class="min-w-0">
+								<span class="name">{p.name}</span>
+								<span class="tagline">{p.tagline}</span>
+							</span>
+							<span class="side">
+								{p.featured && <PixelIcon name="star" scale={1} class="text-white" />}
+								<span>{p.status}</span>
+								<ToggleIcon />
+							</span>
+						</summary>
+						<ul class="files">
+							<li>
+								<div class="file">
+									<span class="fname">README.md</span>
+									<span class="fval">{p.summary}</span>
+								</div>
+							</li>
+							<li>
+								<div class="file">
+									<span class="fname">NOTES.md</span>
+									<ul class="points fval">
+										{p.points.map((point) => (
+											<li>{point}</li>
+										))}
+									</ul>
+								</div>
+							</li>
+							<li>
+								<div class="file">
+									<span class="fname">stack</span>
+									<ul class="skills flex flex-wrap gap-[3px]" aria-label="Skills">
+										{p.skills.map((skill) => (
+											<li>
+												<Pill>{skill}</Pill>
+											</li>
+										))}
+									</ul>
+								</div>
+							</li>
+							{(p.repo || p.live) && (
+								<li>
+									<div class="file">
+										<span class="fname">links</span>
+										<span class="fval flex gap-4">
+											{p.repo && (
+												<a href={p.repo} target="_blank" rel="noopener noreferrer" class="link">
+													repo <img src={arrowUp.src} alt="" width="9" height="10" class="rotate-[38deg]" />
+												</a>
+											)}
+											{p.live && (
+												<a href={p.live} target="_blank" rel="noopener noreferrer" class="link">
+													live <img src={arrowUp.src} alt="" width="9" height="10" class="rotate-[38deg]" />
+												</a>
+											)}
+										</span>
+									</div>
+								</li>
+							)}
+						</ul>
+					</details>
+				</li>
+			))
+		}
+	</ul>
+</div>
+
+<style>
+	.tree ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.tree li {
+		position: relative;
+		padding-left: 30px;
+	}
+	/* the trunk down the left of each item; the last item's stops at its elbow */
+	.tree li::before {
+		content: '';
+		position: absolute;
+		left: 9px;
+		top: 0;
+		bottom: 0;
+		width: 2px;
+		background: var(--color-line);
+		transition: background-color 0.2s;
+	}
+	.tree li:last-child::before {
+		bottom: auto;
+		height: 16px;
+	}
+	/* the elbow from the trunk into the item */
+	.tree li::after {
+		content: '';
+		position: absolute;
+		left: 9px;
+		top: 15px;
+		width: 16px;
+		height: 2px;
+		background: var(--color-line);
+		transition:
+			background-color 0.2s,
+			width 0.2s;
+	}
+	/* projects have padding (and from the second on, a line) above their row, so their elbows sit lower */
+	.proj::after {
+		top: 21px;
+	}
+	.proj:last-child::before {
+		height: 22px;
+	}
+	.proj + .proj::after {
+		top: 23px;
+	}
+	.proj + .proj:last-child::before {
+		height: 24px;
+	}
+	/* a line between projects, from the trunk out to the column wall, so open ones read as separate blocks */
+	.proj > details {
+		padding-block: 4px;
+	}
+	.proj + .proj > details {
+		border-top: 2px solid var(--color-line);
+		margin-right: -20px;
+		padding-right: 20px;
+	}
+	/* the hovered (or open) project's connector lights up */
+	.proj:has(> details > summary:hover)::after,
+	.proj:has(> details[open])::after {
+		background: var(--color-tick);
+		width: 18px;
+	}
+	.proj:has(> details > summary:hover)::before {
+		background: #2c2d2d;
+	}
+
+	summary {
+		position: relative;
+		z-index: 0; /* keeps the hover highlight (z-index -1) inside the row */
+		display: grid;
+		grid-template-columns: 24px 1fr auto;
+		gap: 12px;
+		align-items: start;
+		padding: 6px 0 8px;
+		list-style: none;
+		cursor: pointer;
+	}
+	summary::-webkit-details-marker {
+		display: none;
+	}
+	summary:focus-visible {
+		outline: none;
+	}
+	/* a highlight that sweeps in from the left on hover */
+	summary::before {
+		content: '';
+		position: absolute;
+		inset: 1px -8px 1px -6px;
+		z-index: -1;
+		background: #111113;
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform 0.25s ease;
+	}
+	summary:hover::before,
+	summary:focus-visible::before {
+		transform: scaleX(1);
+	}
+	/* centred on the elbow */
+	summary :global(.ico) {
+		margin-top: -1px;
+		color: var(--color-tick);
+		transition: color 0.2s;
+	}
+	summary:hover :global(.ico),
+	details[open] :global(.ico) {
+		color: #fff;
+	}
+	.name {
+		display: inline-block;
+		font-size: 18px;
+		line-height: 1.25;
+		letter-spacing: -0.01em;
+		color: #fff;
+		transition: transform 0.2s ease;
+	}
+	.name::after {
+		content: '/';
+		color: var(--color-tick);
+	}
+	summary:hover .name {
+		transform: translateX(3px);
+	}
+	/* the short line shows while it's closed; open, README.md says it in full */
+	.tagline {
+		display: block;
+		margin-top: 2px;
+		overflow: hidden;
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		font-size: 13px;
+		letter-spacing: -0.04em;
+		color: var(--color-muted);
+	}
+	details[open] .tagline {
+		display: none;
+	}
+	.side {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font-size: 12px;
+		color: var(--color-tick);
+		transition: color 0.2s;
+	}
+	summary:hover .side {
+		color: var(--color-muted);
+	}
+
+	/* the files: a nested list with its own trunk, hanging from the project's icon */
+	.files {
+		margin-bottom: 6px !important;
+	}
+	.files > li {
+		padding-left: 34px;
+	}
+	.files > li::before,
+	.files > li::after {
+		background: #262727;
+	}
+	.file {
+		display: grid;
+		grid-template-columns: 110px 1fr;
+		gap: 12px;
+		align-items: baseline;
+		padding: 5px 0;
+	}
+	.fname {
+		font-size: 13px;
+		color: var(--color-muted);
+	}
+	.fval {
+		font-size: 14px;
+		line-height: 1.6;
+		letter-spacing: -0.01em;
+		color: #fff;
+	}
+	/* NOTES.md points: plain dashes, none of the tree's connector lines */
+	.points > li {
+		padding: 0 0 2px 16px;
+	}
+	.points > li::before {
+		content: '-';
+		left: 2px;
+		bottom: auto;
+		width: auto;
+		height: auto;
+		background: none;
+		color: var(--color-tick);
+	}
+	.points > li::after {
+		content: none;
+	}
+	.skills > li {
+		padding: 0;
+	}
+	.skills > li::before,
+	.skills > li::after {
+		content: none;
+	}
+	.link {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		border-bottom: 1px solid var(--color-tick);
+		transition: border-color 0.2s;
+	}
+	.link:hover {
+		border-color: #fff;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.tree *,
+		.tree *::before,
+		.tree *::after {
+			transition: none !important;
+		}
+	}
+</style>

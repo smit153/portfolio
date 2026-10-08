@@ -1,0 +1,21 @@
+---
+// Centred "All projects →" style button closing a home section, linking to its full page.
+import arrowUp from '../assets/icons/arrow-up.svg';
+
+interface Props {
+	href: string;
+}
+const { href } = Astro.props;
+---
+
+<div class="relative flex justify-center py-6">
+	<span aria-hidden="true" class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line"></span>
+	<a
+		href={href}
+		class="group inline-flex h-8 items-center gap-2.5 border border-line bg-ink px-[15px] text-sm tracking-[-0.01em] text-[#f3f4f6] transition-colors hover:border-tick"
+	>
+		<slot />
+		<!-- the site's pixel arrow, turned to point right; it nudges along on hover -->
+		<img src={arrowUp.src} alt="" width="11" height="12" class="rotate-90 transition-transform group-hover:translate-x-0.5" />
+	</a>
+</div>
