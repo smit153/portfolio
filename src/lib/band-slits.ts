@@ -33,7 +33,7 @@ export function startBandSlits() {
 
 	// the art covers exactly one viewport, since it's pinned to the screen
 	function paint() {
-		dpr = Math.min(devicePixelRatio || 1, 2);
+		dpr = devicePixelRatio || 1; // the screen's own density, so a slice never gets scaled
 		const w = innerWidth;
 		const h = innerHeight;
 		art.width = Math.ceil(w * dpr);
@@ -54,9 +54,13 @@ export function startBandSlits() {
 				g.fillStyle = `rgb(${grey},${grey},${grey})`;
 				g.fillText(RAMP[i], x, y);
 			}
+		// whole device pixels, with the css size set to match exactly: any mismatch would resample the text (blur)
 		for (const s of slits) {
-			s.width = Math.ceil(s.clientWidth * dpr);
-			s.height = Math.ceil(s.clientHeight * dpr);
+			s.style.width = '';
+			s.width = Math.round(s.clientWidth * dpr);
+			s.height = Math.round(s.clientHeight * dpr);
+			s.style.width = `${s.width / dpr}px`;
+			s.style.height = `${s.height / dpr}px`;
 		}
 		show(slits);
 	}
@@ -66,9 +70,13 @@ export function startBandSlits() {
 		for (const s of which) {
 			const r = s.getBoundingClientRect();
 			const ctx = s.getContext('2d')!;
+			ctx.imageSmoothingEnabled = false;
 			ctx.fillStyle = '#000';
 			ctx.fillRect(0, 0, s.width, s.height);
-			ctx.drawImage(art, r.left * dpr, r.top * dpr, r.width * dpr, r.height * dpr, 0, 0, s.width, s.height);
+			// a 1:1 copy from whole-pixel coordinates keeps the characters as crisp as they were drawn
+			const x = Math.round(r.left * dpr);
+			const y = Math.round(r.top * dpr);
+			ctx.drawImage(art, x, y, s.width, s.height, 0, 0, s.width, s.height);
 		}
 	}
 	const queue = () => {
