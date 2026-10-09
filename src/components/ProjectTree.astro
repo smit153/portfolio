@@ -2,7 +2,8 @@
 // Projects as a list: one row per project (its pixel icon, name, a short line, status), each opening into a small
 // file tree of its README (summary), NOTES (points), stack and links (its case study page, repo, live site).
 // Featured projects start open; any number can be open at once. A full-width hairline separates the projects, like the page's other lines.
-// The files' connector lines: the list draws a trunk down its left, and every file an elbow into it.
+// The files' connector lines: the list draws a trunk down its left, and every file a square elbow into it. Pointing at a
+// file lights the trunk from the top down to it and its elbow; opening a project folds the files out.
 import arrowUp from '../assets/icons/arrow-up.svg';
 import type { Project } from '../lib/projects';
 import Pill from './Pill.astro';
@@ -149,7 +150,6 @@ const { projects } = Astro.props;
 
 	summary {
 		position: relative;
-		z-index: 0; /* keeps the hover highlight (z-index -1) inside the row */
 		display: grid;
 		grid-template-columns: 24px 1fr auto;
 		gap: 12px;
@@ -157,6 +157,11 @@ const { projects } = Astro.props;
 		padding: 6px 0 8px;
 		list-style: none;
 		cursor: pointer;
+		transition: opacity 0.2s;
+	}
+	/* hover just dims the row, like the blog arrows */
+	summary:hover {
+		opacity: 0.7;
 	}
 	summary::-webkit-details-marker {
 		display: none;
@@ -164,28 +169,12 @@ const { projects } = Astro.props;
 	summary:focus-visible {
 		outline: none;
 	}
-	/* a highlight that sweeps in from the left on hover */
-	summary::before {
-		content: '';
-		position: absolute;
-		inset: 1px -8px 1px -6px;
-		z-index: -1;
-		background: #111113;
-		transform: scaleX(0);
-		transform-origin: left;
-		transition: transform 0.25s ease;
-	}
-	summary:hover::before,
-	summary:focus-visible::before {
-		transform: scaleX(1);
-	}
 	/* centred on the elbow */
 	summary :global(.ico) {
 		margin-top: 0;
 		color: var(--color-tick);
 		transition: color 0.2s;
 	}
-	summary:hover :global(.ico),
 	details[open] :global(.ico) {
 		color: #fff;
 	}
@@ -195,14 +184,10 @@ const { projects } = Astro.props;
 		line-height: var(--text-heading--line-height);
 		letter-spacing: -0.01em;
 		color: #fff;
-		transition: transform 0.2s ease;
 	}
 	.name::after {
 		content: '/';
 		color: var(--color-tick);
-	}
-	summary:hover .name {
-		transform: translateX(3px);
 	}
 	/* the short line shows while it's closed; open, README.md says it in full */
 	.tagline {
@@ -226,22 +211,54 @@ const { projects } = Astro.props;
 		font-size: var(--text-body);
 		line-height: var(--text-body--line-height);
 		color: var(--color-tick);
-		transition: color 0.2s;
-	}
-	summary:hover .side {
-		color: var(--color-muted);
 	}
 
-	/* the files: a nested list with its own trunk, hanging from the project's icon */
+	/* opening a project folds its files out instead of snapping (browsers without ::details-content just snap) */
+	.proj details {
+		interpolate-size: allow-keywords;
+	}
+	.proj details::details-content {
+		block-size: 0;
+		overflow: clip;
+		transition:
+			block-size 0.18s cubic-bezier(0.23, 1, 0.32, 1),
+			content-visibility 0.18s allow-discrete;
+	}
+	.proj details[open]::details-content {
+		block-size: auto;
+	}
+
+	/* the files: a nested list with its own trunk, hanging from the project's icon. Each trunk piece has a white fill
+	   that grows down it. */
 	.files {
+		--wire: #262727;
+		--lit: #444; /* a quiet step up from the wire, not something that pulls the eye */
 		margin-bottom: 6px !important;
 	}
 	.files > li {
 		padding-left: 34px;
 	}
-	.files > li::before,
+	.files > li::before {
+		background: linear-gradient(var(--lit), var(--lit)) top / 2px 0 no-repeat, var(--wire);
+		transition: none;
+	}
+	/* the elbow starts beside the trunk instead of over it, so a lit trunk has no dark notch at each junction */
 	.files > li::after {
-		background: #262727;
+		left: 11px;
+		width: 14px;
+		background: var(--wire);
+		transition: none;
+	}
+	/* pointing at a file: the trunk lights from the top through the files above it, down to its own elbow, and the
+	   elbow lights, all at once */
+	.files > li:has(~ li:hover)::before {
+		background-size: 2px 100%;
+	}
+	.files > li:hover::before {
+		background-size: 2px 17px; /* down through the elbow's joint */
+	}
+	.files > li:hover::after {
+		background-color: var(--lit);
 	}
 	.file {
 		display: grid;
