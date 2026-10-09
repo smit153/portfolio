@@ -101,7 +101,43 @@ const first = filters[0].name;
 	</div>
 </section>
 
+<style>
+	/* the border lights on the side facing the cursor (a cone from the tile's centre towards it), more as the cursor
+	   nears that edge: React Bits' Border Glow without the glow */
+	[data-stack-grid] > li {
+		position: relative;
+		--angle: 0deg;
+		--edge: 0;
+	}
+	[data-stack-grid] > li::before {
+		content: '';
+		position: absolute;
+		inset: -1px;
+		border: 1px solid var(--color-tick);
+		pointer-events: none;
+		mask-image: conic-gradient(from var(--angle), #000 12%, transparent 30%, transparent 70%, #000 88%);
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+	[data-stack-grid] > li:hover::before {
+		opacity: calc(0.25 + 0.75 * var(--edge));
+	}
+</style>
+
 <script>
+	// the hovered tile's lit side follows the pointer: its angle from the tile's centre (0 = up) and how close to the
+	// edge it is (0 in the middle, 1 on the border)
+	document.querySelector<HTMLElement>('[data-stack-grid]')?.addEventListener('pointermove', (e) => {
+		const tile = (e.target as Element).closest<HTMLElement>('[data-stack-grid] > li');
+		if (!tile) return;
+		const r = tile.getBoundingClientRect();
+		const dx = e.clientX - r.left - r.width / 2;
+		const dy = e.clientY - r.top - r.height / 2;
+		const edge = Math.min(1, Math.max(Math.abs(dx) / (r.width / 2), Math.abs(dy) / (r.height / 2)));
+		tile.style.setProperty('--angle', `${(Math.atan2(dy, dx) * 180) / Math.PI + 90}deg`);
+		tile.style.setProperty('--edge', edge.toFixed(3));
+	});
+
 	// clicking a category shows only its tiles
 	const buttons = document.querySelectorAll<HTMLButtonElement>('[data-stack-filters] button');
 	const tiles = document.querySelectorAll<HTMLElement>('[data-stack-grid] > li');
