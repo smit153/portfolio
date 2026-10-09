@@ -6,8 +6,9 @@ const CELL = 11;
 const GAP = 3;
 const STEP = CELL + GAP;
 const LABEL_H = 18;
-// neutral grays from the page palette: empty → busiest
-const SHADES = ['var(--color-line)', '#383838', 'var(--color-tick)', 'var(--color-muted)', '#c4c4c4'];
+// empty → busiest: an empty day sits just above the page so any contribution stands out against it,
+// then four clear steps of grey up to white
+const SHADES = ['#151516', '#4a4a4a', '#7a7a7a', '#b0b0b0', '#ffffff'];
 
 const calendar = getContributions(LOGIN);
 const days = calendar?.days ?? [];
@@ -32,11 +33,14 @@ for (const c of cells) {
 const dateFmt = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 // non-breaking spaces keep each date on one line when the caption wraps
 const fmt = (date: string) => dateFmt.format(new Date(`${date}T00:00:00Z`)).replace(/ /g, '\u00a0');
+// the tooltip's date, e.g. "Mon, 6 Oct 2025"
+const dayFmt = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const day = (date: string) => dayFmt.format(new Date(`${date}T00:00:00Z`));
 const range = days.length ? `${fmt(days[0].date)} – ${fmt(days[days.length - 1].date)}` : '';
 const link = 'underline decoration-tick underline-offset-4 transition-colors hover:decoration-white';
 ---
 
-<figure class="px-3 py-5">
+<figure class="relative px-3 py-5" data-graph>
 	<!-- when the graph is wider than the column it scrolls, and the edges with more to see fade out instead of cutting off -->
 	<div class="graph-scroll overflow-x-auto [scrollbar-width:none]" data-graph-scroll>
 		<svg
@@ -56,13 +60,14 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 			}
 			{
 				cells.map(({ col, row, count, date, level }) => (
-					<rect x={col * STEP} y={LABEL_H + row * STEP} width={CELL} height={CELL} fill={SHADES[level]}>
-						<title>{`${count} contribution${count === 1 ? '' : 's'} on ${fmt(date)}`}</title>
-					</rect>
+					<rect x={col * STEP} y={LABEL_H + row * STEP} width={CELL} height={CELL} fill={SHADES[level]} data-count={count} data-day={day(date)} />
 				))
 			}
 		</svg>
 	</div>
+
+	<!-- the hover tooltip (filled in by the script below) -->
+	<div data-graph-tip aria-hidden="true" class="pointer-events-none absolute left-0 top-0 z-10 hidden whitespace-nowrap border border-[#383838] bg-ink px-2 py-1 text-small text-muted"></div>
 
 	<figcaption class="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-small text-white">
 		<!-- desktop: the count and its source on the left, the legend on the right. phones: the count on its own line,
@@ -105,6 +110,11 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 </figure>
 
 <style>
+	/* the day under the pointer gets a thin white outline */
+	.graph-scroll rect[data-day]:hover {
+		stroke: #fff;
+		stroke-width: 1;
+	}
 	/* each edge fades only while there's more graph past it */
 	.graph-scroll {
 		--fade-l: 0px;
@@ -137,5 +147,37 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 			{ passive: true },
 		);
 		addEventListener('resize', toEnd);
+	});
+
+	// a small tooltip over the day under the pointer (a tap on phones): the count, then the date
+	document.querySelectorAll<HTMLElement>('[data-graph]').forEach((fig) => {
+		const tip = fig.querySelector<HTMLElement>('[data-graph-tip]')!;
+		const scroller = fig.querySelector<HTMLElement>('[data-graph-scroll]')!;
+		const hide = () => tip.classList.add('hidden');
+		const show = (cell: SVGRectElement) => {
+			const n = Number(cell.dataset.count);
+			const what = n ? `${n.toLocaleString('en-US')} contribution${n === 1 ? '' : 's'}` : 'No contributions';
+			tip.innerHTML = '';
+			const b = document.createElement('span');
+			b.className = n ? 'text-white' : '';
+			b.textContent = what;
+			tip.append(b, ` · ${cell.dataset.day}`);
+			tip.classList.remove('hidden');
+			// centred above the day, kept inside the figure
+			const f = fig.getBoundingClientRect();
+			const c = cell.getBoundingClientRect();
+			const x = c.left + c.width / 2 - f.left - tip.offsetWidth / 2;
+			tip.style.left = `${Math.max(4, Math.min(f.width - tip.offsetWidth - 4, x))}px`;
+			tip.style.top = `${c.top - f.top - tip.offsetHeight - 6}px`;
+		};
+		fig.addEventListener('pointerover', (e) => {
+			const cell = (e.target as Element).closest<SVGRectElement>('rect[data-day]');
+			if (cell) show(cell);
+			else hide();
+		});
+		// a finger "leaves" as soon as it lifts, so on touch the tip stays until a tap elsewhere or a scroll
+		fig.addEventListener('pointerleave', (e) => e.pointerType !== 'touch' && hide());
+		document.addEventListener('pointerdown', (e) => !fig.contains(e.target as Node) && hide());
+		scroller.addEventListener('scroll', hide, { passive: true });
 	});
 </script>
