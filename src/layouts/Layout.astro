@@ -1,5 +1,5 @@
 ---
-import { Font } from 'astro:assets';
+import { Font, fontData } from 'astro:assets';
 import '../styles/global.css';
 
 interface Props {
@@ -15,6 +15,8 @@ const {
 	description = 'Smit Sojitra, software developer and AI engineer: full-stack, AI agents, cloud & DevOps. Projects, notes and a desk cat.',
 	type = 'website',
 } = Astro.props;
+// Caveat is only on screen at first on wide screens (the hero's side notes), so phones don't fetch it up front
+const caveatUrl = fontData['--font-caveat']?.[0]?.src[0]?.url;
 // absolute addresses, as link previews need them
 const url = new URL(Astro.url.pathname, Astro.site);
 const image = new URL('/og.png', Astro.site);
@@ -60,7 +62,7 @@ const image = new URL('/og.png', Astro.site);
 					};
 			}
 		</script>
-		<!-- preload only what's on screen first: Söhne Mono Buch (400) + Kräftig (500), Grape Nuts for section titles, Caveat for the notes -->
+		<!-- preload only what's on screen first: Söhne Mono Buch (400) + Kräftig (500), Grape Nuts for section titles, Caveat for the notes (xl only) -->
 		<Font
 			cssVariable="--font-sohne-mono"
 			preload={[
@@ -69,7 +71,8 @@ const image = new URL('/og.png', Astro.site);
 			]}
 		/>
 		<Font cssVariable="--font-grape-nuts" preload={[{ weight: 400, style: 'normal' }]} />
-		<Font cssVariable="--font-caveat" preload={[{ weight: 400, style: 'normal', subset: 'latin' }]} />
+		<Font cssVariable="--font-caveat" />
+		{caveatUrl && <link rel="preload" href={caveatUrl} as="font" type="font/woff2" crossorigin media="(min-width: 1280px)" />}
 	</head>
 	<body class="font-sohne">
 		<slot />

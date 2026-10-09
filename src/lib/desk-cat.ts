@@ -48,6 +48,10 @@ const pick = <T>(weighted: [T, number][]) => {
 
 export function startDeskCat() {
 	if (document.querySelector('[data-desk-cat]')) return;
+	// the speech bubble's handwriting is only preloaded on wide screens (Layout.astro): fetch it now so the first
+	// bubble doesn't swap fonts while it's showing
+	const caveat = getComputedStyle(document.documentElement).getPropertyValue('--font-caveat');
+	if (caveat) document.fonts.load(`20px ${caveat}`).catch(() => {});
 	const sheet = new Image();
 	sheet.src = sheetUrl;
 	sheet.decode().then(
