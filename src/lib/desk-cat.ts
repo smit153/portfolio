@@ -88,6 +88,8 @@ class DeskCat {
 	bubble: HTMLElement | null = null;
 	last = performance.now();
 	visible = true;
+	/** something moved it (a resize, a floor shifting, a new bubble): draw once even if it's off screen */
+	dirty = true;
 	/** each animation's opaque area in the cell (x0, y0, x1, y1), the only part that takes clicks */
 	solid = {} as Record<AnimName, [number, number, number, number]>;
 	clip = '';
@@ -120,7 +122,7 @@ class DeskCat {
 		this.refreshFloors();
 		this.place();
 		this.bindPointer();
-		addEventListener('resize', () => this.refreshFloors());
+		addEventListener('resize', () => this.resize());
 		setInterval(() => this.refreshFloors(), 1000); // layout shifts (e.g. collapsing sections) move the floors
 		document.addEventListener('visibilitychange', () => (this.last = performance.now()));
 		new IntersectionObserver(([e]) => (this.visible = e.isIntersecting)).observe(cv);
@@ -145,8 +147,25 @@ class DeskCat {
 		const same = this.floor && this.floors.find((f) => f.el === this.floor!.el);
 		if (same) {
 			this.floor = same;
-			if (this.mode === 'ground') this.y = same.y;
+			if (this.mode === 'ground' && this.y !== same.y) {
+				this.y = same.y;
+				this.dirty = true;
+			}
 		}
+	}
+	/** the window changed size: keep the cat at the same spot along its floor, on screen, and redraw it now */
+	resize() {
+		const f = this.floor;
+		const fx = f ? (this.x - f.left) / Math.max(1, f.right - f.left) : 0.5;
+		this.refreshFloors();
+		if (this.floor && this.mode === 'ground') {
+			// phones keep it in the middle, as on load
+			const at = narrow() ? 0.5 : Math.min(1, Math.max(0, fx));
+			this.x = this.clampWide(this.floor.left + (this.floor.right - this.floor.left) * at);
+			this.y = this.floor.y;
+			this.moveTo = null;
+		}
+		this.dirty = true;
 	}
 	get home() {
 		return this.floors.find((f) => f.home) ?? this.floors.at(-1) ?? null;
@@ -279,6 +298,7 @@ class DeskCat {
 		const anchor = held ? GRIP : a.base;
 		const left = this.x - (CW * SCALE) / 2;
 		const top = this.y - anchor * SCALE;
+		this.dirty = false;
 		this.cv.style.transformOrigin = `50% ${(anchor / CH) * 100}%`;
 		this.cv.style.transform = `translate(${left.toFixed(1)}px, ${top.toFixed(1)}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
 		if (this.bubble) {
@@ -294,7 +314,7 @@ class DeskCat {
 			this.physics(dt);
 			this.stepAnim(dt);
 			this.resolveWaits();
-			if (this.visible || this.mode !== 'ground') this.draw();
+			if (this.visible || this.dirty || this.mode !== 'ground') this.draw();
 			this.report();
 		}
 		requestAnimationFrame((n) => this.tick(n));
@@ -482,6 +502,8 @@ class DeskCat {
 		b.append(inner);
 		document.body.append(b);
 		this.bubble = b;
+		// placed by the next draw, even if the cat is off screen (otherwise it waits in the page's top-left corner)
+		this.dirty = true;
 		// snoring drifts up and fades, over and over
 		if (!ms && !this.reduce)
 			inner.animate(

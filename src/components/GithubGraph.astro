@@ -121,9 +121,21 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 			el.style.setProperty('--fade-l', el.scrollLeft > 1 ? '40px' : '0px');
 			el.style.setProperty('--fade-r', el.scrollLeft < max - 1 ? '40px' : '0px');
 		};
-		el.scrollLeft = el.scrollWidth;
-		fade();
-		el.addEventListener('scroll', fade, { passive: true });
-		addEventListener('resize', fade);
+		// stick to the latest weeks until someone scrolls back, also when the window is resized
+		let atEnd = true;
+		const toEnd = () => {
+			if (atEnd) el.scrollLeft = el.scrollWidth;
+			fade();
+		};
+		toEnd();
+		el.addEventListener(
+			'scroll',
+			() => {
+				atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+				fade();
+			},
+			{ passive: true },
+		);
+		addEventListener('resize', toEnd);
 	});
 </script>
