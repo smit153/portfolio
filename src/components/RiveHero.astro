@@ -286,6 +286,27 @@ import poster from '../assets/images/hero-poster.webp';
 				if (mobile) mobile.value = isMobile;
 				applyMuted();
 
+				// the phone's random notification only runs while the scene is on screen (inView, in the scene's
+				// DeskAudio script): off when less than a fifth of it shows or the tab is hidden. Music isn't affected.
+				const inView = vmi.boolean('inView');
+				if (inView) {
+					let showing = true;
+					const update = () => {
+						const v = showing && document.visibilityState === 'visible';
+						if (inView.value !== v) inView.value = v;
+						canvas.dataset.inView = String(v); // visible in devtools, for checking
+					};
+					new IntersectionObserver(
+						([e]) => {
+							showing = e.intersectionRatio >= 0.2;
+							update();
+						},
+						{ threshold: [0, 0.2] },
+					).observe(canvas);
+					document.addEventListener('visibilitychange', update);
+					update();
+				}
+
 				// the monitor's power trigger fires from the Rive click listener or from typing; page-fired
 				// toggles update monitorOn up front and skip their (async) echo
 				vmi.trigger('toggleMonitor')?.on(() => {
