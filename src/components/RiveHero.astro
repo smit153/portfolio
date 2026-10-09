@@ -1,29 +1,33 @@
 ---
-// Interactive pixel-art desk scene rendered from public/rive/hero.riv
-import wasmUrl from '@rive-app/canvas/rive.wasm?url';
-// lossless capture of the scene's first frame at the canvas's fixed drawing size (re-capture if hero.riv changes)
+// Interactive pixel-art desk scene rendered from src/assets/rive/hero.riv
+// capture of the scene's first frame at Rive's 1528x859 (re-capture if hero.riv changes), saved as WebP quality 95
+// (about 60 KB, visually lossless) with the clock's digits unlit, since the scene sets the real time once it runs
 import poster from '../assets/images/hero-poster.webp';
 ---
 
-<!-- start the runtime and scene downloads with the HTML instead of after the script runs -->
-<link rel="preload" href={wasmUrl} as="fetch" type="application/wasm" crossorigin />
-<link rel="preload" href="/rive/hero.riv" as="fetch" crossorigin />
+<!-- the runtime and scene downloads start after the first paint (boot() in the script below) -->
 <link rel="preload" href={poster.src} as="image" fetchpriority="high" />
 
 <div class="relative aspect-video w-full">
-	<!-- still of the first frame, shown until Rive draws. Rive draws at a fixed 1528x859 and the still is painted
-	     into a canvas of the same size, so the browser scales both through the same path and they match pixel for
-	     pixel at any screen density: the swap is invisible. -->
+	<!-- still of the first frame, shown until Rive draws. Both canvases draw at the hero's on-screen resolution (set
+	     below) and the still is painted into a canvas of the same size, so the browser scales both through the same
+	     path and the swap is invisible. -->
 	<canvas
 		data-hero-poster
 		aria-hidden="true"
-		width={poster.width}
-		height={poster.height}
+		width="1528"
+		height="859"
 		class="absolute inset-0 size-full [image-rendering:pixelated]"></canvas>
 	<script is:inline define:vars={{ posterSrc: poster.src }}>
+		// draw at the hero's on-screen resolution, capped at 1528x859: no sharper than the screen shows anyway, and on
+		// phones and 1x screens Rive (sized to match in the script below) has far fewer pixels to draw every frame
+		const c = document.querySelector('[data-hero-poster]');
+		const w = Math.min(1528, Math.round(c.getBoundingClientRect().width * devicePixelRatio)) || 1528;
+		c.width = w;
+		c.height = Math.round((w * 859) / 1528);
 		const img = new Image();
 		img.src = posterSrc;
-		img.decode().then(() => document.querySelector('[data-hero-poster]')?.getContext('2d').drawImage(img, 0, 0), () => {});
+		img.decode().then(() => c.getContext('2d').drawImage(img, 0, 0, c.width, c.height), () => {});
 	</script>
 	<noscript>
 		<img src={poster.src} alt="" class="absolute inset-0 size-full [image-rendering:pixelated]" />
@@ -114,8 +118,10 @@ import poster from '../assets/images/hero-poster.webp';
 </div>
 
 <script>
-	import { Alignment, Fit, Layout, Rive, RuntimeLoader, type ViewModelInstance } from '@rive-app/canvas';
+	// the runtime (and its 2 MB wasm) is loaded after the first paint, in boot() below
+	import type { Rive, ViewModelInstance } from '@rive-app/canvas';
 	import wasmUrl from '@rive-app/canvas/rive.wasm?url';
+	import rivUrl from '../assets/rive/hero.riv?url';
 	// ua-parser-js 1.x (MIT; 2.x is AGPL)
 	import UAParser from 'ua-parser-js';
 	import keys from '../data/keyboard-keys.json';
@@ -128,9 +134,6 @@ import poster from '../assets/images/hero-poster.webp';
 			miniaudio?: { unlock?: () => void };
 		}
 	}
-
-	// serve the runtime from our own bundle instead of the default CDN
-	RuntimeLoader.setWasmUrl(wasmUrl);
 
 	// mobile = phone or tablet; iPadOS reports a desktop Mac UA, so also count a touch Mac.
 	// ?mobile=1 / ?mobile=0 overrides for testing. Phones and tablets have no hover, so the
@@ -263,78 +266,124 @@ import poster from '../assets/images/hero-poster.webp';
 			else if (key.length === 1) setTyped(typed + key);
 		};
 
-		const rive = new Rive({
-			src: '/rive/hero.riv',
-			canvas,
-			stateMachine: 'State Machine 1',
-			autoplay: true,
-			autoBind: true,
-			layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
-			onLoad: () => {
-				// the drawing surface stays at its fixed 1528x859 (no resizeDrawingSurfaceToCanvas) so it matches the
-				// still; once the first frame is drawn, swap them
-				requestAnimationFrame(() =>
-					requestAnimationFrame(() => {
-						canvas.classList.remove('opacity-0');
-						document.querySelector('[data-hero-poster]')?.remove();
-					}),
-				);
-				vmi = rive.viewModelInstance;
-				if (!vmi) return;
+		let rive: Rive | null = null;
+		const boot = async () => {
+			// fetch the wasm and the scene alongside the runtime's own code, rather than one after the other
+			for (const href of [wasmUrl, rivUrl]) {
+				const link = Object.assign(document.createElement('link'), { rel: 'preload', as: 'fetch', href, crossOrigin: 'anonymous' });
+				document.head.append(link);
+			}
+			const { Alignment, Fit, Layout, Rive, RuntimeLoader } = await import('@rive-app/canvas');
+			// serve the runtime from our own bundle instead of the default CDN
+			RuntimeLoader.setWasmUrl(wasmUrl);
+			// same drawing size as the poster, so the swap matches
+			const poster = document.querySelector<HTMLCanvasElement>('[data-hero-poster]');
+			if (poster) {
+				canvas.width = poster.width;
+				canvas.height = poster.height;
+			}
+			const r = new Rive({
+				src: rivUrl,
+				canvas,
+				stateMachine: 'State Machine 1',
+				autoplay: true,
+				autoBind: true,
+				layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
+				onLoad: () => {
+					// the drawing surface keeps the poster's size (no resizeDrawingSurfaceToCanvas) so it matches the
+					// still; once the first frame is drawn, swap them
+					requestAnimationFrame(() =>
+						requestAnimationFrame(() => {
+							canvas.classList.remove('opacity-0');
+							document.querySelector('[data-hero-poster]')?.remove();
+						}),
+					);
+					new ResizeObserver(() => {
+						const w = Math.min(1528, Math.round(canvas.getBoundingClientRect().width * devicePixelRatio));
+						if (w <= canvas.width) return;
+						canvas.width = w;
+						canvas.height = Math.round((w * 859) / 1528);
+						r.resizeToCanvas();
+					}).observe(canvas);
 
-				const mobile = vmi.boolean('isMobile');
-				if (mobile) mobile.value = isMobile;
-				applyMuted();
+					vmi = r.viewModelInstance;
+					if (!vmi) return;
 
-				// the phone's random notification only runs while the scene is on screen (inView, in the scene's
-				// DeskAudio script): off when less than a fifth of it shows or the tab is hidden. Music isn't affected.
-				const inView = vmi.boolean('inView');
-				if (inView) {
-					let showing = true;
-					const update = () => {
-						const v = showing && document.visibilityState === 'visible';
-						if (inView.value !== v) inView.value = v;
-						canvas.dataset.inView = String(v); // visible in devtools, for checking
-					};
-					new IntersectionObserver(
-						([e]) => {
-							showing = e.intersectionRatio >= 0.2;
-							update();
-						},
-						{ threshold: [0, 0.2] },
-					).observe(canvas);
-					document.addEventListener('visibilitychange', update);
-					update();
-				}
+					const mobile = vmi.boolean('isMobile');
+					if (mobile) mobile.value = isMobile;
+					applyMuted();
 
-				// the monitor's power trigger fires from the Rive click listener or from typing; page-fired
-				// toggles update monitorOn up front and skip their (async) echo
-				vmi.trigger('toggleMonitor')?.on(() => {
-					if (selfFired) {
-						selfFired--;
-						return;
+					// the phone's random notification only runs while the scene is on screen (inView, in the scene's
+					// DeskAudio script): off when less than a fifth of it shows or the tab is hidden. Music isn't affected.
+					const inView = vmi.boolean('inView');
+					if (inView) {
+						let showing = true;
+						const update = () => {
+							const v = showing && document.visibilityState === 'visible';
+							if (inView.value !== v) inView.value = v;
+							canvas.dataset.inView = String(v); // visible in devtools, for checking
+						};
+						new IntersectionObserver(
+							([e]) => {
+								showing = e.intersectionRatio >= 0.2;
+								update();
+							},
+							{ threshold: [0, 0.2] },
+						).observe(canvas);
+						document.addEventListener('visibilitychange', update);
+						update();
 					}
-					monitorOn = !monitorOn;
-					if (!monitorOn) setTyped('');
-				});
-				vmi.trigger('toggleBook')?.on(() => {
-					bookOpen = !bookOpen;
-					HOT[3] = bookOpen ? BOOK_OPEN : BOOK_CLOSED;
-				});
 
-				// shelf clock: the scene draws the digits from clockTime ("HHMM", 12-hour, leading space)
-				const clock = vmi.string('clockTime');
-				if (clock) {
-					const tick = () => {
-						const d = new Date();
-						const h = d.getHours() % 12 || 12;
-						clock.value = String(h).padStart(2, ' ') + String(d.getMinutes()).padStart(2, '0');
-					};
-					tick();
-					setInterval(tick, 10_000);
-				}
-			},
+					// the monitor's power trigger fires from the Rive click listener or from typing; page-fired
+					// toggles update monitorOn up front and skip their (async) echo
+					vmi.trigger('toggleMonitor')?.on(() => {
+						if (selfFired) {
+							selfFired--;
+							return;
+						}
+						monitorOn = !monitorOn;
+						if (!monitorOn) setTyped('');
+					});
+					vmi.trigger('toggleBook')?.on(() => {
+						bookOpen = !bookOpen;
+						HOT[3] = bookOpen ? BOOK_OPEN : BOOK_CLOSED;
+					});
+
+					// shelf clock: the scene draws the digits from clockTime ("HHMM", 12-hour, leading space)
+					const clock = vmi.string('clockTime');
+					if (clock) {
+						const tick = () => {
+							const d = new Date();
+							const h = d.getHours() % 12 || 12;
+							clock.value = String(h).padStart(2, ' ') + String(d.getMinutes()).padStart(2, '0');
+						};
+						tick();
+						setInterval(tick, 10_000);
+					}
+				},
+			});
+			rive = r;
+		};
+		// start once the page has loaded and its first paint is on screen, so fetching and compiling the runtime never
+		// holds up the first frame (a requestAnimationFrame runs just before that frame paints, which is too early);
+		// the poster (the same first frame) covers the hero until Rive draws
+		const painted = new Promise<void>((resolve) => {
+			if (performance.getEntriesByName('first-contentful-paint').length) return resolve();
+			try {
+				new PerformanceObserver((list, obs) => {
+					if (list.getEntriesByName('first-contentful-paint').length) {
+						obs.disconnect();
+						resolve();
+					}
+				}).observe({ type: 'paint', buffered: true });
+			} catch {
+				resolve(); // no paint timing (old Safari): the load event alone
+			}
 		});
+		const loaded = new Promise<void>((resolve) =>
+			document.readyState === 'complete' ? resolve() : addEventListener('load', () => resolve(), { once: true }),
+		);
+		Promise.all([painted, loaded]).then(() => setTimeout(boot, 0));
 
 		// Rive's audio only unlocks on click/touchend/pointerdown, so a first key press stays silent.
 		// Unlock it ourselves inside the key gesture: resume every AudioContext (tracked by the inline
@@ -357,7 +406,7 @@ import poster from '../assets/images/hero-poster.webp';
 					mini.unlock();
 				} catch {}
 			}
-			rive.volume = RIVE_VOLUME;
+			if (rive) rive.volume = RIVE_VOLUME;
 			markAudioReady();
 			// stay subscribed until Rive's output exists and nothing is suspended (Safari may need a second key)
 			setTimeout(() => {
