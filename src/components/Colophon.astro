@@ -1,6 +1,6 @@
 ---
-// The colophon above the footer's torch: what the site is, how it was built and deployed, what it runs on and
-// what inspired it, then the initials and socials. Build, date, versions and counts are read at build time.
+// The colophon above the footer's torch: what the site is, how it was built and deployed, what it runs on, then
+// the initials and socials. Build, date, versions and counts are read at build time.
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -40,12 +40,6 @@ const stack = ['astro', 'tailwindcss', '@astrojs/mdx', 'mermaid', '@rive-app/can
 const posts = (await getPosts()).length;
 const projects = (await getProjects()).length;
 
-const inspired = [
-	{ name: 'chanhdai.com', href: 'https://chanhdai.com' },
-	{ name: 'ayuzh.space', href: 'https://www.ayuzh.space' },
-	{ name: 'Griffin', href: 'https://www.griffin.com' },
-	{ name: 'Hairline', href: 'https://hairline.lucasmarkes.com' },
-];
 const socials = [
 	{ label: 'X', href: 'https://x.com/smit_sojitra153', icon: x },
 	{ label: 'GitHub', href: 'https://github.com/smit153', icon: github },
@@ -111,26 +105,12 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 		</div>
 		<div>
 			<dt>for agents</dt>
-			<dd><a href="/llms.txt" class={link}>llms.txt</a></dd>
-		</div>
-
-		<div class="col-span-2 sm:col-span-4">
-			<dt>inspired by</dt>
-			<dd>
-				<ol class="grid grid-cols-1 gap-x-4 sm:grid-cols-4">
-					{
-						inspired.map(({ name, href }, i) => (
-							<li>
-								<span class="text-tick">{String(i + 1).padStart(2, '0')}</span>{' '}
-								<a href={href} class="transition-colors hover:text-muted" {...ext}>
-									{name}
-								</a>
-							</li>
-						))
-					}
-				</ol>
+			<dd class="flex flex-col items-start gap-1">
+				<a href="/llms.txt" class={link}>llms.txt</a>
+				<a href="/index.md" class={link}>index.md</a>
 			</dd>
 		</div>
+
 	</dl>
 
 	<!-- initials and socials -->
@@ -175,9 +155,6 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 		border-bottom: 1px solid var(--color-line);
 		border-right: 1px solid var(--color-line);
 	}
-	dl > div:nth-last-child(1) {
-		border-bottom: 0;
-	}
 	dt {
 		margin-bottom: 4px;
 		font-size: var(--text-tiny);
@@ -193,9 +170,11 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 	@media (min-width: 640px) {
 		dl > div:nth-child(4),
 		dl > div:nth-child(8),
-		dl > div:nth-child(11),
-		dl > div:nth-child(12) {
+		dl > div:nth-child(11) {
 			border-right: 0;
+		}
+		dl > div:nth-child(n + 9) {
+			border-bottom: 0;
 		}
 	}
 	@media (max-width: 639px) {
@@ -204,9 +183,11 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 		dl > div:nth-child(6),
 		dl > div:nth-child(8),
 		dl > div:nth-child(9),
-		dl > div:nth-child(11),
-		dl > div:nth-child(12) {
+		dl > div:nth-child(11) {
 			border-right: 0;
+		}
+		dl > div:nth-child(n + 10) {
+			border-bottom: 0;
 		}
 	}
 </style>

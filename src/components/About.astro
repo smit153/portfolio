@@ -1,5 +1,6 @@
 ---
 // The short version of who I am, summarised from my LinkedIn About.
+import { about } from '../data/profile';
 import SectionTitle from './SectionTitle.astro';
 
 const projects = [
@@ -14,10 +15,7 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 	<SectionTitle id="about-title">So, who am I?</SectionTitle>
 
 	<ul class="list-disc space-y-2 py-6 pl-10 pr-5 text-body tracking-[-0.01em] text-white marker:text-tick">
-		<li>I'm Smit Sojitra, a software developer at Updot with 3+ years of building products that solve real problems.</li>
-		<li>I work across full-stack and backend engineering, AI agents and LLM workflows, cloud infrastructure and DevOps.</li>
-		<li>I start with the problem, pick the right tech for it, and take products from idea to production.</li>
-		<li>Right now I'm building and exploring products around AI, automation and modern software systems.</li>
+		{about.map((point) => <li>{point}</li>)}
 		<li>
 			Creator of{' '}
 			{

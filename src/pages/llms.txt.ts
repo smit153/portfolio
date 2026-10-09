@@ -26,6 +26,10 @@ export const GET: APIRoute = async ({ site }) => {
 		`- [All projects](${url('/projects')})`,
 		`- [All writing](${url('/blog')})`,
 		'',
+		'## Optional',
+		'',
+		`- [index.md](${url('/index.md')}): the home page as Markdown (about, experience, education, projects, writing)`,
+		'',
 	].join('\n');
 	return new Response(text, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 };
