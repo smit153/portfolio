@@ -32,7 +32,7 @@ const { Content, headings } = await render(post);
 const sections = headings.filter((h) => h.depth === 2);
 ---
 
-<Layout title={`${post.data.title} · Smit Sojitra`}>
+<Layout title={`${post.data.title} · Smit Sojitra`} description={post.data.description} type="article">
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
 			<Header />

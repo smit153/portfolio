@@ -4,9 +4,20 @@ import '../styles/global.css';
 
 interface Props {
 	title: string;
+	/** for search results and link previews; posts and projects pass their own */
+	description?: string;
+	/** 'article' for posts and project pages */
+	type?: 'website' | 'article';
 }
 
-const { title } = Astro.props;
+const {
+	title,
+	description = 'Smit Sojitra, software developer and AI engineer: full-stack, AI agents, cloud & DevOps. Projects, notes and a desk cat.',
+	type = 'website',
+} = Astro.props;
+// absolute addresses, as link previews need them
+const url = new URL(Astro.url.pathname, Astro.site);
+const image = new URL('/og.png', Astro.site);
 ---
 
 <html lang="en">
@@ -20,6 +31,21 @@ const { title } = Astro.props;
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={url} />
+		<!-- link previews (Open Graph, X): the spec-sheet card in public/og.png -->
+		<meta property="og:type" content={type} />
+		<meta property="og:site_name" content="smiit.in" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={url} />
+		<meta property="og:image" content={image} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="Smit Sojitra, Software Developer and AI Engineer, smiit.in" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@smit_sojitra153" />
+		<meta name="twitter:creator" content="@smit_sojitra153" />
 		<!-- must run before @rive-app/canvas loads: remember every AudioContext so a key press can resume them -->
 		<script is:inline>
 			window.__audioContexts = [];
