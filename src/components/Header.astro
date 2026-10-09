@@ -43,10 +43,11 @@ const jumps = [
 	<button
 		type="button"
 		data-jump-open
-		aria-label="Jump to a section"
 		class="ml-auto flex items-center gap-2 text-muted transition-colors hover:text-white md:ml-0"
 	>
 		<PixelIcon name="search" />
+		<!-- the name read out includes the visible keys, so voice control users can say what they see -->
+		<span class="sr-only">Jump to a section</span>
 		<kbd data-jump-mod class="border border-line px-1.5 text-small leading-5">Ctrl</kbd>
 		<kbd class="border border-line px-1.5 text-small leading-5">K</kbd>
 	</button>

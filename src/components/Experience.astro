@@ -31,7 +31,7 @@ const tabs = [
 							aria-controls={`panel-${key}`}
 							aria-selected={i === 0 ? 'true' : 'false'}
 							tabindex={i === 0 ? 0 : -1}
-							class="font-grape text-[28px] leading-none text-[#3a3a3a] transition-colors hover:text-muted aria-selected:text-white"
+							class="font-grape text-[28px] leading-none text-[#666] transition-colors hover:text-muted aria-selected:text-white"
 						>
 							{label}
 						</button>
@@ -42,7 +42,9 @@ const tabs = [
 		<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
 	</div>
 
-	<ol id="panel-experience" role="tabpanel" aria-labelledby="tab-experience" class="bg-panel divide-y-2 divide-line">
+	<!-- the panel is a div: an ol can't carry role="tabpanel" (and its items would lose their list) -->
+	<div id="panel-experience" role="tabpanel" aria-labelledby="tab-experience" class="bg-panel">
+	<ol class="divide-y-2 divide-line">
 		{
 			jobs.map((job) => {
 				const head = (
@@ -86,8 +88,10 @@ const tabs = [
 			})
 		}
 	</ol>
+	</div>
 
-	<ol id="panel-education" role="tabpanel" aria-labelledby="tab-education" hidden class="bg-panel divide-y-2 divide-line">
+	<div id="panel-education" role="tabpanel" aria-labelledby="tab-education" hidden class="bg-panel">
+	<ol class="divide-y-2 divide-line">
 		{
 			education.map((e) => (
 				<li class="px-5 py-4">
@@ -108,6 +112,7 @@ const tabs = [
 			))
 		}
 	</ol>
+	</div>
 </section>
 
 <style>
