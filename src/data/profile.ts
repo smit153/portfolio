@@ -26,6 +26,7 @@ export const jobs: Job[] = [
 		role: 'Software Developer',
 		type: 'Full time',
 		start: '06.2024',
+		end: '09.2026',
 		points: [
 			'Take projects end to end, from scoping and architecture through to launch and the fixes after it.',
 			'Build full-stack web apps: the frontend, the APIs behind it and the data model underneath.',
