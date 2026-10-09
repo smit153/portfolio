@@ -1,0 +1,62 @@
+---
+// The résumé link and the social icons. `box`: the panel at the right of the profile row (tablet up), résumé on top,
+// socials below. `row`: one row on phones, résumé left and socials right, under a full-bleed line; the home page
+// puts it after the contact details.
+import github from '../assets/icons/github.svg';
+import linkedin from '../assets/icons/linkedin.svg';
+import x from '../assets/icons/x.svg';
+import resume from '../assets/icons/resume.svg';
+import devto from '../assets/icons/devto.svg';
+
+interface Props {
+	layout: 'box' | 'row';
+	class?: string;
+}
+const { layout, class: className } = Astro.props;
+
+// TODO: drop the PDF into public/ under this name
+const RESUME_HREF = '/resume.pdf';
+
+const socials = [
+	{ label: 'GitHub', href: 'https://github.com/smit153', icon: github, frame: 'size-[26px]' },
+	{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/smit-sojitra/', icon: linkedin, frame: 'size-[26px]' },
+	{ label: 'X', href: 'https://x.com/smit_sojitra153', icon: x, frame: 'size-[26px]' },
+	{ label: 'DEV', href: 'https://dev.to/smit153', icon: devto, frame: 'h-[28px] w-[31px]' },
+];
+const box = layout === 'box';
+---
+
+<div
+	class:list={[
+		box
+			? 'absolute inset-y-0 right-0 flex w-[180px] flex-col border-l-2 border-line pt-[2px]'
+			: 'relative flex h-12 items-stretch justify-between pl-5 pr-3',
+		className,
+	]}
+>
+	{!box && <span aria-hidden="true" class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line" />}
+	<a
+		href={RESUME_HREF}
+		target="_blank"
+		rel="noopener noreferrer"
+		class:list={[
+			'flex items-center gap-2 text-white transition-opacity hover:opacity-70',
+			box && 'flex-1 justify-end border-b-2 border-dotted border-line pr-2.5',
+		]}
+	>
+		<img src={resume.src} alt="" width="16" height="20" class="block h-5 w-4" />
+		<span class="leading-none tracking-[0.04em] [font-variant:small-caps] text-heading">Résumé</span>
+	</a>
+
+	<ul class:list={['flex items-center gap-3', box && 'flex-1 justify-center']}>
+		{
+			socials.map(({ label, href, icon, frame }) => (
+				<li class="flex">
+					<a href={href} aria-label={label} target="_blank" rel="noopener noreferrer" class={`relative block ${frame} transition-opacity hover:opacity-70`}>
+						<img src={icon.src} alt="" class="absolute inset-0 block size-full max-w-none" />
+					</a>
+				</li>
+			))
+		}
+	</ul>
+</div>

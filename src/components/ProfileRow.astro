@@ -1,25 +1,11 @@
 ---
+// The avatar, name and title. From tablet up the résumé and socials sit in a box at the right (ProfileLinks);
+// on phones the home page shows them as a row further down, after the contact details.
 import { Image } from 'astro:assets';
 import avatar from '../assets/images/avatar-glasses.png';
-import github from '../assets/icons/github.svg';
-import linkedin from '../assets/icons/linkedin.svg';
-import x from '../assets/icons/x.svg';
-import resume from '../assets/icons/resume.svg';
-import devto from '../assets/icons/devto.svg';
-
-// TODO: drop the PDF into public/ under this name
-const RESUME_HREF = '/resume.pdf';
-
-// TODO: real profile URLs
-const socials = [
-	{ label: 'GitHub', href: 'https://github.com/smit153', icon: github, frame: 'size-[26px]', inset: 'inset-0' },
-	{ label: 'LinkedIn', href: 'https://www.linkedin.com/in/smit-sojitra/', icon: linkedin, frame: 'size-[26px]', inset: 'inset-0' },
-	{ label: 'X', href: 'https://x.com/smit_sojitra153', icon: x, frame: 'size-[26px]', inset: 'inset-0' },
-	{ label: 'DEV', href: 'https://dev.to/smit153', icon: devto, frame: 'h-[28px] w-[31px]', inset: 'inset-0' },
-];
+import ProfileLinks from './ProfileLinks.astro';
 ---
 
-<!-- the avatar and name; from tablet up the links box sits at its right, on phones it's a row of its own below -->
 <section class="relative [--avatar:96px] sm:[--avatar:150px]">
 	<div class="relative h-[101px]">
 		<!-- top hairline: full bleed, broken under the avatar -->
@@ -38,47 +24,17 @@ const socials = [
 			class="absolute bottom-0 left-px z-10 size-(--avatar) rounded-full object-cover [image-rendering:pixelated]"
 		/>
 
-		<!-- each line stays on one row -->
+		<!-- the name stays on one line -->
 		<div class="pl-[calc(var(--avatar)+17px)] pr-5 pt-3 sm:pr-[188px]">
 			<h1 class="truncate whitespace-nowrap text-base font-medium leading-normal tracking-[-0.02em] text-white sm:text-[22px] sm:leading-[1.5]">
 				Smit Sojitra
 			</h1>
-			<p class="truncate whitespace-nowrap text-body tracking-[-0.04em] text-muted">Software Developer</p>
+			<!-- on a phone the title may wrap to a second line rather than be cut off -->
+			<p class="text-body tracking-[-0.04em] text-muted sm:truncate sm:whitespace-nowrap">
+				Software Developer <span class="text-tick">|</span> <span class="whitespace-nowrap">AI Engineer</span>
+			</p>
 		</div>
 	</div>
 
-	<!-- links: phones, one row (resume left, socials right) under a full-bleed line; sm+, a box at the right with
-	     the resume on top and the socials below -->
-	<div class="relative flex h-12 items-stretch justify-between pl-5 pr-3 sm:absolute sm:right-0 sm:top-0 sm:h-[101px] sm:w-[180px] sm:flex-col sm:border-l-2 sm:border-line sm:p-0 sm:pt-[2px]">
-		<span aria-hidden="true" class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line sm:hidden"></span>
-		<a
-			href={RESUME_HREF}
-			target="_blank"
-			rel="noopener noreferrer"
-			class="flex items-center gap-2 text-white transition-opacity hover:opacity-70 sm:flex-1 sm:justify-end sm:border-b-2 sm:border-dotted sm:border-line sm:pr-2.5"
-		>
-			<img src={resume.src} alt="" width="16" height="20" class="block h-5 w-4" />
-			<span class="leading-none tracking-[0.04em] [font-variant:small-caps] text-heading">Résumé</span>
-		</a>
-
-		<ul class="flex items-center gap-3 sm:flex-1 sm:justify-center">
-			{
-				socials.map(({ label, href, icon, frame, inset }) => (
-					<li class="flex">
-						<a
-							href={href}
-							aria-label={label}
-							target="_blank"
-							rel="noopener noreferrer"
-							class={`relative block ${frame} transition-opacity hover:opacity-70`}
-						>
-							<span class={`absolute ${inset}`}>
-								<img src={icon.src} alt="" class="absolute inset-0 block size-full max-w-none" />
-							</span>
-						</a>
-					</li>
-				))
-			}
-		</ul>
-	</div>
+	<ProfileLinks layout="box" class="max-sm:hidden" />
 </section>

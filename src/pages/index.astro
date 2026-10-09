@@ -11,6 +11,7 @@ import DeskCat from '../components/DeskCat.astro';
 import Experience from '../components/Experience.astro';
 import GithubGraph from '../components/GithubGraph.astro';
 import InfoGrid from '../components/InfoGrid.astro';
+import ProfileLinks from '../components/ProfileLinks.astro';
 import ProfileRow from '../components/ProfileRow.astro';
 import Projects from '../components/Projects.astro';
 import RiveHero from '../components/RiveHero.astro';
@@ -27,6 +28,8 @@ import Stacks from '../components/Stacks.astro';
 			<ProfileRow />
 			<Separator />
 			<InfoGrid />
+			<!-- phones: the résumé and socials come after the contact details (tablet up, they're in the profile row) -->
+			<ProfileLinks layout="row" class="sm:hidden" />
 			<Band />
 			
 			<About />
