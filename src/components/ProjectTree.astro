@@ -1,7 +1,8 @@
 ---
-// Projects as a file tree: one row per project (its pixel icon, name, a short line, status), opening into its
-// README (summary), NOTES (points), stack and links (its case study page, repo, live site). Any number can be open at once.
-// Connector lines: every list draws one trunk down its left, and every item an elbow into it.
+// Projects as a list: one row per project (its pixel icon, name, a short line, status), each opening into a small
+// file tree of its README (summary), NOTES (points), stack and links (its case study page, repo, live site).
+// Any number can be open at once. A full-width hairline separates the projects, like the page's other lines.
+// The files' connector lines: the list draws a trunk down its left, and every file an elbow into it.
 import arrowUp from '../assets/icons/arrow-up.svg';
 import type { Project } from '../lib/projects';
 import Pill from './Pill.astro';
@@ -15,11 +16,7 @@ interface Props {
 const { projects, openFirst = true } = Astro.props;
 ---
 
-<div class="tree px-5 pb-6 pt-5">
-	<div class="flex h-[30px] items-center gap-2.5 text-body text-muted">
-		<PixelIcon name="folder" class="text-tick" />
-		<span>root</span>
-	</div>
+<div class="tree px-5">
 	<ul>
 		{
 			projects.map(({ data: p, href }, i) => (
@@ -131,36 +128,23 @@ const { projects, openFirst = true } = Astro.props;
 			background-color 0.2s,
 			width 0.2s;
 	}
-	/* projects have padding (and from the second on, a line) above their row, so their elbows sit lower */
-	.proj::after {
-		top: 22px;
+	/* projects: no connector lines of their own, just a full-width hairline between them */
+	.tree .proj {
+		padding: 10px 0 8px;
 	}
-	.proj:last-child::before {
-		height: 23px;
+	.tree .proj::before,
+	.tree .proj::after {
+		content: none;
 	}
-	.proj + .proj::after {
-		top: 24px;
-	}
-	.proj + .proj:last-child::before {
-		height: 25px;
-	}
-	/* a line between projects, from the trunk out to the column wall, so open ones read as separate blocks */
-	.proj > details {
-		padding-block: 4px;
-	}
-	.proj + .proj > details {
-		border-top: 2px solid var(--color-line);
-		margin-right: -20px;
-		padding-right: 20px;
-	}
-	/* the hovered (or open) project's connector lights up */
-	.proj:has(> details > summary:hover)::after,
-	.proj:has(> details[open])::after {
-		background: var(--color-tick);
-		width: 18px;
-	}
-	.proj:has(> details > summary:hover)::before {
-		background: #2c2d2d;
+	.tree .proj + .proj::before {
+		content: '';
+		left: -50vw;
+		right: -50vw;
+		top: 0;
+		bottom: auto;
+		width: auto;
+		height: 2px;
+		background: var(--color-line);
 	}
 
 	summary {
