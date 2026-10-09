@@ -1,6 +1,6 @@
 ---
 title: "Jev: the AI that doesn't talk (and why that's the point)"
-description: "Every model you've used this year wants to write you an essay. Jev answers with a number, in about a tenth of a second, for a fraction of a cent."
+description: "Most models want to write you an essay. Jev answers with a number, fast and for a fraction of a cent."
 date: 2026-09-12
 tags: [ai, infrastructure, llm]
 cover: ../../assets/blog/jev.png
@@ -13,41 +13,32 @@ import PageLens from '../../components/blog/jev/PageLens.astro';
 
 ## The automation question
 
-Language models have been superhuman at chat for years. So where's all the automation? Jev is the first model I've used that gives a real answer.
+Language models have been superhuman at chat for years, so where's the automation? TypeSafe AI asks that in its Jev launch post. The problem isn't intelligence. Code needs `true` or `false`, one of five categories, a number between 0 and 1. An LLM gives you a paragraph, so you write a fragile parser, a retry loop for the day it wraps the JSON in markdown, and wait ten seconds while it thinks out loud.
 
-That's the question TypeSafe AI asks in the launch post for Jev, and it's a fair one. The trouble isn't intelligence. It's that software can't consume chat. Code needs `true` or `false`, one of five categories, a number between 0 and 1. LLMs give you a paragraph, and then you write a fragile parser, add a retry loop for the day it wraps the JSON in markdown, and wait ten seconds while it "thinks" out loud.
+TypeSafe's answer is a new class it calls a **System One model**. Jev is the first.
 
-TypeSafe's answer is a new class of model it calls a **System One model**, and Jev is the first one.
+## System 1 vs. System 2
 
-## System 1 vs. System 2, in one minute
-
-Psychologists describe two modes of thought. *System 2* is slow and deliberate: long division, chess, writing an essay. *System 1* is instant: "is this email spam?", "does that person look angry?", "is this a bug report or a feature request?" You don't reason through those. You just know.
-
-Today's LLMs are System 2 machines, even when the task is System 1. Asking GPT-class models to route a support ticket is like hiring a novelist to stamp envelopes. Sure, it works. It's also slow, it costs a fortune per stamp, and every so often you get a short story back instead of a stamp.
+*System 2* is slow, deliberate thinking: chess, writing an essay. *System 1* is instant: "is this email spam?" You don't reason through it, you just know. LLMs are System 2 machines even when the task is System 1. Routing a support ticket with one is like hiring a novelist to stamp envelopes. It works, but it's slow, it's pricey, and now and then you get a short story back.
 
 > Think of Jev as a frontier-intelligence function call: unstructured state in, typed probabilistic decisions out.
 
 ## What Jev actually is
 
-Jev is a *decision model*. You hand it two things:
-
-1. **State**: any text, JSON object, or array. A ticket, a diff, a web page, a game screen described in words.
-2. **Questions**: typed, and each one has its own instructions.
-
-It gives back typed answers with probabilities attached. There are three question types:
+Jev is a *decision model*. You give it some **state** (text, a JSON object or an array) and typed **questions**, each with its own instructions. It returns typed answers with probabilities. There are three question types:
 
 <div class="uc">
-<div><b>boolean</b>Yes or no, returned as a probability from 0 to 1. <em>"Is the customer asking for a refund?"</em> gives <code>0.98</code>.</div>
-<div><b>choice</b>Pick one from a set you define, with a probability for every option. <em>"Route this ticket"</em> gives <code>billing: 0.97, shipping: 0.02, technical: 0.01</code>.</div>
-<div><b>score</b>Rate something on an ordered scale you describe, e.g. poor / fair / good / excellent. You get an interpolated score such as <code>2.97</code> plus the probability of each rung.</div>
+<div><b>boolean</b>Yes or no, as a probability from 0 to 1. <em>"Is the customer asking for a refund?"</em> gives <code>0.98</code>.</div>
+<div><b>choice</b>Pick one from a set you define, with a probability for each option. <em>"Route this ticket"</em> gives <code>billing: 0.97, shipping: 0.02, technical: 0.01</code>.</div>
+<div><b>score</b>Rate something on an ordered scale you describe, like poor / fair / good / excellent. You get an interpolated score such as <code>2.97</code> plus the probability of each rung.</div>
 </div>
 
-Here's a full call through the Vercel AI SDK:
+A full call through the Vercel AI SDK:
 
 ```ts
-import { experimental_evaluate as evaluate } from 'ai';
+import { experimental_decide as decide } from 'ai';
 
-const result = await evaluate({
+const result = await decide({
   model: 'typesafe-ai/jev',
   state: 'I cannot log in, and I also want a refund for last month.',
   questions: {
@@ -61,33 +52,27 @@ const result = await evaluate({
 result.answers.wantsRefund.probability; // 0.97
 ```
 
-No begging the model to "please reply in JSON". No repair step. You can't get a malformed answer, because the model has no way to produce one.
+No begging for JSON and no repair step. The model can't produce a malformed answer.
 
 <Triage />
 
-## Why it's fast
+## Why it's fast and cheap
 
-An LLM writes its answer one token at a time. Each token depends on every token before it, so nothing can happen in parallel, and the time you wait grows with the length of the answer. That's *autoregressive* generation. It's why "think step by step" makes a model smarter and slower at the same time.
+An LLM writes one token at a time, and each depends on all the ones before it. Nothing runs in parallel, so the wait grows with the answer. That's *autoregressive* generation.
 
-Jev skips that. It's trained with what TypeSafe calls **Reinforcement Learning for Calibrated Decisions (RLCD)**, and it samples every answer **in parallel** in one pass. The output isn't a story, it's a small fixed-shape structure. There's nothing to stream, so there's nothing to wait for.
+Jev is trained with **Reinforcement Learning for Calibrated Decisions (RLCD)** and samples every answer **in parallel** in one pass. The output is a small fixed-shape structure, so there's nothing to stream.
 
 <TokenRace />
 
-TypeSafe reports **70 to 500 ms end to end**, with roughly 100 ms typical from the US West Coast. It quotes **40× to 200× faster** than frontier LLMs on comparable System One tasks. On its four-workflow benchmark a Jev case took about 0.4 s against 10 to 38 s for the big models.
+TypeSafe reports **70 to 500 ms end to end**, **40× to 200× faster** than frontier LLMs on comparable tasks. In its benchmark a Jev case took about 0.4 s against 10 to 38 s.
 
-## Why it's cheap
+On cost, Jev charges **$0.042 per million input tokens** and nothing for output, and a chatty LLM answer is mostly output. Extra questions are nearly free too, since every question runs in parallel against the same state and adds only its own tokens. One cookbook example asked 13 questions in one call and came out 12.2× cheaper and 10× faster than asking them one by one.
 
-Three reasons stack up:
-
-- **Output is free.** Jev charges **$0.042 per million input tokens** and nothing for output. LLM output tokens typically cost around 5× the input price, and a chatty answer is mostly output.
-- **It's smaller work.** No text generation means far less compute per request.
-- **Extra questions are almost free.** Every question in a request is evaluated in parallel against the same state. Adding one costs only its own tokens and barely moves the latency. One cookbook example ran 13 questions in one call and came out 12.2× cheaper and 10× faster than asking them one by one.
-
-Put concretely: TypeSafe puts a typical support ticket at about **$0.0000126**, and a run classifying 1,018 research papers at **$0.08**. On its benchmark, Jev costs about **$0.0004 per case** versus **$0.03 to $0.18** for frontier LLMs.
+TypeSafe puts a typical support ticket at about **$0.0000126** and 1,018 research papers at **$0.08**.
 
 ## Is it actually good, though?
 
-Cheap and fast only matter if the answers are right. TypeSafe's benchmark is unusual. Rather than chase a single ground-truth label, it assumes a correct workflow in code and uses the predictions of the biggest, most expensive models as reference probabilities. On that test:
+TypeSafe's benchmark assumes a correct workflow in code and uses the biggest models' predictions as reference probabilities. The result:
 
 <div class="table-wrap">
 
@@ -102,11 +87,11 @@ Cheap and fast only matter if the answers are right. TypeSafe's benchmark is unu
 
 <p class="small-note">The source gives one cost and latency range for the LLM group, not per-model figures. All numbers are TypeSafe's own, unaudited by third parties.</p>
 
-So Jev is roughly tied with one big model and a few points behind the best ones, at about **1/200th of the cost** (TypeSafe quotes 193.6×). For a decision you make a million times a day, six points of accuracy for a 200× discount is often an easy trade. For one high-stakes call, maybe not, and there's a design pattern for that below.
+Jev roughly ties one big model and trails the best by about six points, at 75× to 450× less per case going by those ranges. For a decision you make a million times a day, that's often an easy trade. For one high-stakes call, maybe not.
 
-## The killer feature: calibrated confidence
+## Calibrated confidence is the killer feature
 
-Ask an LLM "how sure are you?" and it will say 95% about almost anything. Jev is trained so that *higher confidence means higher accuracy*. That changes how you build:
+An LLM will say it's 95% sure about almost anything. Jev is trained so that *higher confidence means higher accuracy*, which changes how you build:
 
 ```ts
 const { probability } = answers.isSafe;
@@ -116,23 +101,23 @@ else if (probability > 0.60) askHuman();
 else                         reject();
 ```
 
-The model does the fast, cheap 95% of cases and hands you an honest signal about the ones it's unsure of. Vercel's AI Gateway even supports **evaluation fallbacks**: when Jev's confidence falls inside an uncertain band, the same request is re-run on a bigger model automatically. Cheap by default, expensive only when it matters.
+Jev takes the sure cases and flags the rest. Vercel's AI Gateway can even re-run a request on a bigger model when Jev's confidence lands in an uncertain band: cheap by default, expensive only when it matters.
 
-## Where it shines: use cases
+## Where it shines
 
 <div class="uc">
-<div><b>Routing and triage</b>Support tickets, form submissions, emails, incoming leads. Ask ten questions (topic, urgency, sentiment, language, refund intent) in a single 100 ms call.</div>
-<div><b>Guardrails for other AI</b>Put Jev in front of an agent's tool calls: "is this shell command destructive?" "does this reply leak a secret?" It adds so little latency and cost that you can check <em>every</em> action instead of sampling.</div>
-<div><b>Bulk data labeling</b>Classify a thousand papers, resumes or reviews for pennies, and get probabilities you can threshold instead of hard labels.</div>
-<div><b>LLM-as-judge, minus the bill</b>Score outputs against a rubric in evals or CI. A 1-to-4 score question over a pull request or a chatbot answer is a natural fit.</div>
-<div><b>Semantic search and re-ranking</b>Score candidates against a query with no embeddings and no vector database. More on that below, because it's what this project does.</div>
-<div><b>Real-time agents</b>Early demos have Jev steering a Minecraft bot, a driving simulator and a drone sim, choosing actions from a live state description. A two-minute Minecraft session reportedly cost about a cent. (These are simulators, not hardware, so treat them as a sign of what's possible.)</div>
-<div><b>Feature engineering</b>Turn free text into numeric columns ("how angry, 0 to 3?") that feed a classical ML model.</div>
+<div><b>Routing and triage</b>Tickets, forms, emails, leads. Ask ten questions (topic, urgency, sentiment) in one call.</div>
+<div><b>Guardrails for other AI</b>Ask "is this shell command destructive?" before an agent's tool calls. It's cheap enough to check <em>every</em> action.</div>
+<div><b>Bulk labeling</b>Classify a thousand papers or reviews for pennies.</div>
+<div><b>LLM-as-judge, minus the bill</b>Score outputs against a rubric in evals or CI.</div>
+<div><b>Semantic search and re-ranking</b>Score candidates against a query with no embeddings or vector database, as in my project below.</div>
+<div><b>Real-time agents</b>Early demos steer a Minecraft bot (two minutes reportedly cost about a cent) and driving and drone sims. They're simulators, so treat them as a hint.</div>
+<div><b>Feature engineering</b>Turn free text into numeric columns ("how angry, 0 to 3?") for a classical model.</div>
 </div>
 
 ## Case study: a search engine built from a function call
 
-This is the part I can vouch for, because I built it and hit every wall myself. **PageLens** is a Chrome extension: type a question, and it finds and highlights the passages on the current page that answer it, by meaning rather than by keyword. It has no embeddings and no vector store. The page is split into chunks, and each chunk becomes *one score question* in a single Jev call.
+I built **PageLens**, a Chrome extension that highlights the passages on a page that answer your question, by meaning rather than keyword. No embeddings, no vector store. The page is split into chunks, and each chunk becomes *one score question* in a single Jev call.
 
 ```ts
 questions[chunkId] = {
@@ -142,40 +127,35 @@ questions[chunkId] = {
 };
 ```
 
-Because Jev evaluates all questions in parallel, scoring 80+ passages costs about the same wall-clock time as scoring one.
+Scoring 80+ passages takes about as long as scoring one.
 
 <PageLens />
 
-### Lessons from production (the honest part)
+### Lessons from production
 
-- **Documented limits aren't usable limits.** Jev's context is documented in the tens of thousands of tokens, but in testing a batch of 89 questions (~15k tokens) worked repeatedly while ~118 questions (~20k tokens) hit persistent 503s. An oversized batch doesn't degrade gracefully, it fails. So PageLens caps batches at 12k tokens / 80 questions, and measures with `result.usage.inputTokens` rather than trusting the docs.
-- **Each question must know who it is.** All questions share one state. With identical instructions, Jev answered the same thing N times: scores of `2.95, 2.95, 2.96, 2.96` on passages that should have spanned 0 to 3. Putting the chunk id into each question's instructions fixed it: `0, 3, 0, 1.19`.
-- **Don't spend Jev where a regex will do.** Classifying whether the query is an exact phrase, or detecting its shape, is plain string work. It's free and deterministic. Save the model for judgement about meaning.
+- **Documented limits aren't usable limits.** The docs say tens of thousands of tokens. In my testing 89 questions (~15k tokens) worked repeatedly, while ~118 (~20k tokens) hit persistent 503s. Oversized batches fail outright. PageLens caps batches at 12k tokens / 80 questions and measures with `result.usage.inputTokens`.
+- **Each question must know who it is.** All questions share one state, and with identical instructions Jev gave nearly the same answer every time: `2.95, 2.95, 2.96, 2.96` on passages that should have spanned 0 to 3. Putting the chunk id in each question's instructions fixed it: `0, 3, 0, 1.19`.
+- **Don't spend Jev where a regex will do.** Checking whether a query is an exact phrase is plain string work. Save the model for meaning.
 
 ## What Jev is not
 
-An honest post needs a limits section. TypeSafe and independent write-ups are clear about these:
+- **It can't write.** No summaries or explanations, only structured answers.
+- **No deliberate reasoning.** It's unreliable at counting, arithmetic and date comparisons, and contradictory criteria confuse it.
+- **Text only, for now.**
+- **Caps:** up to 255 choices per question. Early access rate limits were around 1,200 requests/minute and 250k tokens/second, and are dynamic.
+- **Vendor benchmarks.** The numbers are TypeSafe's own and the demos are simulators. Test on your own data.
 
-- **It can't write.** No summaries, no drafts, no explanations. Structured answers only.
-- **It's a System 1 model.** No deliberate multi-step reasoning. It's unreliable at counting, arithmetic, date comparisons and numeric precision.
-- **Contradictory criteria confuse it.** Keep your rubrics clear and independent.
-- **Text only, for now.** No images, audio or video yet.
-- **Caps:** up to 255 choices per choice question. Early access rate limits were around 1,200 requests/minute and 250k tokens/second, and are dynamic.
-- **Vendor benchmarks.** The impressive numbers come from TypeSafe's own evals. The demos are simulators. Test on your own data before betting a product on it.
+## A pattern worth stealing
 
-## A design pattern worth stealing
-
-The teams getting the most from Jev tend to do the same three things:
-
-1. **Ask everything at once.** Decompose the decision into many small independent questions and put them all in one call (speculative fan-out). It's nearly free.
-2. **Combine in code.** Weight the probabilities yourself. Your business logic stays testable and version-controlled, instead of buried in a prompt.
-3. **Threshold on confidence.** Automate the sure cases, escalate the unsure ones to a big model or a human.
+1. **Ask everything at once.** Break the decision into many small questions in one call. It's nearly free.
+2. **Combine in code.** Weight the probabilities yourself, so the logic stays testable instead of buried in a prompt.
+3. **Threshold on confidence.** Automate the sure cases, escalate the rest to a big model or a human.
 
 ## The takeaway
 
-LLMs made AI *talk*. Jev is a bet that most of what software needs from AI isn't conversation at all, but a fast, cheap, well-calibrated judgement inside an `if` statement. If that's right, the next wave of AI features won't look like chat boxes. They'll be invisible: a thousand tiny decisions made a hundred milliseconds at a time.
+Jev bets that most of what software needs from AI isn't conversation, but a fast, cheap, calibrated judgement inside an `if` statement. If that's right, the next AI features won't look like chat boxes.
 
-If you've got an afternoon, try this. Pick one boring classification job you're currently paying a big model to do, point Jev at it, and compare the bill.
+Try it on one boring classification job you're paying a big model for, and compare the bill.
 
 ### Sources and further reading
 

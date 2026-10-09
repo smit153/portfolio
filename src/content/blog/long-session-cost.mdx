@@ -1,6 +1,6 @@
 ---
 title: "Why message 80 costs more than message 8"
-description: "How attention works, why it's quadratic, and what that means for your AI coding bill. With a session cost simulator to find where your own sessions go wrong."
+description: "How attention works, why it is quadratic, and what that does to your AI coding bill. Includes a simulator to find where your own sessions go wrong."
 date: 2026-10-06
 tags: [ai, llm, claude-code]
 cover: ../../assets/blog/long-session-cost.png
@@ -14,143 +14,126 @@ import AttentionShare from '../../components/blog/lsc/AttentionShare.astro';
 import ResendFigure from '../../components/blog/lsc/ResendFigure.astro';
 import CostSimulator from '../../components/blog/lsc/CostSimulator.astro';
 
-Type "rename this variable" as the 8th message of a Claude Code session. Then type exactly the same thing as the 80th. Same words, same answer, and with my sample numbers the second one costs about four times as much. Turn prompt caching off and it's six times.
+Type "rename this variable" as the 8th message of a Claude Code session. Then type exactly the same thing as the 80th. Same words, same answer, and with my sample numbers the second one costs about three times as much. Turn prompt caching off and it's six times.
 
-Nothing is broken. A long AI session runs into a quadratic curve twice. Once inside the model, where attention compares every token with every token before it. And once on your bill, where every turn sends the whole conversation again. Prompt caching makes the repeat much cheaper, but it doesn't change the shape of either curve. This post takes both apart, starting with how attention works, and ends with a simulator you can use to find where your own sessions go wrong.
+Nothing is broken. A long session hits a quadratic curve twice: inside the model, where attention compares every token with every earlier one, and on your bill, where every turn sends the whole conversation again. Caching makes the repeat cheaper but doesn't change the shape of either curve. There's a simulator at the end.
 
 ## The model forgets everything between requests
 
-Start with the part most people don't expect. The model holds no memory of your session. Claude Code's own docs say it plainly: "The model doesn't remember anything between requests, so Claude Code re-sends the full context: the system prompt, your project context, every prior message and tool result, and your new message."
-
-And one message from you is rarely one request. Every time Claude calls a tool (read a file, run a test, grep), the result goes back as another request, again carrying everything before it. So a long session is a long series of requests, each one a bit bigger than the last.
-
-To see why a big request costs so much to compute, you have to look at what the model does with all those tokens. That's attention.
+Claude Code's docs say it plainly: "The model doesn't remember anything between requests, so Claude Code re-sends the full context." One message from you is rarely one request, either. Every tool call sends its result back as another request carrying everything before it, so a long session is a series of requests, each a bit bigger than the last.
 
 ## What attention actually computes
 
-A token is a chunk of text, roughly ¾ of an English word. Inside a transformer each token becomes a vector, a list of a few thousand numbers. Attention is the step where tokens look at each other, and it's how "it" in a sentence figures out which noun it refers to.
+A token is a chunk of text, roughly ¾ of an English word. Inside a transformer it becomes a vector of a few thousand numbers, and attention is the step where tokens look at each other. It's how "it" works out which noun it points to.
 
-For every token, the model makes three vectors from it:
+Each token gets three vectors:
 
 - **Query (Q)**: what this token is looking for.
 - **Key (K)**: what this token offers to others.
 - **Value (V)**: the information it passes on if someone attends to it.
 
-Then each token's query is compared with every key using a dot product (multiply the two vectors element by element, add it all up). A high score means "this one is relevant to me". The scores go through softmax, which turns them into weights that add up to 1, and the token's output is the weighted sum of all the values. The original paper writes the whole thing in one line:
+A token's query is compared with every key using a dot product (multiply two vectors element by element and add it up). A high score means "relevant to me". Softmax turns the scores into weights that add up to 1, and the output is the weighted sum of the values. The original paper writes it in one line:
 
 <div class="formula">Attention(Q, K, V) = softmax( Q·Kᵀ / √d<sub>k</sub> ) · V</div>
 
-The √d<sub>k</sub> is a scaling factor. The paper explains that with large vectors "the dot products grow large in magnitude, pushing the softmax function into regions where it has extremely small gradients", so they shrink the scores first.
+The √d<sub>k</sub> just keeps the scores from getting so big that softmax can't cope.
 
 <AttentionFigure />
 
 ## Every token checks every earlier token, so the work is n²
 
-Look at what the formula asks you to do. Q·Kᵀ is every query against every key. With n tokens that's an n × n grid of dot products, each one d numbers long. The paper's own complexity table lists self-attention at **O(n²·d)** per layer. (O-notation just means "grows like": double n and the work grows four times.)
-
-Language models add one rule: a token can only look backwards, never at tokens that come after it. That's called a causal mask, and it cuts the grid to a triangle, about n²/2 cells. Half of a square is still a square in growth terms.
+Q·Kᵀ is every query against every key: with n tokens, an n × n grid of dot products. The paper lists self-attention at **O(n²·d)** per layer. (O-notation means "grows like": double n and the work grows four times.) Language models add one rule: a token can only look backwards. That causal mask cuts the grid to a triangle of about n²/2 cells, which still grows like a square.
 
 <AttentionGrid />
 
-At 1,000 tokens the triangle has about half a million cells. At 100,000 tokens, a normal size for a coding session that has read a few files, it's about five billion. At 1 million tokens, the full context window on current Claude models, it's about 500 billion. And that's per head, per layer.
-
-That's the "quadratic time complexity" you keep hearing about. The FlashAttention paper puts it in one sentence: "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length." FlashAttention fixed the memory half by never storing the full grid at once. It still computes every cell, so the time stays quadratic.
+At 1,000 tokens the triangle has about half a million cells. At 100,000, normal for a coding session that has read a few files, about five billion. At 1 million, the full context window on current Claude models, about 500 billion, per head, per layer. FlashAttention fixed the memory half by never storing the whole grid, but it still computes every cell, so the time stays quadratic.
 
 ## The KV cache makes each new token linear, not the whole reply
 
-So far we've only read a prompt. Writing a reply works one token at a time. The model produces token 1, appends it, produces token 2, and so on. Done naively, every new token would rerun the whole sequence through the model.
+A reply is written one token at a time. The key and value vectors of old tokens never change when a new token arrives, so the server keeps them in GPU memory instead of rerunning the whole sequence. kipply's write-up says the point is "to avoid recalculations of those vectors every time we sample a token."
 
-The fix is the KV cache. The key and value vectors of old tokens don't change when a new token arrives (the causal mask guarantees that), so the server keeps them in GPU memory. As kipply's inference write-up puts it, the point is "to avoid recalculations of those vectors every time we sample a token." Each new token then computes its own Q, K and V and compares its query against all the cached keys.
+Some explainers get this wrong: the KV cache doesn't make generation linear. Each new token still does one dot product per earlier token, so the total over a reply is still about n²/2. What the cache removes is the re-run, which would make generation closer to cubic.
 
-That last part matters, and some explainers get it wrong. The KV cache doesn't make generation linear. Each new token still does one dot product per earlier token, so the cost per token grows with the context, and the total over a reply is still about n²/2. What the cache removes is the re-run: without it, generation would be closer to cubic.
-
-The two phases have names you'll see in inference posts. **Prefill** processes your whole prompt at once, the full triangle, in parallel. **Decode** adds one row at a time. Sebastian Raschka sums it up: "Full-attention prefill has quadratic attention work in the sequence length" and "decoding attention work per new token grows linearly with the retained prefix."
+The two phases have names. **Prefill** processes your whole prompt at once, the full triangle. **Decode** adds one row at a time. Sebastian Raschka: decoding work per new token "grows linearly with the retained prefix."
 
 <KvCache />
 
 ## How much of the work is attention, really
 
-Here's a point most posts skip. Attention isn't the only work in a transformer. Every token also goes through the big weight matrices (the feed-forward layers and the projections that make Q, K and V), and that part doesn't depend on context length at all. For short contexts it's most of the bill.
-
-Kaplan and colleagues at OpenAI gave a handy approximation in their 2020 scaling-laws paper. The forward pass costs about `2N + 2·n_layer·n_ctx·d_attn` floating-point operations per token, where N is the parameter count and n_ctx the context length. They note that while the model width d_model is bigger than n_ctx/12, the context part "is a relatively small fraction of the total compute." Working through their own formulas, the two parts are equal at about 12 × d_model tokens.
+Attention isn't the only work in a transformer. Every token also goes through the big weight matrices, and that part doesn't depend on context length. By Kaplan et al.'s approximation (forward cost per token is about `2N + 2·n_layer·n_ctx·d_attn`), the two parts are equal at about 12 × d_model tokens.
 
 <AttentionShare />
 
-With a width of 8,192, attention is a rounding error in a 2,000-token chat and about 91% of the per-token compute at 1M tokens. Each token at that length costs about 11 times the compute of a token in an empty context.
+With a width of 8,192, attention is a rounding error in a 2,000-token chat. At 1M tokens it's about 91% of the compute, and each token costs about 11 times what it would in an empty context.
 
-And yet you pay a flat price. Anthropic's pricing page says current models "include the full 1M token context window at standard pricing. (A 900k-token request is billed at the same per-token rate as a 9k-token request.)" Whatever the extra compute costs, it's averaged into one rate. So the curve you see on your bill comes from somewhere else.
+Yet you pay a flat price: Anthropic says a 900k-token request "is billed at the same per-token rate as a 9k-token request." So the curve on your bill comes from somewhere else.
 
 ## Your bill is quadratic for a different reason
 
-Now back to your bill. Say a session starts with S tokens (system prompt, tool definitions, CLAUDE.md) and each turn adds about a tokens (your message, tool results, Claude's reply). Turn k sends roughly S + k·a tokens. Add that up over K turns and you get about S·K + a·K²/2. The second term is the one that grows with the square of the session length.
-
-It's the same triangle again. Each turn is a row, and each row re-sends everything above it.
+Say a session starts with S tokens (system prompt, tools, CLAUDE.md) and each turn adds about a tokens. Turn k sends roughly S + k·a tokens, so K turns add up to about S·K + a·K²/2. The second term grows with the square of the session length. It's the same triangle: each turn is a row, and each row re-sends everything above it.
 
 <ResendFigure />
 
 ## Prompt caching lowers the slope, not the shape
 
-That's where prompt caching comes in. If the start of a request (the prefix) exactly matches something the API processed recently, it skips the recompute and bills the matched part at a much lower rate. Anthropic doesn't say what it stores. In open-source servers like vLLM, prefix caching keeps the KV cache from the previous request: "we cache the kv-cache blocks of processed requests, and reuse these blocks when a new request comes in with the same prefix." So it's most likely the same KV cache from Demo 2, kept around between requests instead of thrown away.
+If the start of a request (the prefix) exactly matches something processed recently, the API skips the recompute and bills that part at a much lower rate. Anthropic doesn't say what it stores. The open-source vLLM server does "cache the kv-cache blocks of processed requests", so I'd guess it's the KV cache from Demo 2, kept between requests.
 
-The prices, from Anthropic's pricing page (checked October 2026):
+Prices from Anthropic's pricing page (checked October 2026):
 
 <div class="table-wrap num">
 
 | Per million tokens | Input | Cache write (5 min) | Cache write (1 h) | Cache read | Output |
 | --- | --- | --- | --- | --- | --- |
 | Claude Opus 5.5 | $4 | $5 | $8 | $0.20 | $20 |
-| Claude Sonnet 5.5 | $2 | $2.50 | $4 | $0.20 | $10 |
+| Claude Sonnet 5.5 | $2 | $2.50 | $4 | $0.10 | $10 |
 | Claude Haiku 4.5 | $1 | $1.25 | $2 | $0.10 | $5 |
 
 </div>
 
-As multipliers: writing to the cache costs 1.25× the input price for a 5-minute lifetime or 2× for an hour. Reading costs 0.1× (0.05× on Opus 5.5). A read also resets the timer for free. Claude Code sets all of this up for you.
+A 5-minute write costs 1.25× the input price and a 1-hour write 2×. A read costs 0.1× (0.05× on Opus 5.5 and Sonnet 5.5) and resets the timer for free. Claude Code sets this up for you.
 
-A 10× discount sounds like it fixes everything. It doesn't, because the cached part is the part that grows. Each turn still re-reads the whole history, now at a tenth of the price. A tenth of a quadratic is still a quadratic. Thinking tokens, which Claude Code's docs say are "billed as output tokens", add a flat cost per turn on top.
+A 10× or 20× discount sounds like it fixes everything, but the cached part is the part that grows. Each turn still re-reads the whole history at a fraction of the price, and a fraction of a quadratic is still a quadratic. Thinking tokens, which are billed as output, add a flat cost per turn on top.
 
-Two details about the timer matter more than you'd think. It runs from the start of a request, so a long generation eats into it. And Claude Code's docs say the lifetime "is an hour on a subscription and drops to five minutes once you're drawing on usage credits; on an API key or cloud provider, it's five minutes by default." Step away for coffee on an API key and the next message rewrites the whole context at the write price.
+The timer matters more than you'd think, and it runs from the start of a request, so a long generation eats into it. Claude Code's docs say the lifetime is an hour on a subscription but five minutes on an API key or once you're on usage credits. Step away for coffee on an API key and the next message rewrites the whole context at the write price.
 
 <CostSimulator />
 
-With the defaults (Sonnet 5.5, a 20k-token start, 3k tokens added per message, four requests per message) message 8 costs about $0.07 and message 80 about $0.29. The whole 80-message session comes to about $13.60. Without caching the same session would be about $112. Look at what dominates the cached bill: cache reads, around 80% of it. That's the re-sending, at a discount.
-
-(The $13.60 happens to land near Anthropic's own figure of "around $13 per developer per active day" for enterprise Claude Code users. That's a coincidence of my sample values, not a check on the model.)
+With the defaults (Sonnet 5.5, a 20k-token start, 3k tokens added per message, four requests per message) message 8 costs about $0.05 and message 80 about $0.16. The 80-message session comes to about $8.10, or about $112 without caching. Cache reads are around two-thirds of the cached bill: the re-sending, at a discount.
 
 ## What actually moves the curve
 
-Play with the simulator and you'll see a few patterns. Each one lines up with something in Anthropic's docs.
+Try these in the simulator. Each matches Anthropic's docs.
 
-- **/clear resets the triangle.** A /clear at message 41 cuts the default session from about $13.60 to about $8.75. The system prompt and tools stay cached because they're still the same prefix, so the first message after a clear is cheap. Claude Code's docs: "When you want a fresh start instead of continuity, /clear costs nothing."
-- **/compact is a big request itself.** It reads the whole conversation to write the summary. In the simulator it saves about as much as /clear, but you pay for one large read first. Worth it when you need the continuity.
-- **A break longer than the cache lifetime hurts most late in a session.** Put a 20-minute break before message 60 on the 5-minute cache and that one message jumps from about $0.23 to about $0.79, because the whole context gets written again at 1.25×. The same break at message 5 barely shows.
-- **The 1-hour cache isn't free.** Every write costs 2× instead of 1.25×. With no long breaks it makes the default session slightly more expensive ($14.10 against $13.60). It pays off when you step away for more than five minutes and come back.
-- **Tool calls multiply the reads.** Each tool call is a request that re-reads the context. Raise "API requests per message" and the read band grows with it.
-- **Switching models throws the cache away.** Each model has its own cache, so the next request reads the whole history uncached. The same is true for connecting an MCP server whose tools load up front, and on most models for changing effort mid-session.
-- **Subagents start their own context.** They don't read the parent's cache, and on a subscription they get the 5-minute lifetime by default. But their verbose output (test logs, file dumps) stays out of your main conversation, so it isn't re-sent on every later message.
+- **/clear resets the triangle.** A /clear at message 41 cuts the default session from about $8.10 to about $5.70. The system prompt and tools are still the same prefix, so they stay cached.
+- **/compact is a big request itself.** It reads the whole conversation to write the summary, so it saves about as much as /clear but costs one large read first. Worth it when you need the continuity.
+- **A break longer than the cache lifetime hurts most late in a session.** A 20-minute break before message 60 on the 5-minute cache takes that one message from about $0.13 to about $0.72, because the whole context gets written again. At message 5 you'd barely notice.
+- **The 1-hour cache isn't free.** Writes cost 2× instead of 1.25×, so with no long breaks the default session gets slightly more expensive ($8.60 against $8.10). It pays off when you step away for more than five minutes.
+- **Switching models throws the cache away.** Each model has its own cache. Connecting an MCP server whose tools load up front does it too, and on most models so does changing effort mid-session.
+- **Subagents start their own context.** They don't read the parent's cache and get the 5-minute lifetime by default, but their verbose output stays out of your main conversation, so it isn't re-sent on every later message.
 
 ## What this model can't tell you
 
-- **It's not your bill.** Real sessions have uneven messages: one huge file read, then ten tiny ones. The simulator spreads tokens evenly. Run `/usage` for the real numbers. Recent versions show a `Prompt cache (main)` line with your hit rate, misses and whether the cache is warm.
-- **Subscriptions don't bill per token.** On Pro or Max you hit usage limits, not a dollar figure. The same curve drives how fast you reach them, though.
-- **The attention numbers are textbook, not Claude.** Anthropic doesn't publish its architecture. Production models can use grouped KV heads, sliding windows or other tricks that change the constants. The O(n²) shape holds for standard full attention.
-- **What's in the cache is a guess.** Anthropic's docs describe caching by prefix, not by mechanism. The KV-cache explanation comes from open-source servers like vLLM.
-- **Long context has a quality cost too.** This post is about money and compute. Whether the model uses message 3 well at message 80 is a separate question.
+- **It's not your bill.** Real sessions are uneven, and the simulator spreads tokens evenly. Run `/usage` for real numbers. Recent versions show a `Prompt cache (main)` line with your hit rate and misses.
+- **Subscriptions don't bill per token.** On Pro or Max you hit usage limits, not a dollar figure, but the same curve decides how fast.
+- **The attention numbers are textbook, not Claude.** Anthropic doesn't publish its architecture, and tricks like grouped KV heads or sliding windows change the constants. The O(n²) shape holds for standard full attention.
+- **What's in the cache is a guess.** Anthropic's docs describe caching by prefix, not by mechanism. The KV-cache story comes from open-source servers.
+- **Long context has a quality cost too.** Whether the model uses message 3 well at message 80 is a separate question I haven't covered.
 
 ## What I'd actually do
 
-I'd treat a session like a branch, not a home. One task per session, and /clear when the task changes. Keep CLAUDE.md short, since it's in every request (Anthropic suggests under 200 lines). Pick the model and effort at the start and leave them alone. If you're on an API key and tend to wander off mid-task, either set `promptCacheTtl` to `1h` or run /compact before you leave. And when a test run or a log dump will be huge, let a subagent read it and hand back the summary.
+I'd treat a session like a branch, not a home: one task per session, and /clear when the task changes. Keep CLAUDE.md short, since it's in every request (Anthropic suggests under 200 lines). Pick the model and effort at the start and leave them alone. If you're on an API key and tend to wander off mid-task, set `promptCacheTtl` to `1h` or run /compact before you leave. When a test run or log dump will be huge, let a subagent read it and hand back the summary.
 
 None of that changes the shape. It just keeps you on the cheap end of the curve.
 
 ## Sources
 
-1. Vaswani et al., "Attention Is All You Need" (2017), equation and Table 1. [arxiv.org/abs/1706.03762](https://arxiv.org/abs/1706.03762)
-2. Dao et al., "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness" (2022). [arxiv.org/abs/2205.14135](https://arxiv.org/abs/2205.14135)
-3. Kaplan et al., "Scaling Laws for Neural Language Models" (2020), section 2.1. [arxiv.org/abs/2001.08361](https://arxiv.org/abs/2001.08361)
-4. kipply, "Transformer Inference Arithmetic". [kipp.ly/transformer-inference-arithmetic](https://kipp.ly/transformer-inference-arithmetic/)
-5. Sebastian Raschka, "KV cache as a long-context bottleneck". [sebastianraschka.com](https://sebastianraschka.com/faq/docs/kv-cache-long-context-bottleneck.html)
-6. vLLM, "Automatic Prefix Caching" design doc. [docs.vllm.ai](https://docs.vllm.ai/en/latest/design/prefix_caching.html)
-7. Anthropic, Pricing (checked 2026-10-07). [platform.claude.com/docs/en/about-claude/pricing](https://platform.claude.com/docs/en/about-claude/pricing)
-8. Anthropic, Prompt caching. [platform.claude.com/docs/en/build-with-claude/prompt-caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
-9. Claude Code docs, Manage costs effectively. [code.claude.com/docs/en/costs](https://code.claude.com/docs/en/costs)
-10. Claude Code docs, How Claude Code uses prompt caching. [code.claude.com/docs/en/prompt-caching](https://code.claude.com/docs/en/prompt-caching)
+1. RFC 9562, Universally Unique IDentifiers (UUIDs), May 2024: [rfc-editor.org/rfc/rfc9562.html](https://www.rfc-editor.org/rfc/rfc9562.html)
+2. PostgreSQL 18 documentation, UUID functions: [postgresql.org/docs/18/functions-uuid.html](https://www.postgresql.org/docs/18/functions-uuid.html)
+3. PostgreSQL 18 release notes: [postgresql.org/docs/current/release-18.html](https://www.postgresql.org/docs/current/release-18.html)
+4. Benchmark A (5M rows, Postgres), third-party blog post: [dev.to/iurii_rogulia/uuid-v7-vs-v4-postgresql-performance-benchmark-1d3k](https://dev.to/iurii_rogulia/uuid-v7-vs-v4-postgresql-performance-benchmark-1d3k)
+5. Benchmark B (about 44k rows, Postgres 15), third-party blog post: [mblum.me/posts/pg-uuidv7-benchmark](https://mblum.me/posts/pg-uuidv7-benchmark/)
+6. Hibernate 7 `UuidGenerator.Style`: [docs.hibernate.org](https://docs.hibernate.org/orm/7.0/javadocs/org/hibernate/annotations/UuidGenerator.Style.html)
+7. .NET `Guid.CreateVersion7`: [learn.microsoft.com](https://learn.microsoft.com/en-us/dotnet/api/system.guid.createversion7?view=net-10.0)
+8. MySQL and UUIDs (Oracle MySQL blog): [blogs.oracle.com/mysql/mysql-uuids](https://blogs.oracle.com/mysql/mysql-uuids)
+
+<p class="small-note">All demo values are generated live in your browser or are simple arithmetic. Benchmark figures are from the linked posts, not my own measurements.</p>

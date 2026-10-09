@@ -15,33 +15,33 @@ import BenchmarkA from '../../components/blog/uuid/BenchmarkA.astro';
 import Size from '../../components/blog/uuid/Size.astro';
 import Chooser from '../../components/blog/uuid/Chooser.astro';
 
-Every new table starts with the same small decision: how do you identify a row? For most of us the real answer has been a habit rather than a choice. You reach for an auto-increment integer because it's right there, or you reach for a UUID because someone once told you integers don't scale. Both habits are defensible, and both cost you something. UUIDv7 is the first option I've found that doesn't make me pick which cost to eat.
+Every new table raises the same question: how do you identify a row? Most of us answer with habit, an auto-increment integer because it's right there or a UUID because someone said integers don't scale. Both cost you something. UUIDv7 is the first option I've found that doesn't make me pick.
 
 ## Auto-increment is cheap, until you need more than one writer
 
-An auto-increment column is the path of least resistance. Every engine ships it: `AUTO_INCREMENT` in MySQL, `GENERATED ... AS IDENTITY` (or the older `SERIAL`) in Postgres, `IDENTITY` in SQL Server. It's compact, four bytes for an `int` and eight for a `bigint`. It reads fine in a URL, `orders/1042` instead of a block of hex. And it's easy on the index, which I'll get to in a minute.
+An auto-increment column is the default for good reason. Every engine ships it: `AUTO_INCREMENT` in MySQL, `GENERATED ... AS IDENTITY` (or the older `SERIAL`) in Postgres, `IDENTITY` in SQL Server. It's compact (four bytes for an `int`, eight for a `bigint`), reads fine in a URL (`orders/1042`) and is easy on the index.
 
-The trouble shows up later. The next number has to come from somewhere, so one authority has to decide what it is. That's fine with a single database. The moment two servers are inserting rows at the same time, they have to check with each other so they don't both hand out `1043`.
+The trouble comes later: the next number has to come from one authority, so once two servers insert at the same time they have to coordinate or they'll both hand out `1043`.
 
-The values are easy to guess, too. If your page sits at `/users/42`, then `/users/43` is an obvious thing to try. If the app doesn't check that you're allowed to see user 43, you've got an IDOR (insecure direct object reference): a bug where someone reaches records that aren't theirs just by editing the ID in a URL.
+The values are guessable too. From `/users/42`, `/users/43` is the obvious next try. If the app doesn't check you may see user 43, that's an IDOR (insecure direct object reference): reaching records that aren't yours by editing an ID in a URL.
 
 ## UUIDv4 solves both problems and breaks your index
 
-A random UUID (version 4) is 122 bits of randomness with the version and variant bits stamped on top. Any process, on any machine, can generate one without asking a database or anyone else, and nobody is walking your user table by incrementing a number. That takes care of both auto-increment problems.
+A random UUID (version 4) is 122 bits of randomness with the version and variant bits stamped on top. Any process can generate one without asking anyone, and nobody can walk your table by adding one. That fixes both problems.
 
-The bill comes due in storage, so I want to show how a key is actually held on disk. A primary key lives in a B-tree, which keeps its entries sorted across fixed-size pages. When the key is sequential, every insert is larger than the last. It lands at the right edge of the tree, fills the current page, and grabs a new one when that's full. Cheap and orderly.
+The bill comes due in the index. A primary key lives in a B-tree, which keeps entries sorted across fixed-size pages. With a sequential key, each insert is larger than the last, so it lands at the right edge, fills the page and starts a new one.
 
-A v4 is random, so it lands wherever it happens to sort, usually inside a page that's already full. The database then splits that page: allocate a new one, copy half the rows over, update the parent. Splits cost CPU and I/O, and they leave the index fragmented, so later reads pull more pages off disk to cover the same rows. A UUID is also 16 bytes, four times an `int` and twice a `bigint`. A bigger key makes a bigger index, so less of it fits in memory.
+A v4 lands wherever it sorts, usually in a full page. The database splits it: allocate a new page, copy half the rows, update the parent. Splits cost CPU and I/O and fragment the index, so reads touch more pages. A UUID is also 16 bytes, four times an `int` and twice a `bigint`, so the index is bigger and less of it fits in memory.
 
 <BTree />
 
 ## What v7 changes
 
-v7 keeps the 128-bit UUID shape and rearranges the bits. The first 48 hold a Unix timestamp in milliseconds, stored big-endian so the most significant part of the value lines up with the most significant part of the time. Then a 4-bit version tag, a 2-bit variant, and the rest is random. That's the layout in RFC 9562, the 2024 standard that replaced RFC 4122.
+v7 keeps the 128-bit shape and rearranges the bits. The first 48 bits are a Unix timestamp in milliseconds, then a 4-bit version, a 2-bit variant and random bits. That's RFC 9562, the 2024 standard that replaced RFC 4122.
 
 <Layout />
 
-That rearrangement is the whole trick. Because the clock is in front, a v7 generated a moment later sorts after one generated earlier. RFC 9562 says v7 is designed so that database indexes can sort it as plain raw bytes. Version 1 also carried a timestamp, but it stored the pieces in an order that doesn't sort by time, and you have to parse it to put it in order. A v7 behaves like a sequential integer at insert time, appending to the right edge of the tree, while the random tail keeps it unique and lets any node mint one on its own.
+With the clock in front, a later v7 sorts after an earlier one, and RFC 9562 says databases can sort it as plain raw bytes. Version 1 also had a timestamp, but stored it in an order that doesn't sort by time. A v7 appends to the right edge of the tree like a sequential integer, while the random tail keeps it unique and lets any node mint one on its own.
 
 <Decode />
 
@@ -49,9 +49,9 @@ That rearrangement is the whole trick. Because the clock is in front, a v7 gener
 
 ## What the numbers look like
 
-I haven't run my own benchmark for this post, so here are two from other people. Both are single blog-post runs, not lab results, and they disagree on how big the gap is. They agree on the direction.
+I haven't run my own benchmark, so here are two from other people. Both are single blog-post runs, not lab results, and they disagree on the size of the gap but not the direction.
 
-One tested 5 million rows in Postgres with three key types. The other tested a much smaller table (about 44,000 rows on Postgres 15) and saw v7 inserts take about half the time of v4, and a table about 25% smaller. I'd test with your own data before you tell your team it's 4x faster.
+One used 5 million rows in Postgres with three key types. The other used a much smaller table (about 44,000 rows, Postgres 15) and saw v7 inserts take about half the time of v4, with a table roughly a fifth smaller. Test on your own data before you promise anyone a speedup.
 
 <BenchmarkA />
 
@@ -59,23 +59,23 @@ One tested 5 million rows in Postgres with three key types. The other tested a m
 
 ## What v7 can't do
 
-Two things don't come back. A v7 is still 16 bytes, twice a `bigint`, and it's still not something you'd read aloud over the phone.
+A v7 is still 16 bytes, twice a `bigint`, and you still can't read one aloud over the phone.
 
-There's a subtler cost that's easy to miss: the timestamp is sitting in the open. Anyone holding a v7 can decode roughly when the row was created and how fast you're issuing IDs. Demo 2 does exactly that in a few lines. Postgres even ships `uuid_extract_timestamp()` for it, and its docs warn the result may not equal the exact creation time.
+The timestamp is also in the open. Anyone holding a v7 can decode roughly when the row was created and how fast you issue IDs. Demo 2 does it in a few lines, and Postgres ships `uuid_extract_timestamp()`, whose docs warn the result may not equal the exact creation time.
 
-You also get fewer random bits than v4. The layout leaves 74 bits after the timestamp, version and variant, against 122 for v4. That's still plenty to avoid collisions and stop anyone enumerating your keys. But 74 is the ceiling. RFC 9562 lets generators spend some of those bits on a counter or on extra time precision, and Postgres' `uuidv7()` puts sub-millisecond time in them. So I wouldn't use a v7 for anything meant to stay secret. The RFC itself says not to assume UUIDs work as security tokens. Password-reset links, session tokens, invite codes: use a v4 or a proper random token from a cryptographic generator. Keep v7 for primary keys and log IDs, where sortability is the point and the creation time isn't sensitive.
+You get fewer random bits than v4, too: 74 against 122. That's plenty to avoid collisions and stop enumeration, but it's a ceiling: RFC 9562 lets generators spend some on a counter or extra time precision, and Postgres' `uuidv7()` puts sub-millisecond time there. So I wouldn't use a v7 for anything meant to stay secret, and the RFC says UUIDs must not be used as security capabilities. For reset links, session tokens and invite codes, use a v4 or a proper random token. Keep v7 for primary keys and log IDs, where the creation time isn't sensitive.
 
-One more limit that's easy to skip: with several writers, order is only as good as their clocks. Two servers whose clocks disagree by a few milliseconds will produce IDs that are close to sorted, not strictly sorted. For an index that's fine. If you need a strict global order, a v7 alone won't give you one.
+Last limit: with several writers, order is only as good as their clocks. Servers a few milliseconds apart produce IDs that are roughly sorted, not strictly. That's fine for an index, but if you need strict global order, v7 alone won't give it.
 
 ## What I'd reach for
 
-If you're on a single node and the IDs never leave the database, auto-increment integers are still the leanest thing you can use. Don't add 8 bytes and a dependency to solve problems you don't have.
+On a single node where IDs never leave the database, auto-increment is still the leanest option. Don't pay 8 bytes for problems you don't have.
 
-The moment you have more than one writer, or an ID that will show up in a URL or an API response, skip random v4 and use v7. You get v4's decentralized generation and unguessability without handing your index a pile of busywork.
+With more than one writer, or an ID in a URL or API response, skip v4 and use v7. You keep decentralized generation and unguessability without handing your index busywork.
 
 <Chooser />
 
-Adopting v7 is close to a one-liner now. Postgres 18, out in September 2025, ships a built-in `uuidv7()`:
+Adopting v7 is nearly a one-liner now. Postgres 18, out in September 2025, ships a built-in `uuidv7()`:
 
 ```sql
 CREATE TABLE orders (
@@ -86,7 +86,7 @@ CREATE TABLE orders (
 SELECT uuid_extract_timestamp(id) FROM orders LIMIT 1;
 ```
 
-On older Postgres versions, generate the value in your app. MySQL's built-in `UUID()` makes version 1, so generate v7 client-side there and store it as `BINARY(16)`. Hibernate 7 has a `VERSION_7` UUID generator style, and .NET 9 has `Guid.CreateVersion7()`. Check your own ORM or library for the equivalent.
+On older Postgres, generate the value in your app. MySQL's `UUID()` makes version 1, so generate v7 client-side and store it as `BINARY(16)`. Hibernate 7 has a `VERSION_7` UUID generator style and .NET 9 has `Guid.CreateVersion7()`. Check your ORM for the equivalent.
 
 <div class="table-wrap compare">
 
