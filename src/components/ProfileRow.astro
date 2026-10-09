@@ -19,47 +19,49 @@ const socials = [
 ];
 ---
 
-<section class="relative h-[101px] [--avatar:96px] sm:[--avatar:150px]">
-	<!-- top hairline: full bleed, broken under the avatar -->
-	<span aria-hidden="true" class="absolute right-full top-0 h-[2px] w-[50vw] bg-line"></span>
-	<span
-		aria-hidden="true"
-		class="absolute left-[calc(var(--avatar)+1px)] top-0 h-[2px] w-[calc(100%-var(--avatar)-1px+50vw)] bg-line"
-	></span>
-	<span aria-hidden="true" class="absolute inset-y-0 left-[calc(var(--avatar)+1px)] w-[2px] bg-line"></span>
+<!-- the avatar and name; from tablet up the links box sits at its right, on phones it's a row of its own below -->
+<section class="relative [--avatar:96px] sm:[--avatar:150px]">
+	<div class="relative h-[101px]">
+		<!-- top hairline: full bleed, broken under the avatar -->
+		<span aria-hidden="true" class="absolute right-full top-0 h-[2px] w-[50vw] bg-line"></span>
+		<span
+			aria-hidden="true"
+			class="absolute left-[calc(var(--avatar)+1px)] top-0 h-[2px] w-[calc(100%-var(--avatar)-1px+50vw)] bg-line"
+		></span>
+		<span aria-hidden="true" class="absolute inset-y-0 left-[calc(var(--avatar)+1px)] w-[2px] bg-line"></span>
 
-	<Image
-		src={avatar}
-		alt="Pixel-art portrait of Smit Sojitra"
-		width={300}
-		height={300}
-		class="absolute bottom-0 left-px z-10 size-(--avatar) rounded-full object-cover [image-rendering:pixelated]"
-	/>
+		<Image
+			src={avatar}
+			alt="Pixel-art portrait of Smit Sojitra"
+			width={300}
+			height={300}
+			class="absolute bottom-0 left-px z-10 size-(--avatar) rounded-full object-cover [image-rendering:pixelated]"
+		/>
 
-	<!-- each line stays on one row; on the narrowest phones the links box gives up a little width for it -->
-	<div class="pl-[calc(var(--avatar)+17px)] pr-[112px] pt-3 min-[400px]:pr-[132px] sm:pr-[188px]">
-		<h1 class="truncate whitespace-nowrap text-base font-medium leading-normal tracking-[-0.02em] text-white sm:text-[22px] sm:leading-[1.5]">
-			Smit Sojitra
-		</h1>
-		<p class="truncate whitespace-nowrap text-body tracking-[-0.04em] text-muted">Software Developer</p>
+		<!-- each line stays on one row -->
+		<div class="pl-[calc(var(--avatar)+17px)] pr-5 pt-3 sm:pr-[188px]">
+			<h1 class="truncate whitespace-nowrap text-base font-medium leading-normal tracking-[-0.02em] text-white sm:text-[22px] sm:leading-[1.5]">
+				Smit Sojitra
+			</h1>
+			<p class="truncate whitespace-nowrap text-body tracking-[-0.04em] text-muted">Software Developer</p>
+		</div>
 	</div>
 
-	<!-- links box: resume on top, socials below -->
-	<div class="absolute inset-y-0 right-0 flex w-[104px] flex-col border-l-2 border-line pt-[2px] min-[400px]:w-[124px] sm:w-[180px]">
+	<!-- links: phones, one row (resume left, socials right) under a full-bleed line; sm+, a box at the right with
+	     the resume on top and the socials below -->
+	<div class="relative flex h-12 items-stretch justify-between pl-5 pr-3 sm:absolute sm:right-0 sm:top-0 sm:h-[101px] sm:w-[180px] sm:flex-col sm:border-l-2 sm:border-line sm:p-0 sm:pt-[2px]">
+		<span aria-hidden="true" class="absolute inset-x-[-50vw] top-0 h-[2px] bg-line sm:hidden"></span>
 		<a
 			href={RESUME_HREF}
 			target="_blank"
 			rel="noopener noreferrer"
-			class="flex flex-1 items-center justify-end gap-2 border-b-2 border-dotted pr-2.5 border-line text-white transition-opacity hover:opacity-70 "
+			class="flex items-center gap-2 text-white transition-opacity hover:opacity-70 sm:flex-1 sm:justify-end sm:border-b-2 sm:border-dotted sm:border-line sm:pr-2.5"
 		>
 			<img src={resume.src} alt="" width="16" height="20" class="block h-5 w-4" />
 			<span class="leading-none tracking-[0.04em] [font-variant:small-caps] text-heading">Résumé</span>
 		</a>
 
-		<!-- phones: 2x2 grid scaled down to fit the cell; sm+: one row -->
-		<ul
-			class="grid flex-1 grid-cols-2 place-content-center place-items-center gap-x-2 gap-y-1 max-sm:scale-[0.6] sm:flex sm:items-center sm:justify-center sm:gap-3"
-		>
+		<ul class="flex items-center gap-3 sm:flex-1 sm:justify-center">
 			{
 				socials.map(({ label, href, icon, frame, inset }) => (
 					<li class="flex">

@@ -37,7 +37,8 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 ---
 
 <figure class="px-3 py-5">
-	<div class="overflow-x-auto [scrollbar-width:none]" data-graph-scroll>
+	<!-- when the graph is wider than the column it scrolls, and the edges with more to see fade out instead of cutting off -->
+	<div class="graph-scroll overflow-x-auto [scrollbar-width:none]" data-graph-scroll>
 		<svg
 			width={width}
 			height={height}
@@ -65,11 +66,11 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 
 	<figcaption class="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-small text-white">
 		<p>
-			<span class="text-muted">Fig. 1.</span>{' '}
 			{
 				calendar ? (
 					<>
-						{calendar.total.toLocaleString('en-US')} contributions, {range}. Source:{' '}
+						{/* phones get the short version; one line, so no stray space before the comma */}
+						{calendar.total.toLocaleString('en-US')} contributions<span class="sm:hidden"> in the last year</span><span class="max-sm:hidden">, {range}</span>. Source:{' '}
 						<a href={`https://github.com/${LOGIN}`} target="_blank" rel="noopener noreferrer" class={link}>
 							GitHub
 						</a>
@@ -88,7 +89,26 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 	</figcaption>
 </figure>
 
+<style>
+	/* each edge fades only while there's more graph past it */
+	.graph-scroll {
+		--fade-l: 0px;
+		--fade-r: 0px;
+		mask-image: linear-gradient(to right, transparent, #000 var(--fade-l), #000 calc(100% - var(--fade-r)), transparent);
+	}
+</style>
+
 <script>
-	// on narrow screens, start scrolled to the most recent weeks
-	document.querySelectorAll<HTMLElement>('[data-graph-scroll]').forEach((el) => (el.scrollLeft = el.scrollWidth));
+	// on narrow screens, start scrolled to the most recent weeks, and fade whichever edges have more to scroll to
+	document.querySelectorAll<HTMLElement>('[data-graph-scroll]').forEach((el) => {
+		const fade = () => {
+			const max = el.scrollWidth - el.clientWidth;
+			el.style.setProperty('--fade-l', el.scrollLeft > 1 ? '40px' : '0px');
+			el.style.setProperty('--fade-r', el.scrollLeft < max - 1 ? '40px' : '0px');
+		};
+		el.scrollLeft = el.scrollWidth;
+		fade();
+		el.addEventListener('scroll', fade, { passive: true });
+		addEventListener('resize', fade);
+	});
 </script>

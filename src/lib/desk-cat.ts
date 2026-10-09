@@ -32,6 +32,10 @@ const GRIP = meta.anims.held.top + 24; // where it's held: the chest, just under
 const STORE = 'desk-cat-v1';
 // it prefers the page column but the strip runs edge to edge: these odds let it stray into the margins now and then
 const ROAM_OUT = 0.2; // chance a wander heads anywhere along the strip instead of within the column
+// on phones the column is the whole screen: the cat starts in the middle and wanders near it, never off the edge
+const NARROW = 640;
+const NARROW_ROAM = 0.22; // how far either side of the middle it wanders on phones, as a share of the screen width
+const narrow = () => document.documentElement.clientWidth < NARROW;
 const COME_BACK = 0.75; // chance, each time it decides what to do while out in a margin, that it walks back in
 
 class Interrupt extends Error {}
@@ -147,14 +151,14 @@ class DeskCat {
 	get home() {
 		return this.floors.find((f) => f.home) ?? this.floors.at(-1) ?? null;
 	}
-	/** keep x inside the floor's column */
+	/** keep x inside the floor's column (on phones, the whole sprite stays on screen) */
 	clampX(x: number, f = this.floor) {
-		const pad = (CW * SCALE) / 2.5;
+		const pad = (CW * SCALE) / (narrow() ? 2 : 2.5);
 		return f ? Math.min(f.right - pad, Math.max(f.left + pad, x)) : x;
 	}
 	/** keep x on screen: the floors are full-bleed lines */
 	clampWide(x: number) {
-		const pad = (CW * SCALE) / 2.5;
+		const pad = (CW * SCALE) / (narrow() ? 2 : 2.5);
 		return Math.min(document.documentElement.clientWidth - pad, Math.max(pad, x));
 	}
 	floorBelow(y: number) {
@@ -167,7 +171,9 @@ class DeskCat {
 			saved = JSON.parse(localStorage.getItem(STORE) ?? 'null');
 		} catch {}
 		const f = (saved && this.floors[saved.i]) || this.home;
-		if (f) this.land(f, f.left + (f.right - f.left) * (saved?.fx ?? 0.5), false);
+		// phones always start it in the middle of the screen
+		const fx = narrow() ? 0.5 : (saved?.fx ?? 0.5);
+		if (f) this.land(f, f.left + (f.right - f.left) * fx, false);
 	}
 	save() {
 		if (!this.floor) return;
@@ -423,9 +429,11 @@ class DeskCat {
 		switch (what) {
 			case 'wander':
 			case 'dash': {
-				const to =
-					Math.random() < ROAM_OUT
-						? this.clampWide(rand(0, document.documentElement.clientWidth))
+				const vw = document.documentElement.clientWidth;
+				const to = narrow()
+					? this.clampWide(rand(vw * (0.5 - NARROW_ROAM), vw * (0.5 + NARROW_ROAM)))
+					: Math.random() < ROAM_OUT
+						? this.clampWide(rand(0, vw))
 						: this.clampX(rand(f.left, f.right));
 				if (Math.abs(to - this.x) < 30) return this.wait(rand(600, 1200), t); // too short to bother walking
 				await this.walk(to, t, what === 'dash');
