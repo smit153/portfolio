@@ -11,12 +11,12 @@ built: Q1 2026
 updated: Q3 2026
 live: https://oshi.blue153.deno.net/
 source: https://github.com/smit153/oshi
-stack: [TypeScript, Deno, Fresh 2, Preact, Preact Signals, Deno KV, Tailwind CSS 4, Vite, Playwright]
+stack: [TypeScript, Deno, Fresh 2, Preact, Preact Signals, Deno KV, Tailwind CSS, Vite, Playwright]
 status: shipped
 metric: 273 puzzles
 icon: maze
 featured: true
-order: 1
+order: 2
 ---
 
 ## Why I built this
@@ -82,7 +82,7 @@ Core technologies:
 - **Fresh 2:** file-based routes, server rendering and island hydration.
 - **Preact and Signals:** UI components and reactive board and editor state.
 - **Deno KV:** persistent user records, solutions and aggregates.
-- **Tailwind CSS 4 and Open Props:** utilities, design tokens and themes.
+- **Tailwind CSS and Open Props:** utilities, design tokens and themes.
 - **Vite and esbuild:** application builds and local solver-worker bundles.
 - **Playwright:** Chromium automation inside Deno end-to-end tests.
 - **PostHog and OpenTelemetry:** product events and request tracing.
