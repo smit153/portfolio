@@ -14,9 +14,9 @@ import PixelIcon from './PixelIcon.astro';
 const DOMAIN = 'smiit.in';
 const REPO = 'https://github.com/smit153/portfolio';
 
-// the commit this build came from: Cloudflare Pages passes it in; locally, ask git
+// the commit this build came from: Cloudflare's Workers Builds passes it in; locally, ask git
 function commit() {
-	const sha = process.env.CF_PAGES_COMMIT_SHA;
+	const sha = process.env.WORKERS_CI_COMMIT_SHA;
 	if (sha) return sha.slice(0, 7);
 	try {
 		return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
