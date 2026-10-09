@@ -1,0 +1,10 @@
+// The daily rebuild: a tiny Worker whose only job is to hit the Pages deploy hook on a schedule.
+// Deploy from this folder with `npx wrangler deploy`, then `npx wrangler secret put DEPLOY_HOOK_URL`.
+{
+	"name": "smiit-daily-rebuild",
+	"main": "src/index.js",
+	"compatibility_date": "2026-10-01",
+	// 00:30 UTC is 06:00 in India, so the morning's graph includes yesterday
+	"triggers": { "crons": ["30 0 * * *"] },
+	"observability": { "enabled": true }
+}

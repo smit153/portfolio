@@ -9,7 +9,7 @@ const LABEL_H = 18;
 // neutral grays from the page palette: empty → busiest
 const SHADES = ['var(--color-line)', '#383838', 'var(--color-tick)', 'var(--color-muted)', '#c4c4c4'];
 
-const calendar = await getContributions(LOGIN);
+const calendar = getContributions(LOGIN);
 const days = calendar?.days ?? [];
 
 // columns are weeks starting on Sunday; pad the first week so day 0 lands on its weekday row
