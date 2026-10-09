@@ -13,6 +13,8 @@ export default defineConfig({
   adapter: cloudflare({ prerenderEnvironment: 'node', imageService: 'compile' }),
   // no sessions on this site, so no KV namespace for them
   session: false,
+  // the CSS is small (about 9 KB): inline it so the first paint doesn't wait on another request
+  build: { inlineStylesheets: 'always' },
   // blog posts are MDX: Markdown with interactive components dropped in
   integrations: [mdx()],
   markdown: {
