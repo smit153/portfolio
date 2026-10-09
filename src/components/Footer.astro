@@ -1,9 +1,11 @@
 ---
-// Full-width footer: just the torch field (see src/lib/torch-field.ts).
+// Full-width footer: the colophon in the page column, then the torch field (see src/lib/torch-field.ts).
+import Colophon from './Colophon.astro';
 ---
 
 <!-- no top border: the ascii strip above already ends in a line -->
 <footer class="relative bg-ink">
+	<Colophon />
 	<canvas data-torch-field aria-hidden="true" class="block w-full touch-pan-y"></canvas>
 </footer>
 

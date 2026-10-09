@@ -6,6 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://smiit.in',
   // blog posts are MDX: Markdown with interactive components dropped in
   integrations: [mdx()],
   markdown: {
