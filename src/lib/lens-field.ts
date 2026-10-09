@@ -1,7 +1,8 @@
 // The footer's lens: the name as a dot matrix, a small dot in the middle of every square of the name and a fainter
 // one in every empty square. Hovering brings in a magnifier that grows the dots into full blocks: the name turns
 // solid white, the empty squares become a dim checkerboard, and a ring of half-size blocks sits at the rim.
-// Nothing runs at rest: it only draws while the lens follows the pointer and eases in or out.
+// On screens too narrow for the name on one line, it stacks into two. Nothing runs at rest: it only draws while
+// the lens follows the pointer and eases in or out.
 
 // 5x7 pixel letters for the name
 const GLYPH: Record<string, string[]> = {
@@ -29,9 +30,22 @@ function bitmap(text: string) {
 	return rows;
 }
 
-const PX = 3; // css pixels per pixel
-const MAX_PITCH = 12; // css px per square on wide screens (a multiple of PX)
-const MIN_PITCH = 6; // smaller on narrow ones, so the whole name still fits
+/** the words stacked, each line centred, a row of space between them: for screens too narrow for one line */
+function stacked(text: string) {
+	const lines = text.split(' ').map(bitmap);
+	const width = Math.max(...lines.map((l) => l[0].length));
+	const out: boolean[][] = [];
+	lines.forEach((l, i) => {
+		if (i) out.push(Array(width).fill(false));
+		const pad = Math.floor((width - l[0].length) / 2);
+		for (const row of l) out.push([...Array(pad).fill(false), ...row, ...Array(width - pad - row.length).fill(false)]);
+	});
+	return out;
+}
+
+const MAX_PITCH = 12; // css px per square on wide screens
+// a square needs at least 3 pixels across, so its dot has room around it
+const MIN_CELL = 3;
 const MARGIN_ROWS = 3; // empty squares above and below the name
 const RADIUS = 110; // the lens, in css px
 const DOT = 175; // grey of a name dot at rest
@@ -40,8 +54,10 @@ const SOLID = 245; // the name under the lens
 
 export function startLensField(canvas: HTMLCanvasElement, text: string) {
 	const ctx = canvas.getContext('2d')!;
-	const name = bitmap(text);
-	const nameW = name[0].length;
+	const oneLine = bitmap(text);
+	const twoLines = stacked(text);
+	let name = oneLine;
+	let nameW = 0, nameH = 0;
 	// drawn at one canvas pixel per pixel, then scaled up with no smoothing so every pixel stays square
 	const off = document.createElement('canvas');
 	const octx = off.getContext('2d')!;
@@ -49,22 +65,36 @@ export function startLensField(canvas: HTMLCanvasElement, text: string) {
 	let rest: Uint8Array; // the resting dot matrix, one grey per pixel
 	let mask: Uint8Array; // 1 where a pixel is inside the name
 	let w = 0, h = 0, bw = 0, bh = 0, cell = 4, oX = 0;
+	let PX = 3; // css pixels per pixel: 3, or 2 on the narrowest phones
 	let mx = 0, my = 0, pointer = false;
 	let lx = 0, ly = 0, a = 0; // where the lens is, and how far it has grown in (0 to 1)
 	let raf = 0;
 
 	function size() {
 		w = canvas.clientWidth;
-		const pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, Math.floor((w * 0.92) / nameW / PX) * PX));
+		// the biggest square (a whole number of pixels) that fits the name across 92% of the width
+		const pitchFor = (bm: boolean[][], p: number) => Math.min(MAX_PITCH, Math.floor((w * 0.92) / bm[0].length / p) * p);
+		// prefer one line in 3px pixels, then the words stacked in 3px, then stacked in 2px for the narrowest phones
+		const layout =
+			[
+				[oneLine, 3],
+				[twoLines, 3],
+				[twoLines, 2],
+			].find(([bm, p]) => pitchFor(bm as boolean[][], p as number) >= MIN_CELL * (p as number)) ?? [twoLines, 2];
+		name = layout[0] as boolean[][];
+		PX = layout[1] as number;
+		nameW = name[0].length;
+		nameH = name.length;
+		const pitch = Math.max(MIN_CELL * PX, pitchFor(name, PX));
 		const cols = Math.floor(w / pitch);
 		const scale = Math.max(1, Math.floor((cols * 0.92) / nameW));
-		const rows = NAME_ROWS * scale + MARGIN_ROWS * 2;
+		const rows = nameH * scale + MARGIN_ROWS * 2;
 		h = rows * pitch;
 		cell = pitch / PX;
 		// the squares start on a whole pixel, so the lens blocks line up with the letters
 		oX = Math.floor((w - cols * pitch) / 2 / PX);
 		const nx = Math.floor((cols - nameW * scale) / 2);
-		const ny = Math.floor((rows - NAME_ROWS * scale) / 2);
+		const ny = Math.floor((rows - nameH * scale) / 2);
 		canvas.style.height = `${h}px`;
 		const dpr = Math.min(devicePixelRatio || 1, 2);
 		canvas.width = Math.round(w * dpr);
@@ -87,7 +117,7 @@ export function startLensField(canvas: HTMLCanvasElement, text: string) {
 				const gx = Math.floor((sx - nx) / scale);
 				const gy = Math.floor((sy - ny) / scale);
 				const i = by * bw + bx;
-				mask[i] = gy >= 0 && gy < NAME_ROWS && gx >= 0 && gx < nameW && name[gy][gx] ? 1 : 0;
+				mask[i] = gy >= 0 && gy < nameH && gx >= 0 && gx < nameW && name[gy][gx] ? 1 : 0;
 				const ix = bx - oX - sx * cell;
 				const iy = by - sy * cell;
 				if (ix >= lo && ix <= hi && iy >= lo && iy <= hi) rest[i] = mask[i] ? DOT : FAINT;

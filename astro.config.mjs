@@ -76,6 +76,9 @@ export default defineConfig({
     }
   ],
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    // mermaid is only imported lazily (project diagrams), so pre-bundle it up front; found mid-session, the dev
+    // server re-optimises and the page's import fails
+    optimizeDeps: { include: ['mermaid'] }
   }
 });

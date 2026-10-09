@@ -51,6 +51,8 @@
   text-decoration-color: var(--color-tick);
   text-underline-offset: 4px;
   transition: text-decoration-color 0.2s;
+  /* long bare URLs (the source lists) break instead of running off a phone screen */
+  overflow-wrap: anywhere;
 }
 .prose a:hover {
   text-decoration-color: #fff;

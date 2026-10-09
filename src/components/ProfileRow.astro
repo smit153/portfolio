@@ -36,15 +36,16 @@ const socials = [
 		class="absolute bottom-0 left-px z-10 size-(--avatar) rounded-full object-cover [image-rendering:pixelated]"
 	/>
 
-	<div class="pl-[calc(var(--avatar)+17px)] pr-[132px] pt-3 sm:pr-[188px]">
-		<h1 class="text-base font-medium leading-normal tracking-[-0.02em] text-white sm:text-[22px] sm:leading-[1.5]">
+	<!-- each line stays on one row; on the narrowest phones the links box gives up a little width for it -->
+	<div class="pl-[calc(var(--avatar)+17px)] pr-[112px] pt-3 min-[400px]:pr-[132px] sm:pr-[188px]">
+		<h1 class="truncate whitespace-nowrap text-base font-medium leading-normal tracking-[-0.02em] text-white sm:text-[22px] sm:leading-[1.5]">
 			Smit Sojitra
 		</h1>
-		<p class="text-body tracking-[-0.04em] text-muted">Software Developer</p>
+		<p class="truncate whitespace-nowrap text-body tracking-[-0.04em] text-muted">Software Developer</p>
 	</div>
 
 	<!-- links box: resume on top, socials below -->
-	<div class="absolute inset-y-0 right-0 flex w-[124px] flex-col sm:w-[180px] border-l-2 border-line pt-[2px]">
+	<div class="absolute inset-y-0 right-0 flex w-[104px] flex-col border-l-2 border-line pt-[2px] min-[400px]:w-[124px] sm:w-[180px]">
 		<a
 			href={RESUME_HREF}
 			target="_blank"

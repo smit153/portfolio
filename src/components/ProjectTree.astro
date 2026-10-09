@@ -248,6 +248,13 @@ const { projects } = Astro.props;
 		align-items: baseline;
 		padding: 5px 0;
 	}
+	/* on phones the file name sits above its contents, so the text gets the whole width */
+	@media (max-width: 560px) {
+		.file {
+			grid-template-columns: 1fr;
+			gap: 2px;
+		}
+	}
 	.fname {
 		font-size: var(--text-small);
 		line-height: var(--text-small--line-height);
