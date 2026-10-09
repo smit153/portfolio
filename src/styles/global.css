@@ -25,6 +25,30 @@
   body {
     overflow-x: clip;
   }
+  /* scrollbars in the site's greys: a thin square bar on ink. Inherited, so code blocks, tables and diagrams that
+     scroll get it too. The standard properties cover Chrome and Firefox; Safari only reads the ::-webkit-scrollbar
+     rules below (which also lighten the bar while it's hovered or dragged) */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: #383838 var(--color-ink);
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background: var(--color-ink);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #383838;
+    border: 2px solid var(--color-ink);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover,
+  ::-webkit-scrollbar-thumb:active {
+    background: var(--color-tick);
+  }
+  ::-webkit-scrollbar-corner {
+    background: var(--color-ink);
+  }
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']) {
     cursor: pointer;
