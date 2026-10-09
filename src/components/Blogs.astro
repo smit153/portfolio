@@ -1,5 +1,4 @@
 ---
-import { Image } from 'astro:assets';
 import arrowUp from '../assets/icons/arrow-up.svg';
 import { getPosts } from '../lib/posts';
 import SectionTitle from './SectionTitle.astro';
@@ -45,12 +44,14 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 					posts.map(({ data: { title, description, cover }, href }) => (
 						<li class="min-w-0 flex-[0_0_85%] pl-1 sm:flex-[0_0_50%]">
 							<a href={href} class="group relative block h-full border-x-2 border-line pb-6">
-								<Image
-									src={cover}
+								{/* the covers are flat pixel art: the source PNGs are 5-9 KB, while a resized lossy WebP of them is 10x that */}
+								<img
+									src={cover.src}
 									alt=""
-									width={760}
-									height={IMG_H * 2}
-									format="webp"
+									width={cover.width}
+									height={cover.height}
+									loading="lazy"
+									decoding="async"
 									draggable="false"
 									class="w-full object-cover"
 									style={`height:${IMG_H}px`}
