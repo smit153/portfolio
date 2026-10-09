@@ -1,15 +1,15 @@
 ---
-// Full-width footer: just the needle field (see src/lib/needle-field.ts).
+// Full-width footer: just the torch field (see src/lib/torch-field.ts).
 ---
 
 <!-- no top border: the ascii strip above already ends in a line -->
 <footer class="relative bg-ink">
-	<canvas data-needle-field aria-hidden="true" class="block w-full touch-pan-y"></canvas>
+	<canvas data-torch-field aria-hidden="true" class="block w-full touch-pan-y"></canvas>
 </footer>
 
 <script>
-	import { startNeedleField } from '../lib/needle-field';
+	import { startTorchField } from '../lib/torch-field';
 
-	const canvas = document.querySelector<HTMLCanvasElement>('[data-needle-field]');
-	if (canvas) startNeedleField(canvas, 'SMIT SOJITRA');
+	const canvas = document.querySelector<HTMLCanvasElement>('[data-torch-field]');
+	if (canvas) startTorchField(canvas, 'SMIT SOJITRA');
 </script>
