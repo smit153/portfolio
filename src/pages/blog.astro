@@ -1,7 +1,6 @@
 ---
 // All posts: the home card (image, title, summary, arrow) as a full-width row with a meta block. Rows alternate
-// which wall the square image sits on, and a band sits between them.
-import { Image } from 'astro:assets';
+// which wall the square image sits on, and a band sits between them. On phones the image becomes a banner on top.
 import Layout from '../layouts/Layout.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
@@ -29,10 +28,11 @@ const posts = await getPosts();
 							{i > 0 && <Band />}
 							<a href={post.href} class:list={['post group', i % 2 && 'flip']}>
 								<div class="img">
-									<Image src={post.data.cover} alt="" width={440} height={440} format="webp" class="size-full object-cover [image-rendering:pixelated]" />
+									{/* the source PNGs (flat pixel art, 5-9 KB at 1280x720), cropped by the column: square beside the text, a banner on phones */}
+										<img src={post.data.cover.src} alt="" width={post.data.cover.width} height={post.data.cover.height} loading={i ? 'lazy' : 'eager'} decoding="async" class="size-full object-cover [image-rendering:pixelated]" />
 								</div>
 								<div class="txt">
-									<span class="absolute right-3.5 top-3.5 flex size-8 items-center justify-center border-2 border-line bg-ink transition-colors group-hover:border-tick">
+									<span class="absolute -right-[2px] -top-[2px] flex size-8 items-center justify-center border-2 border-line bg-ink transition-colors group-hover:border-tick">
 										<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
 									</span>
 									<h2 class="mb-1.5 mr-10 text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">
@@ -99,26 +99,33 @@ const posts = await getPosts();
 		border-right: 0;
 		border-left: 2px solid var(--color-line);
 	}
-	/* narrow screens: image and text side by side, the meta block underneath */
+	/* narrow screens: one column, the image a 16:9 banner on top, then the text, then the meta block */
 	@media (max-width: 700px) {
 		.post,
 		.post.flip {
-			grid-template-columns: 120px 1fr;
+			grid-template-columns: 1fr;
 		}
+		.img,
 		.flip .img {
 			order: 0;
-			border-left: 0;
-			border-right: 2px solid var(--color-line);
+			border: 0;
+			border-bottom: 2px solid var(--color-line);
+		}
+		.img :global(img) {
+			aspect-ratio: 16 / 9;
 		}
 		.flip .txt {
-			order: 0;
+			order: 1;
 		}
 		.post :global(.meta-col),
 		.flip :global(.meta-col) {
-			order: 3;
-			grid-column: span 2;
+			order: 2;
 			border: 0;
 			border-top: 2px solid var(--color-line);
+		}
+		/* stacked under the text, the meta cells line up with its 20px inset */
+		.post :global(.meta-col > div) {
+			padding-inline: 20px;
 		}
 	}
 </style>
