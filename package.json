@@ -13,6 +13,7 @@
     "github": "node scripts/fetch-github.mjs"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "^14.3.4",
     "@astrojs/mdx": "^8.0.3",
     "@rive-app/canvas": "^2.44.0",
     "@tailwindcss/vite": "^4.3.3",
@@ -24,12 +25,14 @@
     "ua-parser-js": "^1.0.41"
   },
   "allowScripts": {
-    "esbuild": true
+    "esbuild": true,
+    "workerd": true
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/node": "^26.6.4",
     "@types/ua-parser-js": "^0.7.39",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.149.0"
   }
 }

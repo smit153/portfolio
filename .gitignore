@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# wrangler's local state (wrangler dev, deploy config)
+.wrangler/
 portfolio/
 
 # dependencies

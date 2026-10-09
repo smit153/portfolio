@@ -1,5 +1,6 @@
 // Rebuilds the site once a day, so the GitHub graph (fetched at build time) stays fresh. On its cron it POSTs to
-// the Cloudflare Pages deploy hook, which starts a normal build: scripts/fetch-github.mjs runs, then astro build.
+// the site Worker's Workers Builds deploy hook, which starts a normal build: scripts/fetch-github.mjs runs, then
+// astro build, then wrangler deploy.
 // DEPLOY_HOOK_URL is a secret (`wrangler secret put DEPLOY_HOOK_URL`), never in the repo.
 export default {
 	async scheduled(controller, env, ctx) {

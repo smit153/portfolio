@@ -1,12 +1,18 @@
 // @ts-check
 import { defineConfig, fontProviders } from 'astro/config';
 
+import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://smiit.in',
+  // deployed as a Cloudflare Worker (static assets). Every page is still prerendered; prerendering runs in Node
+  // because the colophon reads git and node_modules at build time, and images are still made at build with sharp.
+  adapter: cloudflare({ prerenderEnvironment: 'node', imageService: 'compile' }),
+  // no sessions on this site, so no KV namespace for them
+  session: false,
   // blog posts are MDX: Markdown with interactive components dropped in
   integrations: [mdx()],
   markdown: {

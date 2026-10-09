@@ -1,4 +1,4 @@
-// The daily rebuild: a tiny Worker whose only job is to hit the Pages deploy hook on a schedule.
+// The daily rebuild: a tiny Worker whose only job is to hit the site's deploy hook (Workers Builds) on a schedule.
 // Deploy from this folder with `npx wrangler deploy`, then `npx wrangler secret put DEPLOY_HOOK_URL`.
 {
 	"name": "smiit-daily-rebuild",

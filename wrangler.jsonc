@@ -1,0 +1,11 @@
+// The site, deployed as a Cloudflare Worker serving the built pages (Astro's recommended Cloudflare setup).
+// Workers Builds: build command `pnpm build`, deploy command `npx wrangler deploy`. GITHUB_TOKEN is a build
+// variable there, for scripts/fetch-github.mjs.
+{
+	"name": "smiit",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"compatibility_date": "2026-10-01",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": { "binding": "ASSETS", "directory": "./dist" },
+	"observability": { "enabled": true }
+}
