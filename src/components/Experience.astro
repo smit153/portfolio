@@ -1,6 +1,8 @@
 ---
 // Experience and Education in one section: the title row is the switch ("Experience / Education"),
 // the dim one is the other tab. Jobs open into bullet points; education entries are just the headline facts.
+import mastork from '../assets/logos/mastork.png';
+import upraised from '../assets/logos/upraised.png';
 import updot from '../assets/logos/updot.svg';
 import PixelIcon from './PixelIcon.astro';
 import ToggleIcon from './ToggleIcon.astro';
@@ -9,7 +11,7 @@ import ToggleIcon from './ToggleIcon.astro';
 // LinkedIn does. A job without points shows just its headline facts; `open` decides whether one starts expanded.
 interface Job {
 	company: string;
-	/** without a logo, the job gets the pixel briefcase */
+	/** without a logo, the job gets the pixel briefcase; logos are light grey on transparent */
 	logo?: ImageMetadata;
 	location?: string;
 	role: string;
@@ -28,10 +30,18 @@ const jobs: Job[] = [
 		role: 'Software Developer',
 		type: 'Full time',
 		start: '06.2024',
-		points: [],
+		points: [
+			'Take projects end to end, from scoping and architecture through to launch and the fixes after it.',
+			'Build full-stack web apps: the frontend, the APIs behind it and the data model underneath.',
+			'Set up and customise headless CMSs (Payload, Strapi, Hygraph and Sanity), shaping content so editors can run their sites without a developer.',
+			'Own deployments: environments, build pipelines and releases, and keep things healthy once they are live.',
+			'Work with designers and stakeholders to turn ideas into scoped features, and pick the right stack for each project.',
+		],
+		open: true,
 	},
 	{
 		company: 'Upraised',
+		logo: upraised,
 		location: 'Remote',
 		role: 'Software Developer',
 		start: '07.2023',
@@ -41,16 +51,18 @@ const jobs: Job[] = [
 			'Worked across the frontend and backend, with React.js for the interactive interfaces.',
 			'Added AI features that made candidate sourcing and selection faster.',
 		],
-		open: true,
 	},
 	{
 		company: 'Mastork Technologies',
+		logo: mastork,
 		role: 'Software Developer',
+		type: 'Internship',
 		start: '01.2023',
 		end: '03.2023',
 		points: [
-			'Started as a React Native developer, building mobile apps.',
+			'Started as a React Native developer, building high-quality mobile apps.',
 			'Moved to the MERN stack, building web apps with MongoDB, Express.js, React.js and Node.js.',
+			'Came away with hands-on experience across both mobile and web development.',
 		],
 	},
 ];
