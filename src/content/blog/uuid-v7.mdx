@@ -15,33 +15,31 @@ import BenchmarkA from '../../components/blog/uuid/BenchmarkA.astro';
 import Size from '../../components/blog/uuid/Size.astro';
 import Chooser from '../../components/blog/uuid/Chooser.astro';
 
-Every new table raises the same question: how do you identify a row? Most of us answer with habit, an auto-increment integer because it's right there or a UUID because someone said integers don't scale. Both cost you something. UUIDv7 is the first option I've found that doesn't make me pick.
+Every new table asks the same question: how do you identify a row? Most of us answer on autopilot. An auto-increment integer, because it's right there. Or a UUID, because someone once said integers don't scale. Both send you a bill later. UUIDv7 is the first option I've found that doesn't make me pick.
 
-## Auto-increment is cheap, until you need more than one writer
+## Auto-increment is great, until there are two of you
 
-An auto-increment column is the default for good reason. Every engine ships it: `AUTO_INCREMENT` in MySQL, `GENERATED ... AS IDENTITY` (or the older `SERIAL`) in Postgres, `IDENTITY` in SQL Server. It's compact (four bytes for an `int`, eight for a `bigint`), reads fine in a URL (`orders/1042`) and is easy on the index.
+Every engine ships one, whether it's `AUTO_INCREMENT` in MySQL, `GENERATED ... AS IDENTITY` in Postgres or `IDENTITY` in SQL Server, and it's tiny: four bytes for an `int`, eight for a `bigint`, perfectly fine in a URL like `orders/1042`. Your index loves it.
 
-The trouble comes later: the next number has to come from one authority, so once two servers insert at the same time they have to coordinate or they'll both hand out `1043`.
+The catch? The next number has to come from one place, so the moment two servers are inserting at once they either coordinate or they both hand out `1043`.
 
-The values are guessable too. From `/users/42`, `/users/43` is the obvious next try. If the app doesn't check you may see user 43, that's an IDOR (insecure direct object reference): reaching records that aren't yours by editing an ID in a URL.
+It's also guessable. If you're `/users/42`, you can probably guess where `/users/43` lives, and if the app forgets to check, you're in. That's an IDOR (insecure direct object reference), and it's exactly as embarrassing as it sounds.
 
-## UUIDv4 solves both problems and breaks your index
+## UUIDv4 fixes both and quietly wrecks your index
 
-A random UUID (version 4) is 122 bits of randomness with the version and variant bits stamped on top. Any process can generate one without asking anyone, and nobody can walk your table by adding one. That fixes both problems.
+A v4 is 122 random bits with the version and variant stamped on top. Any process can mint one without asking anyone, and nobody's walking your table by adding one.
 
-The bill comes due in the index. A primary key lives in a B-tree, which keeps entries sorted across fixed-size pages. With a sequential key, each insert is larger than the last, so it lands at the right edge, fills the page and starts a new one.
-
-A v4 lands wherever it sorts, usually in a full page. The database splits it: allocate a new page, copy half the rows, update the parent. Splits cost CPU and I/O and fragment the index, so reads touch more pages. A UUID is also 16 bytes, four times an `int` and twice a `bigint`, so the index is bigger and less of it fits in memory.
+The bill arrives in the index. A primary key lives in a B-tree, which keeps entries sorted across fixed-size pages. Sequential keys always land at the right edge: fill a page, start the next one, very tidy. A v4 lands wherever it sorts, usually in a page that's already full, so the database splits it. Every time. New page, copy half the rows over, update the parent. That costs CPU and I/O, fragments the index, and makes reads touch more pages. And at 16 bytes, a UUID is four times an `int`, so less of the index fits in memory.
 
 <BTree />
 
 ## What v7 changes
 
-v7 keeps the 128-bit shape and rearranges the bits. The first 48 bits are a Unix timestamp in milliseconds, then a 4-bit version, a 2-bit variant and random bits. That's RFC 9562, the 2024 standard that replaced RFC 4122.
+v7 keeps the 128-bit shape and just reorders it. The first 48 bits are a Unix timestamp in milliseconds, then the version and variant bits, then randomness. That's RFC 9562, the 2024 standard that replaced RFC 4122.
 
 <Layout />
 
-With the clock in front, a later v7 sorts after an earlier one, and RFC 9562 says databases can sort it as plain raw bytes. Version 1 also had a timestamp, but stored it in an order that doesn't sort by time. A v7 appends to the right edge of the tree like a sequential integer, while the random tail keeps it unique and lets any node mint one on its own.
+Clock in front means a later v7 sorts after an earlier one, as plain bytes. (Version 1 had a timestamp too, but stored it in an order that doesn't sort by time. Classic.) So v7 appends to the right edge of the tree like an integer, while the random tail keeps it unique and lets any node make one on its own.
 
 <Decode />
 
@@ -49,9 +47,7 @@ With the clock in front, a later v7 sorts after an earlier one, and RFC 9562 say
 
 ## What the numbers look like
 
-I haven't run my own benchmark, so here are two from other people. Both are single blog-post runs, not lab results, and they disagree on the size of the gap but not the direction.
-
-One used 5 million rows in Postgres with three key types. The other used a much smaller table (about 44,000 rows, Postgres 15) and saw v7 inserts take about half the time of v4, with a table roughly a fifth smaller. Test on your own data before you promise anyone a speedup.
+I haven't benchmarked this myself, so here are two runs from other people, both single blog posts rather than lab results, which disagree on how big the gap is but not on which way it points. The smaller one (about 44,000 rows, Postgres 15) saw v7 inserts take about half the time of v4, with a table roughly a fifth smaller. Test on your own data before you promise anyone a speedup.
 
 <BenchmarkA />
 
@@ -59,23 +55,23 @@ One used 5 million rows in Postgres with three key types. The other used a much 
 
 ## What v7 can't do
 
-A v7 is still 16 bytes, twice a `bigint`, and you still can't read one aloud over the phone.
+It's still 16 bytes. Try reading one out over the phone.
 
-The timestamp is also in the open. Anyone holding a v7 can decode roughly when the row was created and how fast you issue IDs. Demo 2 does it in a few lines, and Postgres ships `uuid_extract_timestamp()`, whose docs warn the result may not equal the exact creation time.
+The timestamp is out in the open, too. Anyone holding a v7 can tell roughly when the row was created and how fast you're issuing IDs. Demo 2 does it in a few lines, and Postgres ships `uuid_extract_timestamp()` for exactly this.
 
-You get fewer random bits than v4, too: 74 against 122. That's plenty to avoid collisions and stop enumeration, but it's a ceiling: RFC 9562 lets generators spend some on a counter or extra time precision, and Postgres' `uuidv7()` puts sub-millisecond time there. So I wouldn't use a v7 for anything meant to stay secret, and the RFC says UUIDs must not be used as security capabilities. For reset links, session tokens and invite codes, use a v4 or a proper random token. Keep v7 for primary keys and log IDs, where the creation time isn't sensitive.
+It also has fewer random bits than v4 (74 against 122). That's plenty for avoiding collisions, but the RFC says UUIDs must not be used as security capabilities, and I'd take that personally. Reset links, session tokens, invite codes: use a v4 or a proper random token. Keep v7 for primary keys and log IDs.
 
-Last limit: with several writers, order is only as good as their clocks. Servers a few milliseconds apart produce IDs that are roughly sorted, not strictly. That's fine for an index, but if you need strict global order, v7 alone won't give it.
+Last one: with several writers, order is only as good as their clocks, and servers a few milliseconds apart will give you IDs that are roughly sorted rather than strictly sorted. Your index won't care. If you need strict global order, v7 alone won't get you there.
 
 ## What I'd reach for
 
-On a single node where IDs never leave the database, auto-increment is still the leanest option. Don't pay 8 bytes for problems you don't have.
+One database and IDs that never leave it? Auto-increment is still the leanest thing going. Don't pay 8 extra bytes for problems you don't have.
 
-With more than one writer, or an ID in a URL or API response, skip v4 and use v7. You keep decentralized generation and unguessability without handing your index busywork.
+More than one writer, or an ID that shows up in a URL or an API response? Skip v4 and use v7. You keep decentralised generation and unguessable IDs without making your index do busywork.
 
 <Chooser />
 
-Adopting v7 is nearly a one-liner now. Postgres 18, out in September 2025, ships a built-in `uuidv7()`:
+Adopting it is nearly a one-liner now. Postgres 18 (September 2025) ships a built-in `uuidv7()`:
 
 ```sql
 CREATE TABLE orders (
@@ -86,24 +82,9 @@ CREATE TABLE orders (
 SELECT uuid_extract_timestamp(id) FROM orders LIMIT 1;
 ```
 
-On older Postgres, generate the value in your app. MySQL's `UUID()` makes version 1, so generate v7 client-side and store it as `BINARY(16)`. Hibernate 7 has a `VERSION_7` UUID generator style and .NET 9 has `Guid.CreateVersion7()`. Check your ORM for the equivalent.
+On older Postgres, generate it in your app. MySQL's `UUID()` makes version 1, so generate v7 client-side and store it as `BINARY(16)`. Hibernate 7 has a `VERSION_7` generator style and .NET 9 has `Guid.CreateVersion7()`.
 
-<div class="table-wrap compare">
-
-|  | Auto-increment | UUIDv4 | UUIDv7 |
-| --- | --- | --- | --- |
-| Sorts by creation time | yes | no | yes |
-| Globally unique | no | yes | yes |
-| Generate without the DB | no | yes | yes |
-| Hard to enumerate | no | yes | yes |
-| Cheap B-tree inserts | yes | no | yes |
-| Human-readable | yes | no | no |
-| Safe as a secret token | no | yes | no |
-| Size on disk | 4 to 8 B | 16 B | 16 B |
-
-</div>
-
-<p class="callout">Using v7 as a primary key? Tell me what you're on (Postgres, MySQL, something else) and whether the index difference showed up for you. I'd like to know.</p>
+<p class="callout">Using v7 as a primary key? Tell me what you're on and whether the index difference showed up for you. I'd genuinely like to know.</p>
 
 ## Sources
 
