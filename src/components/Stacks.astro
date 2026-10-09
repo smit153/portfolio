@@ -1,29 +1,52 @@
 ---
-import dotenv from '../assets/logos/dotenv.svg';
-import pandacss from '../assets/logos/pandacss.svg';
-import payload from '../assets/logos/payload.svg';
-import sanity from '../assets/logos/sanity.svg';
-import shadcn from '../assets/logos/shadcn.svg';
-import strapi from '../assets/logos/strapi.svg';
-import webflow from '../assets/logos/webflow.svg';
+// The stack, by category: brand logos from Simple Icons (scripts/fetch-stack-logos.mjs, recoloured to the site's
+// grey) and pixel icons for concepts and brands Simple Icons doesn't have. The first category starts selected.
+import type { PixelIconName } from '../lib/pixel-icons';
+import PixelIcon from './PixelIcon.astro';
 import SectionTitle from './SectionTitle.astro';
 
-// TODO: swap in your real stack; the logos are the ones from the Figma file.
-const tools = [
-	{ name: 'Sanity', category: 'CMS', logo: sanity },
-	{ name: 'Strapi', category: 'CMS', logo: strapi },
-	{ name: 'Payload', category: 'CMS', logo: payload },
-	{ name: 'Webflow', category: 'CMS', logo: webflow },
-	{ name: 'shadcn/ui', category: 'Design', logo: shadcn },
-	{ name: 'Panda CSS', category: 'Design', logo: pandacss },
-	{ name: 'dotenv', category: 'Devtool', logo: dotenv },
+const logos = import.meta.glob<{ default: ImageMetadata }>('../assets/stack/*.svg', { eager: true });
+const logo = (slug: string) => logos[`../assets/stack/${slug}.svg`].default;
+
+type Tool = { name: string; logo?: ImageMetadata; icon?: PixelIconName };
+// [name, simple-icons slug] for brands, [name, null, pixel icon] for the rest
+const STACK: [string, [string, string | null, PixelIconName?][]][] = [
+	['Backend', [
+		['Node.js', 'nodedotjs'], ['Express', 'express'], ['NestJS', 'nestjs'], ['Hono', 'hono'], ['Deno', 'deno'], ['FastAPI', 'fastapi'],
+		['Pydantic', 'pydantic'], ['GraphQL', 'graphql'], ['tRPC', 'trpc'], ['Socket.IO', 'socketdotio'], ['BullMQ', null, 'queue'],
+		['Stripe', 'stripe'], ['Payload', 'payloadcms'], ['Strapi', 'strapi'], ['REST APIs', null, 'rest'], ['Celery', 'celery'],
+	]],
+	['Data & Cloud', [
+		['PostgreSQL', 'postgresql'], ['MongoDB', 'mongodb'], ['Redis', 'redis'], ['Supabase', 'supabase'], ['Prisma', 'prisma'],
+		['Pinecone', null, 'pinecone'], ['Elasticsearch', 'elasticsearch'], ['Docker', 'docker'], ['Kubernetes', 'kubernetes'],
+		['Terraform', 'terraform'], ['Nginx', 'nginx'], ['AWS', null, 'aws'], ['GCP', 'googlecloud'], ['Azure', null, 'azure'],
+		['GitHub Actions', 'githubactions'], ['Meilisearch', 'meilisearch'], ['Prometheus', 'prometheus'], ['Sentry', 'sentry'],
+		['OpenTelemetry', 'opentelemetry'], ['Neo4j', 'neo4j'],
+	]],
+	['Gen AI', [
+		['LangChain', 'langchain'], ['LangGraph', 'langgraph'], ['Vercel AI SDK', 'vercel'], ['MCP', 'modelcontextprotocol'],
+		['RAG', null, 'rag'], ['Embeddings', null, 'embeddings'], ['Prompt engineering', null, 'prompt'], ['Structured Outputs', null, 'structured'], ['Evals', null, 'evals'],
+		['Multi-Agent Systems', null, 'agents'], ['Agentic Memory', null, 'memory'], ['Context Engineering', null, 'context'],
+		['Guardrails', null, 'guardrails'], ['LLM Observability', null, 'observability'], ['Hybrid Search', null, 'hybridsearch'],
+		['Model Routing', null, 'routing'],
+	]],
+	['Frontend', [
+		['React', 'react'], ['Next.js', 'nextdotjs'], ['React Native', 'react'], ['Expo', 'expo'], ['Vue', 'vuedotjs'], ['Nuxt.js', 'nuxt'],
+		['Tailwind CSS', 'tailwindcss'], ['shadcn/ui', 'shadcnui'], ['Framer Motion', 'framer'], ['Three.js', 'threedotjs'], ['GSAP', 'gsap'],
+		['TanStack Query', 'reactquery'], ['Zustand', null, 'bear'], ['Solid', 'solid'], ['React Router', 'reactrouter'], ['Astro', 'astro'],
+		['Svelte', 'svelte'],
+	]],
+	['Languages', [
+		['TypeScript', 'typescript'], ['JavaScript', 'javascript'], ['Python', 'python'], ['SQL', null, 'database'], ['Go', 'go'],
+		['Java', 'openjdk'], ['C++', 'cplusplus'],
+	]],
 ];
 
-const categories = [...new Set(tools.map((t) => t.category))].map((name) => ({
-	name,
-	count: tools.filter((t) => t.category === name).length,
-}));
-const filters = [{ name: 'All', count: tools.length }, ...categories];
+const tools = STACK.flatMap(([category, items]) =>
+	items.map(([name, slug, icon]): Tool & { category: string } => ({ name, category, ...(slug ? { logo: logo(slug) } : { icon }) })),
+);
+const filters = STACK.map(([name, items]) => ({ name, count: items.length }));
+const first = filters[0].name;
 ---
 
 <section aria-labelledby="stacks-title">
@@ -56,15 +79,21 @@ const filters = [{ name: 'All', count: tools.length }, ...categories];
 
 		<ul class="grid flex-1 grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2 p-2" data-stack-grid>
 			{
-				tools.map(({ name, category, logo }) => (
+				tools.map(({ name, category, logo, icon }) => (
 					<li
 						data-category={category}
-						class="flex h-24 flex-col items-center justify-center border border-line bg-ink data-[hidden]:hidden"
+						data-hidden={category === first ? undefined : ''}
+						class="flex h-24 flex-col items-center border border-line bg-ink px-2 pt-[18px] text-center data-[hidden]:hidden"
 					>
 						<span class="flex size-6 items-center justify-center">
-							<img src={logo.src} alt="" width={24} height={24} class="size-6 object-contain grayscale" />
+							{logo ? (
+								<img src={logo.src} alt="" width={24} height={24} class="size-6 object-contain" />
+							) : (
+								<PixelIcon name={icon!} class="text-[#d4d4d4]" />
+							)}
 						</span>
-						<span class="mt-2 text-body tracking-[-0.04em] text-white">{name}</span>
+						<!-- room for two lines, the name centred in it, so every icon sits at the same height -->
+						<span class="mt-1.5 flex min-h-10 items-center text-body leading-5 tracking-[-0.04em] text-white">{name}</span>
 					</li>
 				))
 			}
@@ -73,14 +102,14 @@ const filters = [{ name: 'All', count: tools.length }, ...categories];
 </section>
 
 <script>
-	// clicking a category shows only its tiles; "All" shows everything
+	// clicking a category shows only its tiles
 	const buttons = document.querySelectorAll<HTMLButtonElement>('[data-stack-filters] button');
 	const tiles = document.querySelectorAll<HTMLElement>('[data-stack-grid] > li');
 	buttons.forEach((btn) =>
 		btn.addEventListener('click', () => {
 			const filter = btn.dataset.filter;
 			buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-			tiles.forEach((tile) => tile.toggleAttribute('data-hidden', filter !== 'All' && tile.dataset.category !== filter));
+			tiles.forEach((tile) => tile.toggleAttribute('data-hidden', tile.dataset.category !== filter));
 		}),
 	);
 </script>
