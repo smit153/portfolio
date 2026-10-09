@@ -19,6 +19,12 @@
 
 /* Tailwind's reset gives buttons the plain arrow; every enabled button on the site gets the hand */
 @layer base {
+  /* things placed on the page by script (the desk cat, its speech) can overhang the right edge; never let that
+     add a sideways scrollbar. clip, unlike hidden, doesn't make a scroll container, so sticky still works */
+  html,
+  body {
+    overflow-x: clip;
+  }
   button:not(:disabled),
   [role='button']:not([aria-disabled='true']) {
     cursor: pointer;

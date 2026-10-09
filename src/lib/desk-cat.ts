@@ -175,10 +175,11 @@ class DeskCat {
 		const pad = (CW * SCALE) / (narrow() ? 2 : 2.5);
 		return f ? Math.min(f.right - pad, Math.max(f.left + pad, x)) : x;
 	}
-	/** keep x on screen: the floors are full-bleed lines */
+	/** keep x on screen: the floors are full-bleed lines. On the left the sprite's empty margin may hang off the edge;
+	 *  on the right the whole canvas stays inside, since anything past the right edge widens the page */
 	clampWide(x: number) {
 		const pad = (CW * SCALE) / (narrow() ? 2 : 2.5);
-		return Math.min(document.documentElement.clientWidth - pad, Math.max(pad, x));
+		return Math.min(document.documentElement.clientWidth - (CW * SCALE) / 2, Math.max(pad, x));
 	}
 	floorBelow(y: number) {
 		return this.floors.filter((f) => f.y >= y).sort((a, b) => a.y - b.y)[0];
@@ -561,7 +562,9 @@ class DeskCat {
 					this.set('held');
 					this.squash(1.08);
 				}
-				this.y = this.perched ? bottom : e.pageY;
+				// held up high it stops at the top of the window, with its head on screen
+				const top = scrollY + 4 + (GRIP - meta.anims.held.top) * SCALE;
+				this.y = this.perched ? bottom : Math.max(top, e.pageY);
 			}
 		});
 		const release = (e: PointerEvent) => {
