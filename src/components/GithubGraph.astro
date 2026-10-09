@@ -65,22 +65,37 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 	</div>
 
 	<figcaption class="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-small text-white">
-		<p>
+		<!-- desktop: the count and its source on the left, the legend on the right. phones: the count on its own line,
+		     then the source on the left of the legend's row -->
+		<p class="max-sm:w-full">
 			{
 				calendar ? (
 					<>
 						{/* phones get the short version; one line, so no stray space before the comma */}
-						{calendar.total.toLocaleString('en-US')} contributions<span class="sm:hidden"> in the last year</span><span class="max-sm:hidden">, {range}</span>. Source:{' '}
-						<a href={`https://github.com/${LOGIN}`} target="_blank" rel="noopener noreferrer" class={link}>
-							GitHub
-						</a>
-						.
+						{calendar.total.toLocaleString('en-US')} contributions<span class="sm:hidden"> in the last year</span><span class="max-sm:hidden">, {range}</span>.
+						<span class="max-sm:hidden">
+							{' '}Source:{' '}
+							<a href={`https://github.com/${LOGIN}`} target="_blank" rel="noopener noreferrer" class={link}>
+								GitHub
+							</a>
+							.
+						</span>
 					</>
 				) : (
 					<>GitHub contributions are unavailable right now.</>
 				)
 			}
 		</p>
+		{
+			calendar && (
+				<p class="sm:hidden">
+					Source:{' '}
+					<a href={`https://github.com/${LOGIN}`} target="_blank" rel="noopener noreferrer" class={link}>
+						GitHub
+					</a>
+				</p>
+			)
+		}
 		<p class="flex items-center gap-1 text-muted" aria-hidden="true">
 			Less
 			{SHADES.map((fill) => <span class="size-[11px]" style={`background:${fill}`} />)}
