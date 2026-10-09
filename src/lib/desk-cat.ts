@@ -1,7 +1,9 @@
 // The desk cat: a pixel cat that lives on the page's horizontal lines.
 // Floors are elements marked `data-pet-floor` (their top edge; `="bottom"` for the bottom edge); the one that also
-// has `data-pet-home` is where it starts. On the site that's only the ASCII strip at the bottom (AsciiField), and the
-// cat can't be dragged below the lowest floor. It walks side-on and faces the screen whenever it stops.
+// has `data-pet-home` is where it starts. On the site that's only the ASCII strip at the bottom (AsciiField). Pressing
+// the cat picks it up by the scruff: it dangles from the pointer (its feet may dip into the floor it was picked up from),
+// can't be lowered past where it was picked up, and drops when let go.
+// It walks side-on and faces the screen whenever it stops.
 // It tells the page where it is with `pet:pos` ({ x } in page px, or null when off the ground) and `pet:land`
 // ({ x, force }) events, which the ASCII strip turns into a glow and a ripple.
 // Pose changes (sitting, lying down, landing, being picked up) get a springy squash instead of transition
@@ -28,7 +30,10 @@ const SIDE: Partial<Record<AnimName, 1 | -1>> = { walk: 1, sit: 1, sleep: 1 };
 const WALK = 46; // px/s on screen
 const DASH = 120;
 const GRAVITY = 2400;
-const GRIP = meta.anims.held.top + 24; // where it's held: the chest, just under the raised front legs (sprite rows)
+const GRIP = meta.anims.held.top + 21; // where it's held: the scruff, just under the chin (sprite rows)
+const HANG = (meta.anims.held.base - GRIP) * SCALE; // from the hand down to the dangling feet, in page px
+const SINK = 12; // px the dangling feet may dip into the lowest floor when carried down to it
+const HOLD = 180; // ms a press is held before it picks the cat up; shorter is a click
 const STORE = 'desk-cat-v1';
 // it prefers the page column but the strip runs edge to edge: these odds let it stray into the margins now and then
 const ROAM_OUT = 0.2; // chance a wander heads anywhere along the strip instead of within the column
@@ -97,8 +102,6 @@ class DeskCat {
 	/** each animation's opaque area in the cell (x0, y0, x1, y1), the only part that takes clicks */
 	solid = {} as Record<AnimName, [number, number, number, number]>;
 	clip = '';
-	/** held, but lowered all the way onto the strip: shown sitting there instead of dangling */
-	perched = false;
 
 	constructor(readonly sheet: HTMLImageElement) {
 		const { cv } = this;
@@ -298,7 +301,7 @@ class DeskCat {
 		// since continuous fractional scaling makes pixel art shimmer
 		const sy = this.sy;
 		const sx = 1 + (1 - this.sy) * 0.6;
-		const held = this.mode === 'held' && !this.perched;
+		const held = this.mode === 'held';
 		// held: hang from the chest under the pointer; otherwise stand the feet on the line
 		const anchor = held ? GRIP : a.base;
 		const left = this.x - (CW * SCALE) / 2;
@@ -328,7 +331,7 @@ class DeskCat {
 	/** tell the page where it stands, only when that changes */
 	reported: number | null = null;
 	report() {
-		const x = this.mode === 'ground' || this.perched ? Math.round(this.x) : null;
+		const x = this.mode === 'ground' ? Math.round(this.x) : null;
 		if (x === this.reported) return;
 		this.reported = x;
 		document.dispatchEvent(new CustomEvent('pet:pos', { detail: { x } }));
@@ -522,73 +525,73 @@ class DeskCat {
 		if (ms) setTimeout(() => this.bubble === b && this.say(null), ms);
 	}
 
-	// ---------- pointer: drag and click ----------
+	// ---------- pointer: pick up, drag and click ----------
 	bindPointer() {
 		const { cv } = this;
-		let down: { x: number; y: number; t: number } | null = null;
+		let down: { x: number; y: number } | null = null;
+		let holdTimer = 0;
 		let lastMove = { x: 0, y: 0, t: 0 };
+		let lowest = 0; // the lowest the hand may go: where it was picked up, or just into the lowest floor
+
+		// the lowest floor is the bottom of its world
+		const bottom = () => Math.max(...this.floors.map((f) => f.y));
+		// held up high it stops at the top of the window with its head on screen
+		const holdY = (y: number) => Math.max(scrollY + 4 + (GRIP - meta.anims.held.top) * SCALE, Math.min(lowest, y));
+
+		// picked up by the scruff, once the press is held for a moment or starts to drag (a click or tap is a meow)
+		const pickUp = (x: number, y: number) => {
+			clearTimeout(holdTimer);
+			this.interrupt();
+			this.say(null);
+			this.mode = 'held';
+			this.floor = null;
+			this.vx = this.vy = 0;
+			this.set('held');
+			this.squash(1.14); // stretched as it's lifted
+			play('pickup', 1, 1500);
+			cv.style.cursor = 'grabbing';
+			this.x = this.clampWide(x);
+			lowest = Math.max(y, bottom() - HANG + SINK);
+			this.y = holdY(y);
+		};
 
 		cv.addEventListener('pointerdown', (e) => {
 			e.preventDefault();
 			cv.setPointerCapture(e.pointerId);
-			down = { x: e.pageX, y: e.pageY, t: performance.now() };
-			lastMove = { ...down };
+			down = { x: e.pageX, y: e.pageY };
+			lastMove = { x: e.pageX, y: e.pageY, t: performance.now() };
+			// the latest pointer position, which the hold timer picks it up at
+			const at = down;
+			holdTimer = window.setTimeout(() => down && pickUp(at.x, at.y), HOLD);
 		});
 		cv.addEventListener('pointermove', (e) => {
 			if (!down) return;
-			if (this.mode !== 'held' && Math.hypot(e.pageX - down.x, e.pageY - down.y) > 6) {
-				this.interrupt();
-				this.say(null);
-				this.mode = 'held';
-				this.floor = null;
-				this.set('held');
-				this.squash(1.14); // stretched as it's lifted
-				play('pickup', 1, 1500);
-				cv.style.cursor = 'grabbing';
+			if (this.mode !== 'held') {
+				down.x = e.pageX; // keep the pick-up point under the pointer while the hold timer runs
+				down.y = e.pageY;
+				if (Math.hypot(e.pageX - lastMove.x, e.pageY - lastMove.y) > 6) pickUp(e.pageX, e.pageY);
+				else return;
 			}
-			if (this.mode === 'held') {
-				const now = performance.now();
-				const k = 1000 / Math.max(1, now - lastMove.t);
-				this.vx = this.vx * 0.5 + (e.pageX - lastMove.x) * k * 0.5;
-				this.vy = this.vy * 0.5 + (e.pageY - lastMove.y) * k * 0.5;
-				lastMove = { x: e.pageX, y: e.pageY, t: now };
-				this.x = this.clampWide(e.pageX);
-				// the lowest floor is the bottom of its world: lowered onto it, the cat sits down there instead of
-				// dangling, and stands back up into the held pose once lifted a little (the gap stops flicker)
-				const bottom = Math.max(...this.floors.map((f) => f.y));
-				const feet = e.pageY + (meta.anims.held.base - GRIP) * SCALE;
-				if (!this.perched && feet >= bottom - 4) {
-					this.perched = true;
-					this.set('sit');
-					this.squash(0.9);
-				} else if (this.perched && feet < bottom - 16) {
-					this.perched = false;
-					this.set('held');
-					this.squash(1.08);
-				}
-				// held up high it stops at the top of the window, with its head on screen
-				const top = scrollY + 4 + (GRIP - meta.anims.held.top) * SCALE;
-				this.y = this.perched ? bottom : Math.max(top, e.pageY);
-			}
+			const now = performance.now();
+			const k = 1000 / Math.max(1, now - lastMove.t);
+			this.vx = this.vx * 0.5 + (e.pageX - lastMove.x) * k * 0.5;
+			this.vy = this.vy * 0.5 + (e.pageY - lastMove.y) * k * 0.5;
+			lastMove = { x: e.pageX, y: e.pageY, t: now };
+			this.x = this.clampWide(e.pageX);
+			this.y = holdY(e.pageY);
 		});
 		const release = (e: PointerEvent) => {
 			if (!down) return;
-			const quick = performance.now() - down.t < 300;
 			down = null;
+			clearTimeout(holdTimer);
 			cv.style.cursor = 'grab';
-			if (this.perched) {
-				// let go while set down on the strip: it just stays sitting there
-				this.perched = false;
-				const f = this.floors.reduce((a, b) => (b.y > a.y ? b : a));
-				this.land(f, this.x, false);
-				this.set('sit');
-			} else if (this.mode === 'held') {
-				// let go: it drops from where its feet hang, keeping a little of the throw
-				this.mode = 'fall';
-				this.y += (meta.anims.held.base - GRIP) * SCALE;
-				this.vy = Math.max(-500, Math.min(300, this.vy * 0.25));
-				this.vx = Math.max(-350, Math.min(350, this.vx * 0.25));
-			} else if (quick) this.meow();
+			// let go before it was picked up: a click or tap (a cancelled press is neither)
+			if (this.mode !== 'held') return e.type === 'pointerup' && this.meow();
+			// let go: it drops from where its feet hang (feet dipped into the floor start on it), keeping a little of the throw
+			this.mode = 'fall';
+			this.y = Math.min(bottom(), this.y + HANG);
+			this.vy = Math.max(-500, Math.min(300, this.vy * 0.25));
+			this.vx = Math.max(-350, Math.min(350, this.vx * 0.25));
 		};
 		cv.addEventListener('pointerup', release);
 		cv.addEventListener('pointercancel', release);
