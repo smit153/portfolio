@@ -1,17 +1,18 @@
 ---
-// Full-width footer: the colophon in the page column, then the dot-matrix lens (see src/lib/lens-field.ts).
+// Full-width footer: the colophon in the page column, then the name in pixel blocks that glow where the pointer
+// passes (see src/lib/afterglow-field.ts).
 import Colophon from './Colophon.astro';
 ---
 
 <!-- no top border: the ascii strip above already ends in a line -->
 <footer class="relative bg-ink">
 	<Colophon />
-	<canvas data-lens-field aria-hidden="true" class="block w-full touch-pan-y"></canvas>
+	<canvas data-name-field aria-hidden="true" class="block w-full touch-pan-y"></canvas>
 </footer>
 
 <script>
-	import { startLensField } from '../lib/lens-field';
+	import { startAfterglowField } from '../lib/afterglow-field';
 
-	const canvas = document.querySelector<HTMLCanvasElement>('[data-lens-field]');
-	if (canvas) startLensField(canvas, 'SMIT SOJITRA');
+	const canvas = document.querySelector<HTMLCanvasElement>('[data-name-field]');
+	if (canvas) startAfterglowField(canvas, 'SMIT SOJITRA');
 </script>

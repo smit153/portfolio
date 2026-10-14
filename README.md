@@ -49,7 +49,7 @@ src/
     project/      case-study pieces (diagrams, meta)
   content/        posts (MDX) and projects (Markdown), see content.config.ts
   data/           profile (jobs, education, about), GitHub snapshot, keyboard map for the desk
-  lib/            the cat, the footer's dot-matrix lens, pixel icons, post and project helpers
+  lib/            the cat, the footer's glowing pixel name, pixel icons, post and project helpers
   assets/         fonts, covers, logos, icons, the cat sprite and the Rive scene
 scripts/          one-off build helpers (below)
 workers/
