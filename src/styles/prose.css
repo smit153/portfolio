@@ -1,4 +1,4 @@
-/* Blog post typography and the shared look of the interactive demos. Used by src/pages/blog/[slug].astro.
+/* Post typography and the shared look of the interactive demos. Used by src/pages/writing/[slug].astro.
    Article text runs a step above the site's body size (16 / 28) because it is read for minutes, not scanned.
    Each post's own demo styles are in src/styles/posts/<slug>.css, scoped under .post-<slug>. */
 

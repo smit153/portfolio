@@ -1,0 +1,4 @@
+# the writing used to live under /blog; old links still land on the same post
+/blog         /writing        301
+/blog/        /writing        301
+/blog/:slug   /writing/:slug  301

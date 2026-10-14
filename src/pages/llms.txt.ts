@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ site }) => {
 		'',
 		`- [Home](${url('/')}): about, experience, projects, stack, writing and contact`,
 		`- [All projects](${url('/projects')})`,
-		`- [All writing](${url('/blog')})`,
+		`- [All writing](${url('/writing')})`,
 		'',
 		'## Optional',
 		'',
