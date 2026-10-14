@@ -1,25 +1,26 @@
 ---
 import SectionTitle from './SectionTitle.astro';
 
-// TODO: replace the [bracketed] placeholders and the booking link
-const BOOK_A_CALL = '#';
+// opens as a Cal.com pop-up (script below); the link is the fallback until the embed has loaded
+const BOOK_A_CALL = 'https://cal.com/smit-sojitra-dev/30min';
 ---
 
 <section aria-labelledby="contact-title" class="relative">
-	<SectionTitle id="contact-title">[Contact title]</SectionTitle>
+	<SectionTitle id="contact-title">Got a project?</SectionTitle>
 
 	<!-- text on the left, the call to action on the right (stacked on small screens), both kept up top: the empty
 	     space below is the desk cat's stage, since it walks along the strip right under this section -->
 	<div class="flex flex-col gap-5 px-5 pb-24 pt-6 sm:flex-row sm:items-start sm:justify-between">
 		<div class="flex flex-col gap-1.5">
 			<h3 class="text-heading tracking-[-0.04em] text-white">Let’s build something together</h3>
-			<p class="text-body tracking-[-0.04em] text-muted">[A line about the work you’re open to]</p>
+			<p class="text-body tracking-[-0.04em] text-muted">Got an idea that needs shipping? I’m listening.</p>
 		</div>
 		<a
 			href={BOOK_A_CALL}
+			data-book-call
 			class="inline-flex h-8 w-fit shrink-0 items-center border border-line bg-ink px-[15px] text-body tracking-[-0.01em] text-[#f3f4f6] transition-colors hover:border-tick"
 		>
-			Book a Call
+			Pick a time
 		</a>
 	</div>
 
@@ -28,6 +29,92 @@ const BOOK_A_CALL = '#';
 		aria-hidden="true"
 		class="pointer-events-none absolute bottom-6 left-full ml-12 hidden rotate-3 select-none whitespace-nowrap font-handwritten text-[22px] leading-[1.05] text-doodle xl:block"
 	>
-		pet the cat,<br />it's been guarding<br />the footer all day
+		don't mind the cat,<br />it's on call
 	</p>
 </section>
+
+<script>
+	// Cal.com's pop-up embed. Its 'init' adds embed.js, so it waits until the page has loaded and gone idle
+	// (or the button is hovered or focused first): the calendar never slows the first paint.
+	type CalApi = ((...args: unknown[]) => void) & { q?: unknown[]; ns?: Record<string, CalApi>; loaded?: boolean };
+	const w = window as unknown as { Cal?: CalApi };
+
+	// sent again with each pop-up: the embed only styles the calendar it's opening
+	const CAL_UI = {
+		theme: 'dark',
+		layout: 'month_view',
+		hideEventTypeDetails: false,
+		// the site's palette, with square corners like the rest of the page
+		cssVarsPerTheme: {
+			dark: {
+				'cal-brand': '#f3f4f6',
+				'cal-brand-text': '#09090b',
+				'cal-bg': '#09090b',
+				'cal-bg-muted': '#151516',
+				'cal-bg-subtle': '#1f2020',
+				'cal-border': '#1f2020',
+				'cal-border-subtle': '#1f2020',
+				'cal-border-booker': '#1f2020',
+				'cal-text-muted': '#8d8d8d',
+				radius: '0px',
+			},
+		},
+	};
+
+	let started = false;
+	function startCal() {
+		if (started) return;
+		started = true;
+		// Cal.com's loader, unchanged apart from types: it queues calls until embed.js arrives
+		(function (C: typeof w, A: string, L: string) {
+			const p = (a: CalApi, ar: unknown) => a.q!.push(ar);
+			const d = document;
+			C.Cal =
+				C.Cal ||
+				function (...ar: unknown[]) {
+					const cal = C.Cal!;
+					if (!cal.loaded) {
+						cal.ns = {};
+						cal.q = cal.q || [];
+						d.head.appendChild(d.createElement('script')).src = A;
+						cal.loaded = true;
+					}
+					if (ar[0] === L) {
+						const api: CalApi = (...args: unknown[]) => p(api, args);
+						const namespace = ar[1];
+						api.q = api.q || [];
+						if (typeof namespace === 'string') {
+							cal.ns![namespace] = cal.ns![namespace] || api;
+							p(cal.ns![namespace], ar);
+							p(cal, ['initNamespace', namespace]);
+						} else p(cal, ar);
+						return;
+					}
+					p(cal, ar);
+				};
+		})(w, 'https://app.cal.com/embed/embed.js', 'init');
+
+		const Cal = w.Cal!;
+		Cal('init', '30min', { origin: 'https://app.cal.com' });
+		Cal.ns!['30min']('ui', CAL_UI);
+	}
+
+	const button = document.querySelector<HTMLAnchorElement>('[data-book-call]');
+	button?.addEventListener('pointerenter', startCal, { once: true });
+	button?.addEventListener('focus', startCal, { once: true });
+	// open the calendar as a pop-up (Cal queues the call if embed.js is still on its way); a modified click
+	// (new tab, new window) keeps the plain link
+	button?.addEventListener('click', (e) => {
+		if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+		e.preventDefault();
+		startCal();
+		w.Cal!.ns!['30min']('modal', {
+			calLink: 'smit-sojitra-dev/30min',
+			config: { layout: 'month_view', useSlotsViewOnSmallScreen: 'true', theme: 'dark' },
+		});
+		w.Cal!.ns!['30min']('ui', CAL_UI);
+	});
+	const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(startCal, { timeout: 4000 }) : setTimeout(startCal, 2000));
+	if (document.readyState === 'complete') idle();
+	else addEventListener('load', idle, { once: true });
+</script>
