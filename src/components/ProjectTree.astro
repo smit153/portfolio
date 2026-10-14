@@ -1,7 +1,7 @@
 ---
 // Projects as a list: one row per project (its pixel icon, name, a short line, status), each opening into a small
 // file tree of its README (summary), NOTES (points), stack and links (its case study page, repo, live site).
-// Featured projects start open; any number can be open at once. A full-width hairline separates the projects, like the page's other lines.
+// Projects marked `expanded` start open; any number can be open at once. A full-width hairline separates the projects, like the page's other lines.
 // The files' connector lines: the list draws a trunk down its left, and every file a square elbow into it. Pointing at a
 // file lights the trunk from the top down to it and its elbow; opening a project folds the files out.
 import arrowUp from '../assets/icons/arrow-up.svg';
@@ -21,7 +21,7 @@ const { projects } = Astro.props;
 		{
 			projects.map(({ data: p, href }) => (
 				<li class="proj">
-					<details class="group" open={p.featured}>
+					<details class="group" open={p.expanded}>
 						<summary>
 							<PixelIcon name={p.icon} class="ico" />
 							<span class="min-w-0">

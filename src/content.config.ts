@@ -43,6 +43,8 @@ const projects = defineCollection({
 			icon: z.enum(Object.keys(pixelIcons) as [keyof typeof pixelIcons, ...(keyof typeof pixelIcons)[]]),
 			/** featured projects show on the home page, with a star */
 			featured: z.boolean().default(false),
+			/** starts open in the project tree */
+			expanded: z.boolean().default(false),
 			/** position in the lists, lowest first */
 			order: z.number(),
 			/** until a project has a cover, its page shows its pixel icon large instead */
