@@ -1,7 +1,7 @@
 # smiit.in
 
 My portfolio and notes, live at [smiit.in](https://smiit.in). A greyscale, pixel-art site built with Astro: an
-interactive desk you can type on, a cat that lives on the page, projects as a file tree, and blog posts with
+interactive desk you can type on, a cat that lives on the page, projects as a file tree, and posts with
 interactive demos.
 
 ## What's on it
@@ -19,7 +19,7 @@ interactive demos.
 
 ## Stack
 
-[Astro 7](https://astro.build) with MDX, Tailwind CSS 4, Rive, Embla for the blog carousel and Mermaid for the
+[Astro 7](https://astro.build) with MDX, Tailwind CSS 4, Rive, Embla for the writing carousel and Mermaid for the
 project diagrams. Deployed as a Cloudflare Worker serving static assets; every page is prerendered and images are
 processed at build time with sharp. All fonts are self-hosted: Söhne Mono, Grape Nuts, and Caveat (fetched from
 Google Fonts at build time).
@@ -43,11 +43,11 @@ build keeps the last saved snapshot in `src/data/github-contributions.json`, so 
 
 ```text
 src/
-  pages/          index, /blog, /projects, their [slug] pages, index.md and llms.txt
-  components/     page sections (Header, RiveHero, Experience, Projects, Stacks, Blogs, ...)
+  pages/          index, /writing, /projects, their [slug] pages, index.md and llms.txt
+  components/     page sections (Header, RiveHero, Experience, Projects, Stack, Writing, ...)
     blog/         post furniture (Demo, PostMeta, SectionPill) and each post's demos
     project/      case-study pieces (diagrams, meta)
-  content/        blog posts (MDX) and projects (Markdown), see content.config.ts
+  content/        posts (MDX) and projects (Markdown), see content.config.ts
   data/           profile (jobs, education, about), GitHub snapshot, keyboard map for the desk
   lib/            the cat, the footer's dot-matrix lens, pixel icons, post and project helpers
   assets/         fonts, covers, logos, icons, the cat sprite and the Rive scene
@@ -61,8 +61,8 @@ workers/
 | Script | What it does |
 | --- | --- |
 | `scripts/fetch-github.mjs` | Saves the last year of GitHub contributions (runs before every build) |
-| `scripts/dither-cover.mjs <in.png> <slug>` | Turns a photo into a dithered black-and-white blog cover |
-| `scripts/fetch-stack-logos.mjs` | Downloads the Stacks logos from Simple Icons, recoloured to the site's grey |
+| `scripts/dither-cover.mjs <in.png> <slug>` | Turns a photo into a dithered black-and-white post cover |
+| `scripts/fetch-stack-logos.mjs` | Downloads the Stack logos from Simple Icons, recoloured to the site's grey |
 | `scripts/build-favicon.mjs` | Builds the favicons from the header's pixel initials |
 | `scripts/build-cat-sprite.mjs` | Packs the PixelLab cat frames into one sprite sheet |
 
