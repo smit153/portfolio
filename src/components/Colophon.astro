@@ -7,8 +7,7 @@ import { join } from 'node:path';
 import github from '../assets/icons/github.svg';
 import linkedin from '../assets/icons/linkedin.svg';
 import x from '../assets/icons/x.svg';
-import { getPosts } from '../lib/posts';
-import { getProjects } from '../lib/projects';
+import { getContributions } from '../lib/github';
 import PixelIcon from './PixelIcon.astro';
 
 const DOMAIN = 'smiit.in';
@@ -38,8 +37,8 @@ const version = (pkg: string) => {
 };
 const stack = ['astro', 'tailwindcss', '@astrojs/mdx', 'mermaid', '@rive-app/canvas'].map((p) => `${p}@${version(p)}`);
 
-const posts = (await getPosts()).length;
-const projects = (await getProjects()).length;
+// contributions over the last year, from the snapshot the GitHub graph uses
+const contributions = getContributions('smit153')?.total;
 
 const socials = [
 	{ label: 'X', href: 'https://x.com/smit_sojitra153', icon: x },
@@ -54,7 +53,7 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 	<!-- domain and what the site is -->
 	<div class="row flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 px-5 py-4">
 		<a href="/" class="text-heading tracking-[-0.02em] text-white">{DOMAIN}</a>
-		<p class="text-muted">A pixel-built portfolio, a notebook and a desk cat.</p>
+		<p class="text-muted">Things I made, things I learned, things I broke.</p>
 	</div>
 
 	<dl class="grid grid-cols-2 sm:grid-cols-4">
@@ -71,8 +70,8 @@ const ext = { target: '_blank', rel: 'noopener noreferrer' };
 			<dd>{date}</dd>
 		</div>
 		<div>
-			<dt>contents</dt>
-			<dd>{posts} posts · {projects} projects</dd>
+			<dt>contributions</dt>
+			<dd>{contributions ? `${contributions.toLocaleString('en-US')} this year` : 'unavailable'}</dd>
 		</div>
 
 		<div>
