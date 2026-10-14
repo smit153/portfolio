@@ -2,6 +2,7 @@
 // The stack, by category: brand logos from Simple Icons (scripts/fetch-stack-logos.mjs, recoloured to the site's
 // grey) and pixel icons for concepts and brands Simple Icons doesn't have. The first category starts selected.
 import type { PixelIconName } from '../lib/pixel-icons';
+import MarginNote from './MarginNote.astro';
 import PixelIcon from './PixelIcon.astro';
 import SectionTitle from './SectionTitle.astro';
 
@@ -49,8 +50,11 @@ const filters = STACK.map(([name, items]) => ({ name, count: items.length }));
 const first = filters[0].name;
 ---
 
-<section aria-labelledby="stacks-title">
+<section aria-labelledby="stacks-title" class="relative">
 	<SectionTitle id="stacks-title">Stacks</SectionTitle>
+	<MarginNote side="left" top="72px">
+		Pick a tab to see<br />what I build with.
+	</MarginNote>
 
 	<div class="sm:flex">
 		<!-- category filter: a row on phones, a column beside the grid from sm up -->

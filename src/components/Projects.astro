@@ -1,6 +1,7 @@
 ---
 // Home: the featured projects as a file tree (from src/content/projects), with a link to the full list.
 import { getProjects } from '../lib/projects';
+import MarginNote from './MarginNote.astro';
 import ProjectTree from './ProjectTree.astro';
 import SectionTitle from './SectionTitle.astro';
 import SeeAll from './SeeAll.astro';
@@ -8,8 +9,11 @@ import SeeAll from './SeeAll.astro';
 const featured = (await getProjects()).filter((p) => p.data.featured);
 ---
 
-<section aria-labelledby="projects-title">
+<section aria-labelledby="projects-title" class="relative">
 	<SectionTitle id="projects-title">Projects</SectionTitle>
+	<MarginNote side="right" top="72px">
+		Click a project<br />for its case study.
+	</MarginNote>
 	<ProjectTree projects={featured} />
 	<SeeAll href="/projects">All projects</SeeAll>
 </section>

@@ -87,10 +87,10 @@ export const education = [
 	},
 ];
 
-// the About section's points (the page adds a last one linking the projects)
+// the About section's points
 export const about = [
-	"I'm Smit Sojitra, a software developer at Updot with 3+ years of building products that solve real problems.",
-	'I work across full-stack and backend engineering, AI agents and LLM workflows, cloud infrastructure and DevOps.',
-	'I start with the problem, pick the right tech for it, and take products from idea to production.',
-	"Right now I'm building and exploring products around AI, automation and modern software systems.",
+	"I'm Smit Sojitra, a software developer with 3+ years of experience building full-stack applications, backend systems, and AI workflows.",
+	'I work with TypeScript, Node.js, and Python, with experience in API development, headless CMS integration, AI agents, LLM workflows, cloud infrastructure, and DevOps.',
+	'I take ownership from requirements and system architecture through development, deployment, and ongoing improvements, working closely with designers and stakeholders.',
+	"Currently, I'm building and exploring products around AI, automation, and modern software systems.",
 ];

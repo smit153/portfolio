@@ -15,6 +15,8 @@ import ProfileLinks from '../components/ProfileLinks.astro';
 import ProfileRow from '../components/ProfileRow.astro';
 import Projects from '../components/Projects.astro';
 import RiveHero from '../components/RiveHero.astro';
+import MarginNote from '../components/MarginNote.astro';
+import SectionTitle from '../components/SectionTitle.astro';
 import Separator from '../components/Separator.astro';
 import Stacks from '../components/Stacks.astro';
 ---
@@ -34,7 +36,13 @@ import Stacks from '../components/Stacks.astro';
 			
 			<About />
 			<Separator />
-			<GithubGraph />
+			<section aria-labelledby="github-title" class="relative">
+				<SectionTitle id="github-title">GitHub Activity</SectionTitle>
+				<MarginNote side="left" top="72px">
+					Every square is<br />a day of building.
+				</MarginNote>
+				<GithubGraph />
+			</section>
 			<Band />
 
 

@@ -1,0 +1,19 @@
+---
+// A handwritten note in the side gutter beside a section, matching the hero's notes. Only shown where the
+// gutters have room (xl up). Put it inside a `relative` parent; `top` places it down from that parent's top.
+interface Props {
+	side: 'left' | 'right';
+	top: string;
+}
+const { side, top } = Astro.props;
+---
+
+<p
+	class:list={[
+		'pointer-events-none absolute hidden select-none whitespace-nowrap font-handwritten text-[22px] leading-[1.05] text-doodle xl:block',
+		side === 'left' ? 'right-full mr-12 -rotate-3 text-right' : 'left-full ml-12 rotate-3',
+	]}
+	style={`top: ${top}`}
+>
+	<slot />
+</p>
