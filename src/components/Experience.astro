@@ -115,24 +115,6 @@ const tabs = [
 	</div>
 </section>
 
-<style>
-	/* a quick fade when the panel changes */
-	.bg-panel:not([hidden]) {
-		animation: bg-in 0.25s ease both;
-	}
-	@keyframes bg-in {
-		from {
-			opacity: 0;
-			transform: translateY(4px);
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.bg-panel:not([hidden]) {
-			animation: none;
-		}
-	}
-</style>
-
 <script>
 	// switch panels; arrow keys move between the tabs, like any tablist
 	document.querySelectorAll<HTMLElement>('[data-bg-tabs]').forEach((section) => {
