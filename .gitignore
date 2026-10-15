@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# résumé LaTeX source; only the built public/resume.pdf is committed
+resume/
