@@ -54,7 +54,24 @@ const pick = <T>(weighted: [T, number][]) => {
 /** runs until `signal` aborts (the visitor leaves the page) */
 export function startDeskCat(signal: AbortSignal) {
 	// only pages with a home strip have a cat (its script stays loaded on the pages visited after one)
-	if (!document.querySelector('[data-pet-home]') || document.querySelector('[data-desk-cat]')) return;
+	const home = document.querySelector<HTMLElement>('[data-pet-home]');
+	if (!home || document.querySelector('[data-desk-cat]')) return;
+	// the strip sits at the bottom of the page: the cat wakes up once it's about a screen away, so loading the page
+	// (and its first seconds on a slow phone) doesn't pay for a cat nobody can see yet
+	const near = new IntersectionObserver(
+		([e]) => {
+			if (!e.isIntersecting) return;
+			near.disconnect();
+			wake(signal);
+		},
+		{ rootMargin: '100% 0px' },
+	);
+	near.observe(home);
+	signal.addEventListener('abort', () => near.disconnect());
+}
+
+function wake(signal: AbortSignal) {
+	if (signal.aborted || document.querySelector('[data-desk-cat]')) return;
 	// the speech bubble's handwriting is only preloaded on wide screens (Layout.astro): fetch it now so the first
 	// bubble doesn't swap fonts while it's showing
 	const caveat = getComputedStyle(document.documentElement).getPropertyValue('--font-caveat');
