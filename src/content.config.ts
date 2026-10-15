@@ -15,6 +15,8 @@ const blog = defineCollection({
 			tags: z.array(z.string()),
 			revision: z.string().default('r1'),
 			cover: image(),
+			/** a square crop of the cover for the /writing list, laid out for that shape; falls back to cover */
+			coverSquare: image().optional(),
 			coverAlt: z.string(),
 		}),
 });

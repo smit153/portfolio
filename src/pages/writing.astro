@@ -1,6 +1,7 @@
 ---
-// All posts: the home card (image, title, summary, arrow) as a full-width row with a meta block. Rows alternate
-// which wall the square image sits on, and a band sits between them. On phones the image becomes a banner on top.
+// All posts: the home card (image, title, summary, arrow) as a full-width row with a meta block. The title runs across
+// the top beside the image, with the summary and the meta block under it. Rows alternate which wall the square image
+// sits on, and a band sits between them. On phones the image becomes a banner on top.
 import Layout from '../layouts/Layout.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
@@ -28,17 +29,22 @@ const posts = await getPosts();
 							{i > 0 && <Band />}
 							<a href={post.href} class:list={['post group', i % 2 && 'flip']}>
 								<div class="img">
-									{/* the source PNGs (flat pixel art, 5-9 KB at 1280x720), cropped by the column: square beside the text, a banner on phones */}
-										<img src={post.data.cover.src} alt="" width={post.data.cover.width} height={post.data.cover.height} loading={i ? 'lazy' : 'eager'} decoding="async" class="size-full object-cover [image-rendering:pixelated]" />
+									{/* the square cover beside the text; on phones the image is a 16:9 banner, so it takes the wide one */}
+									<picture class="block size-full">
+										<source media="(max-width: 700px)" srcset={post.data.cover.src} />
+										<img src={(post.data.coverSquare ?? post.data.cover).src} alt="" width={(post.data.coverSquare ?? post.data.cover).width} height={(post.data.coverSquare ?? post.data.cover).height} loading={i ? 'lazy' : 'eager'} decoding="async" class="size-full object-cover" />
+									</picture>
 								</div>
-								<div class="txt">
+								<div class="ttl">
 									<span class="absolute -right-[2px] -top-[2px] flex size-8 items-center justify-center border-2 border-line bg-ink transition-colors group-hover:border-tick">
 										<img src={arrowUp.src} alt="" width="13" height="14" class="rotate-[38deg]" />
 									</span>
-									<h2 class="mb-1.5 mr-10 text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">
+									<h2 class="mr-10 text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">
 										{post.data.title}
 									</h2>
-									<p class="text-body tracking-[-0.04em] text-muted">{post.data.description}</p>
+								</div>
+								<div class="txt">
+									<p class="line-clamp-5 text-body tracking-[-0.04em] text-muted">{post.data.description}</p>
 									<span class="mt-auto pt-4 text-small text-white">
 										<span class="border-b border-tick">read the note</span>
 										<img src={arrowUp.src} alt="" width="13" height="14" class="ml-1.5 inline rotate-90 transition-transform group-hover:translate-x-0.5" />
@@ -57,75 +63,88 @@ const posts = await getPosts();
 </Layout>
 
 <style>
+	/* image | title over (summary, meta); flipped rows mirror it */
 	.post {
 		display: grid;
-		grid-template-columns: 220px 1fr 250px;
+		grid-template-columns: 32% 1fr 264px;
+		grid-template-rows: auto 1fr;
+		grid-template-areas:
+			'img ttl ttl'
+			'img txt meta';
 	}
 	.post.flip {
-		grid-template-columns: 250px 1fr 220px;
+		grid-template-columns: 264px 1fr 32%;
+		grid-template-areas:
+			'ttl ttl img'
+			'meta txt img';
 	}
 	.img {
+		grid-area: img;
 		overflow: hidden;
 		border-right: 2px solid var(--color-line);
 	}
+	/* the image fills its cell, whatever height the title, summary and meta give the row */
 	.img :global(img) {
-		aspect-ratio: 1;
 		transition: transform 0.3s ease;
 	}
 	.post:hover .img :global(img) {
 		transform: scale(1.04);
 	}
-	.txt {
+	.ttl {
+		grid-area: ttl;
 		position: relative;
+		padding: 18px 20px 14px;
+		border-bottom: 2px solid var(--color-line);
+	}
+	.txt {
+		grid-area: txt;
 		display: flex;
 		flex-direction: column;
-		padding: 18px 20px;
+		padding: 14px 20px 18px;
 	}
-	/* the meta block's column (its own styles are in PostMeta) */
+	/* the meta block's column (its own styles are in PostMeta); its cells share the title's 20px inset */
 	.post :global(.meta-col) {
+		grid-area: meta;
 		border-left: 2px solid var(--color-line);
 	}
-	/* flipped rows: meta on the left, image on the right */
-	.flip :global(.meta-col) {
-		order: 1;
-		border-left: 0;
-		border-right: 2px solid var(--color-line);
-	}
-	.flip .txt {
-		order: 2;
+	.post :global(.meta-col > div) {
+		padding-inline: 20px;
 	}
 	.flip .img {
-		order: 3;
 		border-right: 0;
 		border-left: 2px solid var(--color-line);
 	}
-	/* narrow screens: one column, the image a 16:9 banner on top, then the text, then the meta block */
+	.flip :global(.meta-col) {
+		border-left: 0;
+		border-right: 2px solid var(--color-line);
+	}
+	/* narrow screens: one column, the image a 16:9 banner on top, then the title, the text and the meta block */
 	@media (max-width: 700px) {
 		.post,
 		.post.flip {
 			grid-template-columns: 1fr;
+			grid-template-rows: none;
+			grid-template-areas: 'img' 'ttl' 'txt' 'meta';
 		}
 		.img,
 		.flip .img {
-			order: 0;
 			border: 0;
 			border-bottom: 2px solid var(--color-line);
 		}
 		.img :global(img) {
 			aspect-ratio: 16 / 9;
 		}
-		.flip .txt {
-			order: 1;
+		.ttl {
+			padding-bottom: 6px;
+			border-bottom: 0;
+		}
+		.txt {
+			padding-top: 0;
 		}
 		.post :global(.meta-col),
 		.flip :global(.meta-col) {
-			order: 2;
 			border: 0;
 			border-top: 2px solid var(--color-line);
-		}
-		/* stacked under the text, the meta cells line up with its 20px inset */
-		.post :global(.meta-col > div) {
-			padding-inline: 20px;
 		}
 	}
 </style>
