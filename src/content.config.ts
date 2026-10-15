@@ -8,10 +8,17 @@ const blog = defineCollection({
 	loader: glob({ pattern: '*.mdx', base: './src/content/blog' }),
 	schema: ({ image }) =>
 		z.object({
+			/** the headline on the page and the cards */
 			title: z.string(),
+			/** the <title> in search results, worded the way people search; the headline if missing */
+			seoTitle: z.string().optional(),
 			/** one or two lines, shown under the title and on the cards */
 			description: z.string(),
+			/** the meta description, for when `description` runs past about 155 characters */
+			seoDescription: z.string().optional(),
 			date: z.coerce.date(),
+			/** when the post last changed in a way worth telling readers */
+			updated: z.coerce.date().optional(),
 			tags: z.array(z.string()),
 			revision: z.string().default('r1'),
 			cover: image(),
@@ -26,8 +33,12 @@ const projects = defineCollection({
 	schema: ({ image }) =>
 		z.object({
 			title: z.string(),
+			/** "<name>: <what it does>" for the <title> in search results ("– Smit Sojitra" is added) */
+			seoTitle: z.string().optional(),
 			/** one or two sentences: what it is and who it's for */
 			summary: z.string(),
+			/** the meta description, for when `summary` runs past about 155 characters */
+			seoDescription: z.string().optional(),
 			/** one short line for the closed row in the project tree */
 			tagline: z.string(),
 			/** three short points for the tree's NOTES.md */

@@ -11,17 +11,26 @@ import Band from '../components/Band.astro';
 import PageTitle from '../components/PageTitle.astro';
 import PostMeta from '../components/blog/PostMeta.astro';
 import { getPosts } from '../lib/posts';
+import { breadcrumbs, titled } from '../lib/seo';
 
 const posts = await getPosts();
 ---
 
-<Layout title="Writing · Smit Sojitra" description="Writing by Smit Sojitra on AI, databases and building software, with interactive demos.">
+<Layout
+	title={titled('Writing')}
+	description="Articles by Smit Sojitra on AI, LLMs, databases and building software, most with interactive demos you can try in the page."
+	jsonLd={breadcrumbs([{ name: 'Writing', path: '/writing/' }])}
+>
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<!-- a full-height column, so the strip below sits at the bottom of the window when there is little content -->
 		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
 			<Header />
 			<Band />
 			<PageTitle>Writing</PageTitle>
+			<p class="relative px-5 pb-5 pt-4 text-body tracking-[-0.04em] text-muted">
+				Long-form notes on AI, LLMs, databases and building software. Most come with interactive demos, so you can try the idea instead of only reading about it.
+				<span aria-hidden="true" class="absolute inset-x-[-50vw] bottom-0 h-[2px] bg-line"></span>
+			</p>
 			<ol>
 				{
 					posts.map((post, i) => (

@@ -1,26 +1,45 @@
 ---
 import { Font, fontData } from 'astro:assets';
 import { ClientRouter } from 'astro:transitions';
+import JsonLd from '../components/JsonLd.astro';
+import { NAME, abs } from '../lib/seo';
 import '../styles/global.css';
 
 interface Props {
+	/** the whole <title>: unique per page, about 60 characters at most */
 	title: string;
-	/** for search results and link previews; posts and projects pass their own */
-	description?: string;
+	/** for search results and link previews: unique per page, about 155 characters at most */
+	description: string;
 	/** 'article' for posts and project pages */
 	type?: 'website' | 'article';
+	/** the link preview card (1200x630), a path on the site; the site-wide card otherwise */
+	image?: string;
+	imageAlt?: string;
+	/** posts: when it was published and last changed */
+	published?: Date;
+	modified?: Date;
+	/** schema.org entities for this page (src/lib/seo.ts) */
+	jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+	/** keep the page out of search results (the 404 page) */
+	noindex?: boolean;
 }
 
 const {
 	title,
-	description = 'Smit Sojitra, software developer and AI engineer: full-stack, AI agents, cloud & DevOps. Projects, writing and a desk cat.',
+	description,
 	type = 'website',
+	image: imagePath = '/og.png',
+	imageAlt = 'Smit Sojitra, Software Developer and AI Engineer, smiit.in',
+	published,
+	modified,
+	jsonLd,
+	noindex = false,
 } = Astro.props;
 // Caveat is only on screen at first on wide screens (the hero's side notes), so phones don't fetch it up front
 const caveatUrl = fontData['--font-caveat']?.[0]?.src[0]?.url;
 // absolute addresses, as link previews need them
-const url = new URL(Astro.url.pathname, Astro.site);
-const image = new URL('/og.png', Astro.site);
+const url = abs(Astro.url.pathname);
+const image = abs(imagePath);
 ---
 
 <html lang="en">
@@ -35,7 +54,11 @@ const image = new URL('/og.png', Astro.site);
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 		<meta name="description" content={description} />
-		<link rel="canonical" href={url} />
+		<meta name="author" content={NAME} />
+		{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={url} />}
+		<!-- Google Search Console ownership -->
+		<meta name="google-site-verification" content="PVrMQL7H5MWEUC8p3ExPPnENlyuNm2ctbP9c_ItTkQE" />
+		<link rel="alternate" type="application/rss+xml" title="Smit Sojitra's writing" href="/rss.xml" />
 		<!-- link previews (Open Graph, X): the spec-sheet card in public/og.png -->
 		<meta property="og:type" content={type} />
 		<meta property="og:site_name" content="smiit.in" />
@@ -45,10 +68,18 @@ const image = new URL('/og.png', Astro.site);
 		<meta property="og:image" content={image} />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
-		<meta property="og:image:alt" content="Smit Sojitra, Software Developer and AI Engineer, smiit.in" />
+		<meta property="og:image:alt" content={imageAlt} />
+		{published && <meta property="article:published_time" content={published.toISOString()} />}
+		{modified && <meta property="article:modified_time" content={modified.toISOString()} />}
+		{published && <meta property="article:author" content={abs('/')} />}
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@smit_sojitra153" />
 		<meta name="twitter:creator" content="@smit_sojitra153" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={image} />
+		<meta name="twitter:image:alt" content={imageAlt} />
+		{jsonLd && <JsonLd data={jsonLd} />}
 		<!-- must run before @rive-app/canvas loads: remember every AudioContext so a key press can resume them -->
 		<script is:inline>
 			window.__audioContexts = [];

@@ -5,9 +5,9 @@ import PixelIcon from './PixelIcon.astro';
 
 const links = [
 	{ label: 'Experience', href: '/#experience-title' },
-	{ label: 'Projects', href: '/projects' },
+	{ label: 'Projects', href: '/projects/' },
 	{ label: 'Stack', href: '/#stack-title' },
-	{ label: 'Writing', href: '/writing' },
+	{ label: 'Writing', href: '/writing/' },
 	{ label: 'Contact', href: '/#contact-title' },
 ];
 // everything the quick-jump box can go to
@@ -63,7 +63,7 @@ const jumps = [
 			type="text"
 			placeholder="Jump to…"
 			autocomplete="off"
-			class="h-12 flex-1 bg-transparent text-body text-white outline-none placeholder:text-tick"
+			class="h-12 flex-1 bg-transparent text-body text-white outline-none placeholder:text-label"
 		/>
 		<kbd class="border border-line px-1.5 text-small leading-5 text-muted">Esc</kbd>
 	</div>
@@ -73,7 +73,7 @@ const jumps = [
 				<li>
 					<a href={href} data-jump-item class="flex items-center justify-between px-4 py-2 text-body text-muted aria-selected:bg-[#111113] aria-selected:text-white">
 						<span>{label}</span>
-						<span class="text-small text-tick">{hint}</span>
+						<span class="text-small text-label">{hint}</span>
 					</a>
 				</li>
 			))

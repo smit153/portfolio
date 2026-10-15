@@ -6,7 +6,8 @@
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	"compatibility_date": "2026-10-01",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-	"assets": { "binding": "ASSETS", "directory": "./dist" },
+	// an address with no page gets the built 404 page (src/pages/404.astro), with a 404 status
+	"assets": { "binding": "ASSETS", "directory": "./dist", "not_found_handling": "404-page" },
 	// served only at the domain: no workers.dev address, no per-version preview URLs
 	"routes": [
 		{ "pattern": "smiit.in", "custom_domain": true },

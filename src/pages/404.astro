@@ -1,0 +1,30 @@
+---
+// Any address with no page: says so, points home, and stays out of search results.
+import Layout from '../layouts/Layout.astro';
+import AsciiField from '../components/AsciiField.astro';
+import Band from '../components/Band.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import PageTitle from '../components/PageTitle.astro';
+import { titled } from '../lib/seo';
+---
+
+<Layout title={titled('Page not found')} description="There's no page at this address on smiit.in." noindex>
+	<div class="min-h-screen overflow-x-clip bg-ink">
+		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
+			<Header />
+			<Band />
+			<PageTitle>Page not found</PageTitle>
+			<div class="px-5 py-6 text-body tracking-[-0.04em] text-muted">
+				<p>There's nothing at this address. It may have moved, or the link has a typo.</p>
+				<p class="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+					<a href="/" class="text-white underline decoration-tick underline-offset-4 hover:decoration-white">Go home</a>
+					<a href="/writing/" class="text-white underline decoration-tick underline-offset-4 hover:decoration-white">Writing</a>
+					<a href="/projects/" class="text-white underline decoration-tick underline-offset-4 hover:decoration-white">Projects</a>
+				</p>
+			</div>
+			<AsciiField class="mt-auto" />
+		</main>
+		<Footer />
+	</div>
+</Layout>

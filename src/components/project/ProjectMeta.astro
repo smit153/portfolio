@@ -55,7 +55,7 @@ const bare = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 			{
 				p.live && (
 					<a href={p.live} target="_blank" rel="noopener noreferrer" class="link">
-						<span class="text-tick">visit</span> {bare(p.live)}
+						<span class="text-label">visit</span> {bare(p.live)}
 						<img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
 					</a>
 				)
@@ -63,7 +63,7 @@ const bare = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 			{
 				p.source && (
 					<a href={p.source} target="_blank" rel="noopener noreferrer" class="link">
-						<span class="text-tick">source</span> {bare(p.source).replace('github.com/', 'github/')}
+						<span class="text-label">source</span> {bare(p.source).replace('github.com/', 'github/')}
 						<img src={arrowUp.src} alt="" width="11" height="12" class="rotate-[38deg]" />
 					</a>
 				)
@@ -103,7 +103,7 @@ const bare = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 		line-height: var(--text-tiny--line-height);
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		color: var(--color-tick);
+		color: var(--color-label);
 	}
 	dd {
 		margin: 0;

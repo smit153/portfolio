@@ -16,7 +16,7 @@ const { sections } = Astro.props;
 				{sections.map((s, i) => (
 					<li>
 						<a href={`#${s.slug}`} data-pill-link={s.slug} class="flex gap-3 px-4 py-1.5 text-small text-muted transition-colors hover:text-white aria-[current=true]:text-white">
-							<span class="text-tick">{String(i + 1).padStart(2, '0')}</span>
+							<span class="text-label">{String(i + 1).padStart(2, '0')}</span>
 							<span>{s.text}</span>
 						</a>
 					</li>
@@ -28,7 +28,7 @@ const { sections } = Astro.props;
 					<circle data-pill-ring cx="9" cy="9" r="7" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="43.98" stroke-dashoffset="43.98" />
 				</svg>
 				<span data-pill-text class="min-w-0 flex-1 truncate text-small text-white">{sections[0].text}</span>
-				<span data-pill-count class="text-small text-tick">01 / {String(sections.length).padStart(2, '0')}</span>
+				<span data-pill-count class="text-small text-label">01 / {String(sections.length).padStart(2, '0')}</span>
 			</button>
 		</div>
 	)

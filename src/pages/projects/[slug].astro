@@ -17,6 +17,7 @@ import SectionPill from '../../components/blog/SectionPill.astro';
 import Diagrams from '../../components/project/Diagrams.astro';
 import ProjectMeta from '../../components/project/ProjectMeta.astro';
 import { getProjects } from '../../lib/projects';
+import { NAME, abs, breadcrumbs, ids, titled } from '../../lib/seo';
 import '../../styles/prose.css';
 import '../../styles/project.css';
 
@@ -32,9 +33,34 @@ const { project, previous, next } = Astro.props;
 const p = project.data;
 const { Content, headings } = await render(project);
 const sections = headings.filter((h) => h.depth === 2);
+
+const description = p.seoDescription ?? p.summary;
+const url = abs(project.href);
+// the stack lists libraries too: the languages are the entries that start with one of these
+const LANGUAGES = ['TypeScript', 'JavaScript', 'Python', 'Go', 'Rust', 'Java'];
+const languages = [...new Set(p.stack.map((s) => LANGUAGES.find((l) => s === l || s.startsWith(`${l} `))).filter(Boolean))];
+const work = {
+	'@type': p.source ? 'SoftwareSourceCode' : 'CreativeWork',
+	'@id': `${url}#project`,
+	name: p.title,
+	description,
+	url,
+	mainEntityOfPage: url,
+	...(p.source && { codeRepository: p.source }),
+	...(languages.length && { programmingLanguage: languages }),
+	...(p.live && { sameAs: p.live }),
+	keywords: p.stack,
+	author: { '@type': 'Person', '@id': ids.person, name: NAME, url: abs('/') },
+	isPartOf: { '@id': ids.website },
+};
 ---
 
-<Layout title={`${p.title} · Smit Sojitra`} description={p.summary} type="article">
+<Layout
+	title={titled(p.seoTitle ?? p.title)}
+	description={description}
+	type="article"
+	jsonLd={[work, breadcrumbs([{ name: 'Projects', path: '/projects/' }, { name: p.title, path: project.href }])]}
+>
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
 			<Header />
@@ -42,7 +68,7 @@ const sections = headings.filter((h) => h.depth === 2);
 
 			<!-- back, copy link, next -->
 			<div class="relative flex h-12 items-center justify-between gap-4 px-5">
-				<a href="/projects" class="group flex items-center gap-2 text-small text-muted transition-colors hover:text-white">
+				<a href="/projects/" class="group flex items-center gap-2 text-small text-muted transition-colors hover:text-white">
 					<img src={arrowUp.src} alt="" width="13" height="14" class="-rotate-90 opacity-70 transition-[opacity,translate] group-hover:-translate-x-0.5 group-hover:opacity-100" />
 					projects
 				</a>
@@ -124,13 +150,13 @@ const sections = headings.filter((h) => h.depth === 2);
 					].map(({ project: other, label }, i) =>
 						other ? (
 							<a href={other.href} class:list={['group flex flex-col gap-1 px-5 py-5 transition-colors hover:bg-[#0e0e10]', i === 1 && 'sm:items-end sm:border-l-2 sm:border-line sm:text-right']}>
-								<span class="text-small text-tick">{label === 'previous' ? '← previous' : 'next →'}</span>
+								<span class="text-small text-label">{label === 'previous' ? '← previous' : 'next →'}</span>
 								<span class="text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">{other.data.title}</span>
 								<span class="text-small text-muted">{other.data.tagline}</span>
 							</a>
 						) : (
-							<a href="/projects" class:list={['group flex flex-col gap-1 px-5 py-5 transition-colors hover:bg-[#0e0e10]', i === 1 && 'sm:items-end sm:border-l-2 sm:border-line sm:text-right']}>
-								<span class="text-small text-tick">{label === 'previous' ? '← back to' : 'back to →'}</span>
+							<a href="/projects/" class:list={['group flex flex-col gap-1 px-5 py-5 transition-colors hover:bg-[#0e0e10]', i === 1 && 'sm:items-end sm:border-l-2 sm:border-line sm:text-right']}>
+								<span class="text-small text-label">{label === 'previous' ? '← back to' : 'back to →'}</span>
 								<span class="text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">all projects</span>
 							</a>
 						),

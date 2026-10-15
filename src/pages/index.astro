@@ -1,4 +1,6 @@
 ---
+import { getImage } from 'astro:assets';
+import avatar from '../assets/images/avatar-glasses.png';
 import Layout from '../layouts/Layout.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
@@ -19,9 +21,17 @@ import SectionTitle from '../components/SectionTitle.astro';
 import Separator from '../components/Separator.astro';
 import Stack from '../components/Stack.astro';
 import Writing from '../components/Writing.astro';
+import { abs, person, website } from '../lib/seo';
+
+// the portrait search engines can show next to my name
+const photo = await getImage({ src: avatar, width: 400, height: 400, format: 'png' });
 ---
 
-<Layout title="Smit Sojitra">
+<Layout
+	title="Smit Sojitra – Software Developer & AI Engineer in Bangalore"
+	description="Smit Sojitra, software developer and AI engineer in Bangalore: full-stack apps, AI agents, LLM workflows and DevOps. Projects, writing and a desk cat."
+	jsonLd={[person(abs(photo.src)), website]}
+>
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<!-- the page column: its side borders are the full-height column guides -->
 		<main class="relative mx-auto min-h-screen w-full max-w-[768px] border-x-2 border-line">

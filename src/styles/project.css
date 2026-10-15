@@ -14,7 +14,7 @@
   left: 0;
   top: 22px;
   font-size: 14px;
-  color: var(--color-tick);
+  color: var(--color-label);
 }
 .case > span[aria-hidden]:first-child + h2::after {
   top: 0;
@@ -46,5 +46,5 @@
 }
 /* until it's drawn, the source waits quietly instead of flashing as code */
 .case pre:has(> code.language-mermaid) {
-  color: var(--color-tick);
+  color: var(--color-label);
 }
