@@ -22,6 +22,8 @@ import Demo from '../Demo.astro';
 </Demo>
 
 <script>
+	import { onPage } from '../../../lib/on-page';
+
 	const DOC =
 		'INVOICE INV-20418\nNorthwind Supply Co.\nIssued: 3 Oct 2026    Due: 2 Nov 2026\n\n2 x Steel brackets ........ $84.00\n1 x Freight ............... $16.50\nTotal due: $100.50\n\nPay to account ending 4471.';
 	type Field = { name: string; value: string | null; slip?: string; written?: string; conf: number | null };
@@ -35,76 +37,78 @@ import Demo from '../Demo.astro';
 	const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 	const marked = (start: number, text: string) => esc(DOC.slice(0, start)) + '<mark>' + esc(text) + '</mark>' + esc(DOC.slice(start + text.length));
 
-	const root = document.getElementById('aii-extract');
-	if (root) {
-		const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
-		const modes = [...root.querySelectorAll<HTMLButtonElement>('[data-mode]')];
-		const slipBtn = $('[data-slip]') as HTMLButtonElement;
-		let mode = 'point';
-		let cur = 0;
-		let slipped = false;
+	onPage(() => {
+		const root = document.getElementById('aii-extract');
+		if (root) {
+			const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+			const modes = [...root.querySelectorAll<HTMLButtonElement>('[data-mode]')];
+			const slipBtn = $('[data-slip]') as HTMLButtonElement;
+			let mode = 'point';
+			let cur = 0;
+			let slipped = false;
 
-		const fieldBtns = FIELDS.map((f, i) => {
-			const b = document.createElement('button');
-			b.type = 'button';
-			b.textContent = f.name.replace('_', ' ');
-			b.onclick = () => {
-				cur = i;
-				slipped = false;
-				render();
-			};
-			$('[data-fields]').append(b);
-			return b;
-		});
-
-		function render() {
-			const f = FIELDS[cur];
-			fieldBtns.forEach((b, i) => b.classList.toggle('on', i === cur));
-			modes.forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
-			slipBtn.disabled = mode !== 'write' || !f.value;
-			slipBtn.classList.toggle('on', slipped && mode === 'write');
-			let html = esc(DOC);
-			let out: string;
-			if (mode === 'point') {
-				if (f.value) {
-					const s = DOC.indexOf(f.value);
-					const e = s + f.value.length;
-					html = marked(s, f.value);
-					out =
-						JSON.stringify({ text: f.value, type: f.name, confidence: f.conf, start: s, end: e }, null, 1).replace(/\n\s*/g, ' ') +
-						`\n\nCheck: doc.slice(${s}, ${e}) === ${JSON.stringify(DOC.slice(s, e))}  -> true. The answer carries its own proof.`;
-				} else {
-					out = 'No span to point at. "3" never appears as an item count. It has to be worked out (2 + 1), and that needs a writer, not a pointer.';
-				}
-			} else {
-				const v = f.value ? (slipped ? f.slip! : f.value) : f.written!;
-				const s = DOC.indexOf(v);
-				if (f.value && s >= 0) html = marked(s, v);
-				out =
-					JSON.stringify({ [f.name]: v }) +
-					'\n\n' +
-					(!f.value
-						? "A writer can answer this: it adds 2 + 1. A pointer can't. This is the kind of field that stays with an LLM."
-						: s >= 0
-							? 'Found in the document, so this one is right. But you only know because you searched for it yourself.'
-							: "Not in the document. The output looks fine on its own: no offsets, no flag, nothing to tell you it's wrong.");
-			}
-			$('[data-doc]').innerHTML = html;
-			$('[data-out]').textContent = out;
-		}
-
-		modes.forEach(
-			(b) =>
-				(b.onclick = () => {
-					mode = b.dataset.mode!;
+			const fieldBtns = FIELDS.map((f, i) => {
+				const b = document.createElement('button');
+				b.type = 'button';
+				b.textContent = f.name.replace('_', ' ');
+				b.onclick = () => {
+					cur = i;
 					slipped = false;
 					render();
-				}),
-		);
-		slipBtn.onclick = () => {
-			slipped = !slipped;
+				};
+				$('[data-fields]').append(b);
+				return b;
+			});
+
+			function render() {
+				const f = FIELDS[cur];
+				fieldBtns.forEach((b, i) => b.classList.toggle('on', i === cur));
+				modes.forEach((b) => b.classList.toggle('on', b.dataset.mode === mode));
+				slipBtn.disabled = mode !== 'write' || !f.value;
+				slipBtn.classList.toggle('on', slipped && mode === 'write');
+				let html = esc(DOC);
+				let out: string;
+				if (mode === 'point') {
+					if (f.value) {
+						const s = DOC.indexOf(f.value);
+						const e = s + f.value.length;
+						html = marked(s, f.value);
+						out =
+							JSON.stringify({ text: f.value, type: f.name, confidence: f.conf, start: s, end: e }, null, 1).replace(/\n\s*/g, ' ') +
+							`\n\nCheck: doc.slice(${s}, ${e}) === ${JSON.stringify(DOC.slice(s, e))}  -> true. The answer carries its own proof.`;
+					} else {
+						out = 'No span to point at. "3" never appears as an item count. It has to be worked out (2 + 1), and that needs a writer, not a pointer.';
+					}
+				} else {
+					const v = f.value ? (slipped ? f.slip! : f.value) : f.written!;
+					const s = DOC.indexOf(v);
+					if (f.value && s >= 0) html = marked(s, v);
+					out =
+						JSON.stringify({ [f.name]: v }) +
+						'\n\n' +
+						(!f.value
+							? "A writer can answer this: it adds 2 + 1. A pointer can't. This is the kind of field that stays with an LLM."
+							: s >= 0
+								? 'Found in the document, so this one is right. But you only know because you searched for it yourself.'
+								: "Not in the document. The output looks fine on its own: no offsets, no flag, nothing to tell you it's wrong.");
+				}
+				$('[data-doc]').innerHTML = html;
+				$('[data-out]').textContent = out;
+			}
+
+			modes.forEach(
+				(b) =>
+					(b.onclick = () => {
+						mode = b.dataset.mode!;
+						slipped = false;
+						render();
+					}),
+			);
+			slipBtn.onclick = () => {
+				slipped = !slipped;
+				render();
+			};
 			render();
-		};
-		render();
-	}
+		}
+	});
 </script>

@@ -35,104 +35,109 @@ import Demo from '../Demo.astro';
 </Demo>
 
 <script>
+	import { onPage, onLeave } from '../../../lib/on-page';
+
 	const LABELS = ['billing', 'account', 'technical', 'shipping'];
 	const PROBS = [0.91, 0.05, 0.03, 0.01];
 	const TOKS = ['{"', 'label', '":', ' "', 'billing', '"}'];
 	const ALTS = ['{"label": "billing"}', '{"label": "Billing"}', '{"label": "billing_dispute"}', 'Sure! The label is billing.', '{"label": "refund"}', '```json\n{"label": "billing"}\n```'];
 
-	const root = document.getElementById('aii-write');
-	if (root) {
-		const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
-		let step = 0;
-		let alt = -1;
-		let timer: ReturnType<typeof setInterval> | null = null;
+	onPage((signal) => {
+		const root = document.getElementById('aii-write');
+		if (root) {
+			const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+			let step = 0;
+			let alt = -1;
+			let timer: ReturnType<typeof setInterval> | null = null;
 
-		const fills = LABELS.map((l, i) => {
-			const name = document.createElement('span');
-			name.textContent = l;
-			const bar = document.createElement('div');
-			bar.className = 'bar';
-			const fill = document.createElement('i');
-			bar.append(fill);
-			const val = document.createElement('span');
-			$('[data-bars]').append(name, bar, val);
-			return { fill, val, p: PROBS[i] };
-		});
-
-		const usable = (s: string) => {
-			try {
-				const o = JSON.parse(s);
-				return o && LABELS.includes(o.label) ? 'ok' : `parses, but "${o?.label}" is not one of your labels`;
-			} catch {
-				return 'not valid JSON, your parser throws';
-			}
-		};
-
-		const render = () => {
-			const tk = $('[data-toks]');
-			tk.innerHTML = '';
-			const tok = (s: string, isNew: boolean) => {
-				const t = document.createElement('span');
-				t.className = isNew ? 'tok new' : 'tok';
-				t.textContent = s;
-				tk.append(t);
-			};
-			if (alt >= 0) {
-				tok(ALTS[alt], true);
-				const u = usable(ALTS[alt]);
-				$('[data-wcheck]').textContent = u === 'ok' ? 'Usable: valid JSON and one of your labels.' : `Not usable: ${u}.`;
-				$('[data-wpasses]').textContent = '1 + one per token';
-			} else {
-				for (let i = 0; i < step; i++) tok(TOKS[i], i === step - 1);
-				$('[data-wpasses]').textContent = String(1 + step);
-				$('[data-wcheck]').textContent =
-					step === 0 ? 'Prompt read. Nothing written yet.' : step < TOKS.length ? `Writing token ${step} of ${TOKS.length}...` : 'Done. Now your code has to parse it and check the label.';
-			}
-			const done = step > 0 || alt >= 0;
-			fills.forEach(({ fill, val, p }) => {
-				fill.style.width = done ? `${p * 100}%` : '0';
-				val.textContent = done ? p.toFixed(2) : '';
+			const fills = LABELS.map((l, i) => {
+				const name = document.createElement('span');
+				name.textContent = l;
+				const bar = document.createElement('div');
+				bar.className = 'bar';
+				const fill = document.createElement('i');
+				bar.append(fill);
+				const val = document.createElement('span');
+				$('[data-bars]').append(name, bar, val);
+				return { fill, val, p: PROBS[i] };
 			});
-			$('[data-ppasses]').textContent = done ? '1' : '0';
-			$('[data-pcheck]').textContent = done ? 'Done after one pass. The answer can only be one of your four labels.' : '';
-		};
 
-		const stop = () => {
-			if (timer) clearInterval(timer);
-			timer = null;
-			$('[data-play]').textContent = 'Play';
-		};
-		const doStep = () => {
-			alt = -1;
-			if (step < TOKS.length) step++;
-			else stop();
-			render();
-		};
+			const usable = (s: string) => {
+				try {
+					const o = JSON.parse(s);
+					return o && LABELS.includes(o.label) ? 'ok' : `parses, but "${o?.label}" is not one of your labels`;
+				} catch {
+					return 'not valid JSON, your parser throws';
+				}
+			};
 
-		$('[data-step]').onclick = () => {
-			stop();
-			doStep();
-		};
-		$('[data-reset]').onclick = () => {
-			stop();
-			step = 0;
-			alt = -1;
-			render();
-		};
-		$('[data-play]').onclick = () => {
-			if (timer) return stop();
-			if (step >= TOKS.length || alt >= 0) {
+			const render = () => {
+				const tk = $('[data-toks]');
+				tk.innerHTML = '';
+				const tok = (s: string, isNew: boolean) => {
+					const t = document.createElement('span');
+					t.className = isNew ? 'tok new' : 'tok';
+					t.textContent = s;
+					tk.append(t);
+				};
+				if (alt >= 0) {
+					tok(ALTS[alt], true);
+					const u = usable(ALTS[alt]);
+					$('[data-wcheck]').textContent = u === 'ok' ? 'Usable: valid JSON and one of your labels.' : `Not usable: ${u}.`;
+					$('[data-wpasses]').textContent = '1 + one per token';
+				} else {
+					for (let i = 0; i < step; i++) tok(TOKS[i], i === step - 1);
+					$('[data-wpasses]').textContent = String(1 + step);
+					$('[data-wcheck]').textContent =
+						step === 0 ? 'Prompt read. Nothing written yet.' : step < TOKS.length ? `Writing token ${step} of ${TOKS.length}...` : 'Done. Now your code has to parse it and check the label.';
+				}
+				const done = step > 0 || alt >= 0;
+				fills.forEach(({ fill, val, p }) => {
+					fill.style.width = done ? `${p * 100}%` : '0';
+					val.textContent = done ? p.toFixed(2) : '';
+				});
+				$('[data-ppasses]').textContent = done ? '1' : '0';
+				$('[data-pcheck]').textContent = done ? 'Done after one pass. The answer can only be one of your four labels.' : '';
+			};
+
+			const stop = () => {
+				if (timer) clearInterval(timer);
+				timer = null;
+				$('[data-play]').textContent = 'Play';
+			};
+			const doStep = () => {
+				alt = -1;
+				if (step < TOKS.length) step++;
+				else stop();
+				render();
+			};
+
+			$('[data-step]').onclick = () => {
+				stop();
+				doStep();
+			};
+			$('[data-reset]').onclick = () => {
+				stop();
 				step = 0;
 				alt = -1;
-			}
-			$('[data-play]').textContent = 'Pause';
-			timer = setInterval(() => (step >= TOKS.length ? stop() : doStep()), 550);
-		};
-		$('[data-alt]').onclick = () => {
-			stop();
-			alt = (alt + 1) % ALTS.length;
+				render();
+			};
+			$('[data-play]').onclick = () => {
+				if (timer) return stop();
+				if (step >= TOKS.length || alt >= 0) {
+					step = 0;
+					alt = -1;
+				}
+				$('[data-play]').textContent = 'Pause';
+				timer = setInterval(() => (step >= TOKS.length ? stop() : doStep()), 550);
+			};
+			$('[data-alt]').onclick = () => {
+				stop();
+				alt = (alt + 1) % ALTS.length;
+				render();
+			};
 			render();
-		};
-		render();
-	}
+			onLeave(signal, stop);
+		}
+	});
 </script>

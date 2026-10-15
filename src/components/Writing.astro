@@ -76,19 +76,23 @@ const IMG_H = 228; // image height; the full-bleed hairline sits right under it
 
 <script>
 	import EmblaCarousel from 'embla-carousel';
+	import { onPage, onLeave } from '../lib/on-page';
 
-	const viewport = document.querySelector<HTMLElement>('[data-blog-viewport]');
-	const prev = document.querySelector<HTMLButtonElement>('[data-blog-nav="prev"]');
-	const next = document.querySelector<HTMLButtonElement>('[data-blog-nav="next"]');
-	if (viewport && prev && next) {
-		const embla = EmblaCarousel(viewport, { align: 'start', containScroll: 'trimSnaps' });
-		const update = () => {
-			prev.disabled = !embla.canScrollPrev();
-			next.disabled = !embla.canScrollNext();
-		};
-		prev.addEventListener('click', () => embla.scrollPrev());
-		next.addEventListener('click', () => embla.scrollNext());
-		embla.on('select', update).on('reInit', update);
-		update();
-	}
+	onPage((signal) => {
+		const viewport = document.querySelector<HTMLElement>('[data-blog-viewport]');
+		const prev = document.querySelector<HTMLButtonElement>('[data-blog-nav="prev"]');
+		const next = document.querySelector<HTMLButtonElement>('[data-blog-nav="next"]');
+		if (viewport && prev && next) {
+			const embla = EmblaCarousel(viewport, { align: 'start', containScroll: 'trimSnaps' });
+			const update = () => {
+				prev.disabled = !embla.canScrollPrev();
+				next.disabled = !embla.canScrollNext();
+			};
+			prev.addEventListener('click', () => embla.scrollPrev());
+			next.addEventListener('click', () => embla.scrollNext());
+			embla.on('select', update).on('reInit', update);
+			update();
+			onLeave(signal, () => embla.destroy());
+		}
+	});
 </script>

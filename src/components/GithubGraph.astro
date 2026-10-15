@@ -124,60 +124,64 @@ const link = 'underline decoration-tick underline-offset-4 transition-colors hov
 </style>
 
 <script>
-	// on narrow screens, start scrolled to the most recent weeks, and fade whichever edges have more to scroll to
-	document.querySelectorAll<HTMLElement>('[data-graph-scroll]').forEach((el) => {
-		const fade = () => {
-			const max = el.scrollWidth - el.clientWidth;
-			el.style.setProperty('--fade-l', el.scrollLeft > 1 ? '40px' : '0px');
-			el.style.setProperty('--fade-r', el.scrollLeft < max - 1 ? '40px' : '0px');
-		};
-		// stick to the latest weeks until someone scrolls back, also when the window is resized
-		let atEnd = true;
-		const toEnd = () => {
-			if (atEnd) el.scrollLeft = el.scrollWidth;
-			fade();
-		};
-		toEnd();
-		el.addEventListener(
-			'scroll',
-			() => {
-				atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
-				fade();
-			},
-			{ passive: true },
-		);
-		addEventListener('resize', toEnd);
-	});
+	import { onPage } from '../lib/on-page';
 
-	// a small tooltip over the day under the pointer (a tap on phones): the count, then the date
-	document.querySelectorAll<HTMLElement>('[data-graph]').forEach((fig) => {
-		const tip = fig.querySelector<HTMLElement>('[data-graph-tip]')!;
-		const scroller = fig.querySelector<HTMLElement>('[data-graph-scroll]')!;
-		const hide = () => tip.classList.add('hidden');
-		const show = (cell: SVGRectElement) => {
-			const n = Number(cell.dataset.count);
-			const what = n ? `${n.toLocaleString('en-US')} contribution${n === 1 ? '' : 's'}` : 'No contributions';
-			tip.innerHTML = '';
-			const b = document.createElement('span');
-			b.className = n ? 'text-white' : '';
-			b.textContent = what;
-			tip.append(b, ` · ${cell.dataset.day}`);
-			tip.classList.remove('hidden');
-			// centred above the day, kept inside the figure
-			const f = fig.getBoundingClientRect();
-			const c = cell.getBoundingClientRect();
-			const x = c.left + c.width / 2 - f.left - tip.offsetWidth / 2;
-			tip.style.left = `${Math.max(4, Math.min(f.width - tip.offsetWidth - 4, x))}px`;
-			tip.style.top = `${c.top - f.top - tip.offsetHeight - 6}px`;
-		};
-		fig.addEventListener('pointerover', (e) => {
-			const cell = (e.target as Element).closest<SVGRectElement>('rect[data-day]');
-			if (cell) show(cell);
-			else hide();
+	onPage((signal) => {
+		// on narrow screens, start scrolled to the most recent weeks, and fade whichever edges have more to scroll to
+		document.querySelectorAll<HTMLElement>('[data-graph-scroll]').forEach((el) => {
+			const fade = () => {
+				const max = el.scrollWidth - el.clientWidth;
+				el.style.setProperty('--fade-l', el.scrollLeft > 1 ? '40px' : '0px');
+				el.style.setProperty('--fade-r', el.scrollLeft < max - 1 ? '40px' : '0px');
+			};
+			// stick to the latest weeks until someone scrolls back, also when the window is resized
+			let atEnd = true;
+			const toEnd = () => {
+				if (atEnd) el.scrollLeft = el.scrollWidth;
+				fade();
+			};
+			toEnd();
+			el.addEventListener(
+				'scroll',
+				() => {
+					atEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+					fade();
+				},
+				{ passive: true },
+			);
+			addEventListener('resize', toEnd, { signal });
 		});
-		// a finger "leaves" as soon as it lifts, so on touch the tip stays until a tap elsewhere or a scroll
-		fig.addEventListener('pointerleave', (e) => e.pointerType !== 'touch' && hide());
-		document.addEventListener('pointerdown', (e) => !fig.contains(e.target as Node) && hide());
-		scroller.addEventListener('scroll', hide, { passive: true });
+
+		// a small tooltip over the day under the pointer (a tap on phones): the count, then the date
+		document.querySelectorAll<HTMLElement>('[data-graph]').forEach((fig) => {
+			const tip = fig.querySelector<HTMLElement>('[data-graph-tip]')!;
+			const scroller = fig.querySelector<HTMLElement>('[data-graph-scroll]')!;
+			const hide = () => tip.classList.add('hidden');
+			const show = (cell: SVGRectElement) => {
+				const n = Number(cell.dataset.count);
+				const what = n ? `${n.toLocaleString('en-US')} contribution${n === 1 ? '' : 's'}` : 'No contributions';
+				tip.innerHTML = '';
+				const b = document.createElement('span');
+				b.className = n ? 'text-white' : '';
+				b.textContent = what;
+				tip.append(b, ` · ${cell.dataset.day}`);
+				tip.classList.remove('hidden');
+				// centred above the day, kept inside the figure
+				const f = fig.getBoundingClientRect();
+				const c = cell.getBoundingClientRect();
+				const x = c.left + c.width / 2 - f.left - tip.offsetWidth / 2;
+				tip.style.left = `${Math.max(4, Math.min(f.width - tip.offsetWidth - 4, x))}px`;
+				tip.style.top = `${c.top - f.top - tip.offsetHeight - 6}px`;
+			};
+			fig.addEventListener('pointerover', (e) => {
+				const cell = (e.target as Element).closest<SVGRectElement>('rect[data-day]');
+				if (cell) show(cell);
+				else hide();
+			});
+			// a finger "leaves" as soon as it lifts, so on touch the tip stays until a tap elsewhere or a scroll
+			fig.addEventListener('pointerleave', (e) => e.pointerType !== 'touch' && hide());
+			document.addEventListener('pointerdown', (e) => !fig.contains(e.target as Node) && hide(), { signal });
+			scroller.addEventListener('scroll', hide, { passive: true });
+		});
 	});
 </script>

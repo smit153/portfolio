@@ -5,5 +5,7 @@
 
 <script>
 	import { startDeskCat } from '../lib/desk-cat';
-	startDeskCat();
+	import { onPage } from '../lib/on-page';
+
+	onPage((signal) => startDeskCat(signal));
 </script>

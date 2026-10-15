@@ -12,7 +12,10 @@ import Colophon from './Colophon.astro';
 
 <script>
 	import { startAfterglowField } from '../lib/afterglow-field';
+	import { onPage } from '../lib/on-page';
 
-	const canvas = document.querySelector<HTMLCanvasElement>('[data-name-field]');
-	if (canvas) startAfterglowField(canvas, 'SMIT SOJITRA');
+	onPage((signal) => {
+		const canvas = document.querySelector<HTMLCanvasElement>('[data-name-field]');
+		if (canvas) startAfterglowField(canvas, 'SMIT SOJITRA', signal);
+	});
 </script>

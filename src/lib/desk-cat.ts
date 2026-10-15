@@ -51,8 +51,10 @@ const pick = <T>(weighted: [T, number][]) => {
 	return weighted[0][0];
 };
 
-export function startDeskCat() {
-	if (document.querySelector('[data-desk-cat]')) return;
+/** runs until `signal` aborts (the visitor leaves the page) */
+export function startDeskCat(signal: AbortSignal) {
+	// only pages with a home strip have a cat (its script stays loaded on the pages visited after one)
+	if (!document.querySelector('[data-pet-home]') || document.querySelector('[data-desk-cat]')) return;
 	// the speech bubble's handwriting is only preloaded on wide screens (Layout.astro): fetch it now so the first
 	// bubble doesn't swap fonts while it's showing
 	const caveat = getComputedStyle(document.documentElement).getPropertyValue('--font-caveat');
@@ -60,7 +62,7 @@ export function startDeskCat() {
 	const sheet = new Image();
 	sheet.src = sheetUrl;
 	sheet.decode().then(
-		() => new DeskCat(sheet),
+		() => !signal.aborted && new DeskCat(sheet, signal),
 		() => {},
 	);
 }
@@ -103,7 +105,10 @@ class DeskCat {
 	solid = {} as Record<AnimName, [number, number, number, number]>;
 	clip = '';
 
-	constructor(readonly sheet: HTMLImageElement) {
+	constructor(
+		readonly sheet: HTMLImageElement,
+		readonly signal: AbortSignal,
+	) {
 		const { cv } = this;
 		cv.width = CW;
 		cv.height = CH;
@@ -129,10 +134,19 @@ class DeskCat {
 		this.refreshFloors();
 		this.place();
 		this.bindPointer();
-		addEventListener('resize', () => this.resize());
-		setInterval(() => this.refreshFloors(), 1000); // layout shifts (e.g. collapsing sections) move the floors
-		document.addEventListener('visibilitychange', () => (this.last = performance.now()));
-		new IntersectionObserver(([e]) => (this.visible = e.isIntersecting)).observe(cv);
+		addEventListener('resize', () => this.resize(), { signal });
+		const floors = setInterval(() => this.refreshFloors(), 1000); // layout shifts (e.g. collapsing sections) move the floors
+		document.addEventListener('visibilitychange', () => (this.last = performance.now()), { signal });
+		const seen = new IntersectionObserver(([e]) => (this.visible = e.isIntersecting));
+		seen.observe(cv);
+		// leaving the page: the loop below stops, and its pending waits are never resolved, so think() stops too
+		signal.addEventListener('abort', () => {
+			clearInterval(floors);
+			seen.disconnect();
+			purring(false);
+			this.say(null);
+			cv.remove();
+		});
 
 		requestAnimationFrame((t) => this.tick(t));
 		this.think();
@@ -316,6 +330,7 @@ class DeskCat {
 
 	// ---------- main loop ----------
 	tick(t: number) {
+		if (this.signal.aborted) return;
 		const dt = Math.min(0.05, (t - this.last) / 1000);
 		this.last = t;
 		if (!document.hidden) {

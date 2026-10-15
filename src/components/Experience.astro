@@ -116,26 +116,30 @@ const tabs = [
 </section>
 
 <script>
-	// switch panels; arrow keys move between the tabs, like any tablist
-	document.querySelectorAll<HTMLElement>('[data-bg-tabs]').forEach((section) => {
-		const tabs = [...section.querySelectorAll<HTMLButtonElement>('[role=tab]')];
-		const select = (tab: HTMLButtonElement) => {
-			for (const t of tabs) {
-				const on = t === tab;
-				t.setAttribute('aria-selected', String(on));
-				t.tabIndex = on ? 0 : -1;
-				section.querySelector<HTMLElement>(`#${t.getAttribute('aria-controls')}`)!.hidden = !on;
-			}
-		};
-		tabs.forEach((tab, i) => {
-			tab.addEventListener('click', () => select(tab));
-			tab.addEventListener('keydown', (e) => {
-				const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
-				if (!step) return;
-				e.preventDefault();
-				const next = tabs[(i + step + tabs.length) % tabs.length];
-				next.focus();
-				select(next);
+	import { onPage } from '../lib/on-page';
+
+	onPage(() => {
+		// switch panels; arrow keys move between the tabs, like any tablist
+		document.querySelectorAll<HTMLElement>('[data-bg-tabs]').forEach((section) => {
+			const tabs = [...section.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+			const select = (tab: HTMLButtonElement) => {
+				for (const t of tabs) {
+					const on = t === tab;
+					t.setAttribute('aria-selected', String(on));
+					t.tabIndex = on ? 0 : -1;
+					section.querySelector<HTMLElement>(`#${t.getAttribute('aria-controls')}`)!.hidden = !on;
+				}
+			};
+			tabs.forEach((tab, i) => {
+				tab.addEventListener('click', () => select(tab));
+				tab.addEventListener('keydown', (e) => {
+					const step = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+					if (!step) return;
+					e.preventDefault();
+					const next = tabs[(i + step + tabs.length) % tabs.length];
+					next.focus();
+					select(next);
+				});
 			});
 		});
 	});

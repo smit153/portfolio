@@ -24,6 +24,8 @@ import Demo from '../Demo.astro';
 </Demo>
 
 <script>
+	import { onPage } from '../../../lib/on-page';
+
 	// $ per million input tokens, LiteLLM's ScaleDown provider page (checked October 15, 2026)
 	const CDM_IN = 0.05;
 	// the requests slider is logarithmic: 1,000 to 10,000,000 a day
@@ -31,27 +33,29 @@ import Demo from '../Demo.astro';
 	const money = (x: number) => (x >= 100 ? '$' + Math.round(x).toLocaleString('en-US') : '$' + x.toFixed(2));
 	const fmt = (n: number) => n.toLocaleString('en-US');
 
-	const root = document.getElementById('aii-cost');
-	if (root) {
-		const inputs = [...root.querySelectorAll<HTMLInputElement>('[data-s]')];
-		const val = (k: string) => Math.max(0, +inputs.find((i) => i.dataset.s === k)!.value || 0);
-		const set = (attr: string, k: string, v: string) => (root.querySelector(`[data-${attr}="${k}"]`)!.textContent = v);
+	onPage(() => {
+		const root = document.getElementById('aii-cost');
+		if (root) {
+			const inputs = [...root.querySelectorAll<HTMLInputElement>('[data-s]')];
+			const val = (k: string) => Math.max(0, +inputs.find((i) => i.dataset.s === k)!.value || 0);
+			const set = (attr: string, k: string, v: string) => (root.querySelector(`[data-${attr}="${k}"]`)!.textContent = v);
 
-		const render = () => {
-			const req = reqOf(val('req'));
-			const tin = val('in');
-			const tout = val('out');
-			set('v', 'req', fmt(req));
-			set('v', 'in', fmt(tin));
-			set('v', 'out', fmt(tout));
-			const month = req * 30;
-			const llmIn = ((month * tin) / 1e6) * val('pin');
-			const llmOut = ((month * tout) / 1e6) * val('pout');
-			set('o', 'llm', money(llmIn + llmOut));
-			set('o', 'cdm', money(((month * tin) / 1e6) * CDM_IN));
-			set('o', 'share', llmIn + llmOut > 0 ? ((llmOut / (llmIn + llmOut)) * 100).toFixed(0) + '%' : '-');
-		};
-		inputs.forEach((i) => i.addEventListener('input', render));
-		render();
-	}
+			const render = () => {
+				const req = reqOf(val('req'));
+				const tin = val('in');
+				const tout = val('out');
+				set('v', 'req', fmt(req));
+				set('v', 'in', fmt(tin));
+				set('v', 'out', fmt(tout));
+				const month = req * 30;
+				const llmIn = ((month * tin) / 1e6) * val('pin');
+				const llmOut = ((month * tout) / 1e6) * val('pout');
+				set('o', 'llm', money(llmIn + llmOut));
+				set('o', 'cdm', money(((month * tin) / 1e6) * CDM_IN));
+				set('o', 'share', llmIn + llmOut > 0 ? ((llmOut / (llmIn + llmOut)) * 100).toFixed(0) + '%' : '-');
+			};
+			inputs.forEach((i) => i.addEventListener('input', render));
+			render();
+		}
+	});
 </script>

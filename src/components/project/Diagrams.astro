@@ -4,8 +4,13 @@
 ---
 
 <script>
-	const blocks = [...document.querySelectorAll<HTMLElement>('pre:has(> code.language-mermaid)')];
-	if (blocks.length) draw(blocks);
+	import { onPage } from '../../lib/on-page';
+
+	onPage(() => {
+		const blocks = [...document.querySelectorAll<HTMLElement>('pre:has(> code.language-mermaid)')];
+		if (blocks.length) draw(blocks);
+	});
+
 
 	async function draw(blocks: HTMLElement[]) {
 		const { default: mermaid } = await import('mermaid');

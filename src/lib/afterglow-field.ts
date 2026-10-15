@@ -56,7 +56,8 @@ const smooth = (e0: number, e1: number, x: number) => {
 	return t * t * (3 - 2 * t);
 };
 
-export function startAfterglowField(canvas: HTMLCanvasElement, text: string) {
+/** runs until `signal` aborts (the visitor leaves the page) */
+export function startAfterglowField(canvas: HTMLCanvasElement, text: string, signal: AbortSignal) {
 	const ctx = canvas.getContext('2d')!;
 	const oneLine = bitmap(text);
 	const twoLines = stacked(text);
@@ -148,10 +149,15 @@ export function startAfterglowField(canvas: HTMLCanvasElement, text: string) {
 		pointer = false;
 		kick();
 	});
-	new ResizeObserver(() => {
+	const sized = new ResizeObserver(() => {
 		layout();
 		draw();
-	}).observe(canvas);
+	});
+	sized.observe(canvas);
+	signal.addEventListener('abort', () => {
+		sized.disconnect();
+		cancelAnimationFrame(raf);
+	});
 	layout();
 	draw();
 }

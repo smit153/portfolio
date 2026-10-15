@@ -49,7 +49,8 @@ function brightness(x: number, y: number, t: number) {
 	return Math.min(255, 200 * h + 55 + (steep > 0.5 ? 40 * steep : 0));
 }
 
-export function startAsciiField(root: HTMLElement) {
+/** runs until `signal` aborts (the visitor leaves the page) */
+export function startAsciiField(root: HTMLElement, signal: AbortSignal) {
 	const canvas = root.querySelector('canvas')!;
 	const ctx = canvas.getContext('2d')!;
 	const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -125,17 +126,25 @@ export function startAsciiField(root: HTMLElement) {
 		else if (visible && !raf) raf = requestAnimationFrame(loop);
 	}
 
-	new ResizeObserver(() => {
+	const sized = new ResizeObserver(() => {
 		resize();
 		draw(performance.now());
-	}).observe(canvas);
-	new IntersectionObserver(([e]) => {
+	});
+	sized.observe(canvas);
+	const seen = new IntersectionObserver(([e]) => {
 		visible = e.isIntersecting;
 		wake();
-	}).observe(root);
-	reduce.addEventListener('change', wake);
+	});
+	seen.observe(root);
+	reduce.addEventListener('change', wake, { signal });
+	signal.addEventListener('abort', () => {
+		sized.disconnect();
+		seen.disconnect();
+		visible = false;
+		cancelAnimationFrame(raf);
+	});
 	// the font loads after first paint; redraw once it's in so a still frame doesn't keep the fallback
-	document.fonts?.ready.then(() => draw(performance.now()));
+	document.fonts?.ready.then(() => !signal.aborted && draw(performance.now()));
 
 	// the desk cat reports where it is (page coordinates) and when it lands; only its home strip listens
 	if (!root.hasAttribute('data-pet-home')) return;
@@ -143,10 +152,10 @@ export function startAsciiField(root: HTMLElement) {
 	document.addEventListener('pet:land', (e) => {
 		const { x, force } = (e as CustomEvent<{ x: number; force: number }>).detail;
 		if (!reduce.matches) rings.push({ x: local(x), at: performance.now() / 1000, force });
-	});
+	}, { signal });
 	document.addEventListener('pet:pos', (e) => {
 		const { x } = (e as CustomEvent<{ x: number | null }>).detail;
 		cat = x === null ? null : local(x);
 		if (reduce.matches) draw(start);
-	});
+	}, { signal });
 }

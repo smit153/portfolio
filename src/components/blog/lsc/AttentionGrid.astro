@@ -36,71 +36,74 @@ import Demo from '../Demo.astro';
 
 <script>
 	import { big, fmt } from './format';
+	import { onPage } from '../../../lib/on-page';
 
-	const root = document.getElementById('lsc-grid');
-	if (root) {
-		const $ = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
-		const out = (k: string, v: string) => ($(`[data-o="${k}"]`).textContent = v);
-		const input = $<HTMLInputElement>('[data-text]');
-		let masked = true;
-		let sel = -1;
-		let bigN = 1000;
+	onPage(() => {
+		const root = document.getElementById('lsc-grid');
+		if (root) {
+			const $ = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+			const out = (k: string, v: string) => ($(`[data-o="${k}"]`).textContent = v);
+			const input = $<HTMLInputElement>('[data-text]');
+			let masked = true;
+			let sel = -1;
+			let bigN = 1000;
 
-		const renderBig = () => {
-			const p = masked ? (bigN * (bigN + 1)) / 2 : bigN * bigN;
-			const p0 = masked ? (1000 * 1001) / 2 : 1e6;
-			out('bign', fmt(bigN));
-			out('bigpairs', big(p));
-			out('ratio', fmt(p / p0) + '×');
-		};
-		const render = () => {
-			const t = input.value.trim().split(/\s+/).filter(Boolean).slice(0, 24);
-			const n = t.length;
-			if (sel >= n) sel = -1;
-			const toks = $('[data-toks]');
-			toks.innerHTML = '';
-			t.forEach((w, i) => {
-				const b = document.createElement('button');
-				b.type = 'button';
-				b.className = 'tok' + (i === sel ? ' sel' : '');
-				b.textContent = w;
-				b.onclick = () => {
-					sel = sel === i ? -1 : i;
-					render();
-				};
-				toks.append(b);
-			});
-			const grid = $('[data-grid]');
-			grid.style.gridTemplateColumns = `repeat(${Math.max(n, 1)}, minmax(0, 22px))`;
-			let cells = '';
-			for (let r = 0; r < n; r++)
-				for (let c = 0; c < n; c++) {
-					const on = !masked || c <= r;
-					cells += `<div class="c ${on ? (r === sel ? 'hot' : 'on') : 'off'}" title="${t[r]} → ${t[c]}${on ? '' : ' (masked)'}"></div>`;
-				}
-			grid.innerHTML = cells;
-			const pairs = masked ? (n * (n + 1)) / 2 : n * n;
-			out('n', fmt(n));
-			out('pairs', fmt(pairs));
-			out('per', n ? (pairs / n).toFixed(1) : '0');
-			const mask = $('[data-mask]');
-			mask.textContent = `Causal mask: ${masked ? 'on' : 'off'}`;
-			mask.classList.toggle('on', masked);
-			renderBig();
-		};
-		input.addEventListener('input', render);
-		$('[data-mask]').onclick = () => {
-			masked = !masked;
+			const renderBig = () => {
+				const p = masked ? (bigN * (bigN + 1)) / 2 : bigN * bigN;
+				const p0 = masked ? (1000 * 1001) / 2 : 1e6;
+				out('bign', fmt(bigN));
+				out('bigpairs', big(p));
+				out('ratio', fmt(p / p0) + '×');
+			};
+			const render = () => {
+				const t = input.value.trim().split(/\s+/).filter(Boolean).slice(0, 24);
+				const n = t.length;
+				if (sel >= n) sel = -1;
+				const toks = $('[data-toks]');
+				toks.innerHTML = '';
+				t.forEach((w, i) => {
+					const b = document.createElement('button');
+					b.type = 'button';
+					b.className = 'tok' + (i === sel ? ' sel' : '');
+					b.textContent = w;
+					b.onclick = () => {
+						sel = sel === i ? -1 : i;
+						render();
+					};
+					toks.append(b);
+				});
+				const grid = $('[data-grid]');
+				grid.style.gridTemplateColumns = `repeat(${Math.max(n, 1)}, minmax(0, 22px))`;
+				let cells = '';
+				for (let r = 0; r < n; r++)
+					for (let c = 0; c < n; c++) {
+						const on = !masked || c <= r;
+						cells += `<div class="c ${on ? (r === sel ? 'hot' : 'on') : 'off'}" title="${t[r]} → ${t[c]}${on ? '' : ' (masked)'}"></div>`;
+					}
+				grid.innerHTML = cells;
+				const pairs = masked ? (n * (n + 1)) / 2 : n * n;
+				out('n', fmt(n));
+				out('pairs', fmt(pairs));
+				out('per', n ? (pairs / n).toFixed(1) : '0');
+				const mask = $('[data-mask]');
+				mask.textContent = `Causal mask: ${masked ? 'on' : 'off'}`;
+				mask.classList.toggle('on', masked);
+				renderBig();
+			};
+			input.addEventListener('input', render);
+			$('[data-mask]').onclick = () => {
+				masked = !masked;
+				render();
+			};
+			$('[data-double]').onclick = () => {
+				if (bigN < 1024000) bigN *= 2;
+				renderBig();
+			};
+			$('[data-reset]').onclick = () => {
+				bigN = 1000;
+				renderBig();
+			};
 			render();
-		};
-		$('[data-double]').onclick = () => {
-			if (bigN < 1024000) bigN *= 2;
-			renderBig();
-		};
-		$('[data-reset]').onclick = () => {
-			bigN = 1000;
-			renderBig();
-		};
-		render();
-	}
+		}
+	});
 </script>

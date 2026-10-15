@@ -74,6 +74,7 @@ const sliders = [
 
 <script>
 	import { chartWidth, el, fmt, money, txt } from './format';
+	import { onPage } from '../../../lib/on-page';
 
 	// $ per million tokens, Anthropic pricing page (checked October 2026)
 	const MODELS = {
@@ -147,143 +148,145 @@ const sliders = [
 		});
 	}
 
-	const root = document.getElementById('lsc-sim');
-	if (root) {
-		const $ = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
-		const out = (k: string, v: string) => ($(`[data-o="${k}"]`).textContent = v);
-		const sliders = [...root.querySelectorAll<HTMLInputElement>('[data-s]')];
-		const model = $<HTMLSelectElement>('[data-model]');
-		const ttl = $<HTMLSelectElement>('[data-ttl]');
-		const BANDS: [Part, string, string][] = [
-			['read', 'cache read', 'var(--s1)'],
-			['write', 'cache write', 'var(--s2)'],
-			['fresh', 'uncached input', 'var(--s3)'],
-			['out', 'output + thinking', 'var(--s4)'],
-		];
-		let cacheOn = true;
-		const H = 260;
-		const L = 50;
-		const R = 10;
-		const T = 12;
-		const B = 34;
-		let W = 640;
-		const host = $('[data-chart]');
-		const tip = $('[data-tip]');
-		const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Cost of each message, stacked by cache read, cache write, uncached input and output' });
-		host.insertBefore(svg, tip);
+	onPage((signal) => {
+		const root = document.getElementById('lsc-sim');
+		if (root) {
+			const $ = <T extends HTMLElement = HTMLElement>(s: string) => root.querySelector<T>(s)!;
+			const out = (k: string, v: string) => ($(`[data-o="${k}"]`).textContent = v);
+			const sliders = [...root.querySelectorAll<HTMLInputElement>('[data-s]')];
+			const model = $<HTMLSelectElement>('[data-model]');
+			const ttl = $<HTMLSelectElement>('[data-ttl]');
+			const BANDS: [Part, string, string][] = [
+				['read', 'cache read', 'var(--s1)'],
+				['write', 'cache write', 'var(--s2)'],
+				['fresh', 'uncached input', 'var(--s3)'],
+				['out', 'output + thinking', 'var(--s4)'],
+			];
+			let cacheOn = true;
+			const H = 260;
+			const L = 50;
+			const R = 10;
+			const T = 12;
+			const B = 34;
+			let W = 640;
+			const host = $('[data-chart]');
+			const tip = $('[data-tip]');
+			const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Cost of each message, stacked by cache read, cache write, uncached input and output' });
+			host.insertBefore(svg, tip);
 
-		const params = () => {
-			const p = { model: model.value, ttl: +ttl.value, cache: cacheOn } as Params;
-			sliders.forEach((s) => ((p as Record<string, unknown>)[s.dataset.s!] = +s.value));
-			return p;
-		};
-		const labels = (p: Params) => {
-			const v = (k: string, s: string) => ($(`[data-v="${k}"]`).textContent = s);
-			v('turns', String(p.turns));
-			(['start', 'add', 'output', 'think'] as const).forEach((k) => v(k, fmt(p[k]) + ' tokens'));
-			v('reqs', String(p.reqs));
-			v('breakAt', p.breakAt ? `message ${p.breakAt}` : 'no break');
-			v('breakMin', `${p.breakMin} min`);
-			v('clearAt', p.clearAt ? `message ${p.clearAt}` : 'never');
-			v('compactAt', p.compactAt ? `message ${p.compactAt}` : 'never');
-		};
+			const params = () => {
+				const p = { model: model.value, ttl: +ttl.value, cache: cacheOn } as Params;
+				sliders.forEach((s) => ((p as Record<string, unknown>)[s.dataset.s!] = +s.value));
+				return p;
+			};
+			const labels = (p: Params) => {
+				const v = (k: string, s: string) => ($(`[data-v="${k}"]`).textContent = s);
+				v('turns', String(p.turns));
+				(['start', 'add', 'output', 'think'] as const).forEach((k) => v(k, fmt(p[k]) + ' tokens'));
+				v('reqs', String(p.reqs));
+				v('breakAt', p.breakAt ? `message ${p.breakAt}` : 'no break');
+				v('breakMin', `${p.breakMin} min`);
+				v('clearAt', p.clearAt ? `message ${p.clearAt}` : 'never');
+				v('compactAt', p.compactAt ? `message ${p.compactAt}` : 'never');
+			};
 
-		const render = () => {
-			const p = params();
-			labels(p);
-			const r = simulate(p);
-			const total = r.reduce((a, t) => a + t.total, 0);
-			const totalN = simulate({ ...p, cache: false }).reduce((a, t) => a + t.total, 0);
-			const last = Math.min(80, p.turns);
-			const m8 = r[7]?.total ?? 0;
-			const ml = r[last - 1].total;
-			out('m8', money(m8));
-			out('lastlbl', `message ${last}`);
-			out('mlast', money(ml));
-			out('ratio', m8 ? (ml / m8).toFixed(1) + '×' : 'n/a');
-			out('total', money(total));
-			out('nocache', money(totalN));
-			$('[data-warn]').innerHTML =
-				Math.max(...r.map((t) => t.ctxEnd)) > 1e6 ? `<div class="warnbox">Context passes 1,000,000 tokens, the model's limit. A real session would auto-compact before this point.</div>` : '';
+			const render = () => {
+				const p = params();
+				labels(p);
+				const r = simulate(p);
+				const total = r.reduce((a, t) => a + t.total, 0);
+				const totalN = simulate({ ...p, cache: false }).reduce((a, t) => a + t.total, 0);
+				const last = Math.min(80, p.turns);
+				const m8 = r[7]?.total ?? 0;
+				const ml = r[last - 1].total;
+				out('m8', money(m8));
+				out('lastlbl', `message ${last}`);
+				out('mlast', money(ml));
+				out('ratio', m8 ? (ml / m8).toFixed(1) + '×' : 'n/a');
+				out('total', money(total));
+				out('nocache', money(totalN));
+				$('[data-warn]').innerHTML =
+					Math.max(...r.map((t) => t.ctxEnd)) > 1e6 ? `<div class="warnbox">Context passes 1,000,000 tokens, the model's limit. A real session would auto-compact before this point.</div>` : '';
 
-			// stacked bars, one per message
-			W = chartWidth(host);
-			svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-			svg.innerHTML = '';
-			const maxY = Math.max(...r.map((t) => t.total)) * 1.08 || 1;
-			const stepY = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10].find((s) => maxY / s <= 5) ?? 20;
-			const yOf = (v: number) => T + (1 - v / maxY) * (H - T - B);
-			for (let v = 0; v <= maxY; v += stepY) {
-				el('line', { x1: L, x2: W - R, y1: yOf(v), y2: yOf(v), class: 'svg-line' }, svg);
-				txt(svg, L - 6, yOf(v) + 4, '$' + v.toFixed(stepY < 1 ? 2 : 0), { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
-			}
-			const bw = (W - L - R) / p.turns;
-			const gap = bw > 4 ? 1 : 0;
-			r.forEach((t, i) => {
-				let y0 = yOf(0);
-				const x = L + i * bw;
-				BANDS.forEach(([k, , c]) => {
-					const h = yOf(0) - yOf(t.cost[k]);
-					if (h > 0.2) {
-						el('rect', { x: x + gap / 2, y: y0 - h, width: Math.max(bw - gap, 0.5), height: h, fill: c }, svg);
-						y0 -= h;
-					}
+				// stacked bars, one per message
+				W = chartWidth(host);
+				svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+				svg.innerHTML = '';
+				const maxY = Math.max(...r.map((t) => t.total)) * 1.08 || 1;
+				const stepY = [0.01, 0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10].find((s) => maxY / s <= 5) ?? 20;
+				const yOf = (v: number) => T + (1 - v / maxY) * (H - T - B);
+				for (let v = 0; v <= maxY; v += stepY) {
+					el('line', { x1: L, x2: W - R, y1: yOf(v), y2: yOf(v), class: 'svg-line' }, svg);
+					txt(svg, L - 6, yOf(v) + 4, '$' + v.toFixed(stepY < 1 ? 2 : 0), { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
+				}
+				const bw = (W - L - R) / p.turns;
+				const gap = bw > 4 ? 1 : 0;
+				r.forEach((t, i) => {
+					let y0 = yOf(0);
+					const x = L + i * bw;
+					BANDS.forEach(([k, , c]) => {
+						const h = yOf(0) - yOf(t.cost[k]);
+						if (h > 0.2) {
+							el('rect', { x: x + gap / 2, y: y0 - h, width: Math.max(bw - gap, 0.5), height: h, fill: c }, svg);
+							y0 -= h;
+						}
+					});
+					if (t.events.length)
+						txt(svg, x + bw / 2, y0 - 4, t.events.includes('clear') ? 'clear' : t.events.includes('compact') ? 'compact' : 'break', { 'text-anchor': 'middle', 'font-size': 10, class: 'svg-muted' });
 				});
-				if (t.events.length)
-					txt(svg, x + bw / 2, y0 - 4, t.events.includes('clear') ? 'clear' : t.events.includes('compact') ? 'compact' : 'break', { 'text-anchor': 'middle', 'font-size': 10, class: 'svg-muted' });
-			});
-			[8, last].forEach((k) => k <= p.turns && txt(svg, L + (k - 0.5) * bw, H - 18, '#' + k, { 'text-anchor': 'middle', 'font-size': 11, class: 'svg-fg' }));
-			txt(svg, L, H - 2, 'message 1', { 'font-size': 11, class: 'svg-muted' });
-			txt(svg, W - R, H - 2, `message ${p.turns}`, { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
+				[8, last].forEach((k) => k <= p.turns && txt(svg, L + (k - 0.5) * bw, H - 18, '#' + k, { 'text-anchor': 'middle', 'font-size': 11, class: 'svg-fg' }));
+				txt(svg, L, H - 2, 'message 1', { 'font-size': 11, class: 'svg-muted' });
+				txt(svg, W - R, H - 2, `message ${p.turns}`, { 'text-anchor': 'end', 'font-size': 11, class: 'svg-muted' });
 
-			const hit = el('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
-			const hl = el('rect', { y: T, height: H - T - B, fill: 'var(--fg)', opacity: 0, 'pointer-events': 'none' }, svg);
-			hit.addEventListener('pointermove', (e) => {
-				const rect = svg.getBoundingClientRect();
-				const sx = ((e.clientX - rect.left) * W) / rect.width;
-				const i = Math.max(0, Math.min(p.turns - 1, Math.floor((sx - L) / bw)));
-				const t = r[i];
-				hl.setAttribute('x', String(L + i * bw));
-				hl.setAttribute('width', String(bw));
-				hl.setAttribute('opacity', '0.08');
-				tip.style.display = 'block';
-				tip.innerHTML =
-					`<b>Message ${i + 1}: ${money(t.total)}</b><br>context ≈ ${fmt(t.ctxEnd)} tokens` +
-					BANDS.map(([k, n, c]) => `<br><i style="display:inline-block;width:9px;height:9px;background:${c};margin-right:6px"></i>${n}: ${money(t.cost[k])}`).join('') +
-					(t.events.length ? `<br><i>${t.events.join(', ')}</i>` : '');
-				tip.style.left = Math.max(0, Math.min(e.clientX - host.getBoundingClientRect().left + 12, host.clientWidth - 200)) + 'px';
-				tip.style.top = '8px';
-			});
-			hit.addEventListener('pointerleave', () => {
-				tip.style.display = 'none';
-				hl.setAttribute('opacity', '0');
-			});
+				const hit = el('rect', { x: L, y: T, width: W - L - R, height: H - T - B, fill: 'transparent' }, svg);
+				const hl = el('rect', { y: T, height: H - T - B, fill: 'var(--fg)', opacity: 0, 'pointer-events': 'none' }, svg);
+				hit.addEventListener('pointermove', (e) => {
+					const rect = svg.getBoundingClientRect();
+					const sx = ((e.clientX - rect.left) * W) / rect.width;
+					const i = Math.max(0, Math.min(p.turns - 1, Math.floor((sx - L) / bw)));
+					const t = r[i];
+					hl.setAttribute('x', String(L + i * bw));
+					hl.setAttribute('width', String(bw));
+					hl.setAttribute('opacity', '0.08');
+					tip.style.display = 'block';
+					tip.innerHTML =
+						`<b>Message ${i + 1}: ${money(t.total)}</b><br>context ≈ ${fmt(t.ctxEnd)} tokens` +
+						BANDS.map(([k, n, c]) => `<br><i style="display:inline-block;width:9px;height:9px;background:${c};margin-right:6px"></i>${n}: ${money(t.cost[k])}`).join('') +
+						(t.events.length ? `<br><i>${t.events.join(', ')}</i>` : '');
+					tip.style.left = Math.max(0, Math.min(e.clientX - host.getBoundingClientRect().left + 12, host.clientWidth - 200)) + 'px';
+					tip.style.top = '8px';
+				});
+				hit.addEventListener('pointerleave', () => {
+					tip.style.display = 'none';
+					hl.setAttribute('opacity', '0');
+				});
 
-			const sum = (k: Part) => r.reduce((a, t) => a + t.cost[k], 0);
-			$('[data-table]').innerHTML =
-				'<thead><tr><th>Part of the bill</th><th>Cost</th><th>Share</th></tr></thead><tbody>' +
-				BANDS.map(([k, n]) => `<tr><td>${n}</td><td>${money(sum(k))}</td><td>${total ? ((sum(k) / total) * 100).toFixed(0) : 0}%</td></tr>`).join('') +
-				`<tr><td><b>Total</b></td><td><b>${money(total)}</b></td><td>100%</td></tr></tbody>`;
-			const btn = $('[data-cache]');
-			btn.textContent = `Prompt caching: ${cacheOn ? 'on' : 'off'}`;
-			btn.classList.toggle('on', cacheOn);
-		};
+				const sum = (k: Part) => r.reduce((a, t) => a + t.cost[k], 0);
+				$('[data-table]').innerHTML =
+					'<thead><tr><th>Part of the bill</th><th>Cost</th><th>Share</th></tr></thead><tbody>' +
+					BANDS.map(([k, n]) => `<tr><td>${n}</td><td>${money(sum(k))}</td><td>${total ? ((sum(k) / total) * 100).toFixed(0) : 0}%</td></tr>`).join('') +
+					`<tr><td><b>Total</b></td><td><b>${money(total)}</b></td><td>100%</td></tr></tbody>`;
+				const btn = $('[data-cache]');
+				btn.textContent = `Prompt caching: ${cacheOn ? 'on' : 'off'}`;
+				btn.classList.toggle('on', cacheOn);
+			};
 
-		sliders.forEach((s) => s.addEventListener('input', render));
-		model.addEventListener('change', render);
-		ttl.addEventListener('change', render);
-		$('[data-cache]').onclick = () => {
-			cacheOn = !cacheOn;
+			sliders.forEach((s) => s.addEventListener('input', render));
+			model.addEventListener('change', render);
+			ttl.addEventListener('change', render);
+			$('[data-cache]').onclick = () => {
+				cacheOn = !cacheOn;
+				render();
+			};
+			$('[data-defaults]').onclick = () => {
+				sliders.forEach((s) => (s.value = s.dataset.default!));
+				model.value = 'sonnet55';
+				ttl.value = '5';
+				cacheOn = true;
+				render();
+			};
+			addEventListener('resize', render, { signal });
 			render();
-		};
-		$('[data-defaults]').onclick = () => {
-			sliders.forEach((s) => (s.value = s.dataset.default!));
-			model.value = 'sonnet55';
-			ttl.value = '5';
-			cacheOn = true;
-			render();
-		};
-		addEventListener('resize', render);
-		render();
-	}
+		}
+	});
 </script>

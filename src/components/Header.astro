@@ -82,50 +82,54 @@ const jumps = [
 </dialog>
 
 <script>
-	const dialog = document.querySelector<HTMLDialogElement>('[data-jump]');
-	const input = document.querySelector<HTMLInputElement>('[data-jump-input]');
-	const items = [...document.querySelectorAll<HTMLAnchorElement>('[data-jump-item]')];
-	const mod = document.querySelector('[data-jump-mod]');
-	if (mod && /Mac|iPhone|iPad/.test(navigator.platform)) mod.textContent = '⌘';
+	import { onPage } from '../lib/on-page';
 
-	if (dialog && input) {
-		let active = 0;
-		const visible = () => items.filter((a) => !a.parentElement!.hidden);
-		const select = (i: number) => {
-			const list = visible();
-			active = (i + list.length) % Math.max(1, list.length);
-			items.forEach((a) => a.removeAttribute('aria-selected'));
-			list[active]?.setAttribute('aria-selected', 'true');
-			list[active]?.scrollIntoView({ block: 'nearest' });
-		};
-		const open = () => {
-			input.value = '';
-			items.forEach((a) => (a.parentElement!.hidden = false));
-			dialog.showModal();
-			select(0);
-		};
+	onPage((signal) => {
+		const dialog = document.querySelector<HTMLDialogElement>('[data-jump]');
+		const input = document.querySelector<HTMLInputElement>('[data-jump-input]');
+		const items = [...document.querySelectorAll<HTMLAnchorElement>('[data-jump-item]')];
+		const mod = document.querySelector('[data-jump-mod]');
+		if (mod && /Mac|iPhone|iPad/.test(navigator.platform)) mod.textContent = '⌘';
 
-		document.querySelector('[data-jump-open]')?.addEventListener('click', open);
-		addEventListener('keydown', (e) => {
-			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-				e.preventDefault();
-				if (dialog.open) dialog.close();
-				else open();
-			}
-		});
-		input.addEventListener('input', () => {
-			const q = input.value.trim().toLowerCase();
-			items.forEach((a) => (a.parentElement!.hidden = !a.textContent!.toLowerCase().includes(q)));
-			select(0);
-		});
-		input.addEventListener('keydown', (e) => {
-			if (e.key === 'ArrowDown') (e.preventDefault(), select(active + 1));
-			else if (e.key === 'ArrowUp') (e.preventDefault(), select(active - 1));
-			else if (e.key === 'Enter') visible()[active]?.click();
-		});
-		// following a link to a section on the same page: close the box first
-		items.forEach((a) => a.addEventListener('click', () => dialog.close()));
-		// a click on the backdrop closes it
-		dialog.addEventListener('click', (e) => e.target === dialog && dialog.close());
-	}
+		if (dialog && input) {
+			let active = 0;
+			const visible = () => items.filter((a) => !a.parentElement!.hidden);
+			const select = (i: number) => {
+				const list = visible();
+				active = (i + list.length) % Math.max(1, list.length);
+				items.forEach((a) => a.removeAttribute('aria-selected'));
+				list[active]?.setAttribute('aria-selected', 'true');
+				list[active]?.scrollIntoView({ block: 'nearest' });
+			};
+			const open = () => {
+				input.value = '';
+				items.forEach((a) => (a.parentElement!.hidden = false));
+				dialog.showModal();
+				select(0);
+			};
+
+			document.querySelector('[data-jump-open]')?.addEventListener('click', open);
+			addEventListener('keydown', (e) => {
+				if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+					e.preventDefault();
+					if (dialog.open) dialog.close();
+					else open();
+				}
+			}, { signal });
+			input.addEventListener('input', () => {
+				const q = input.value.trim().toLowerCase();
+				items.forEach((a) => (a.parentElement!.hidden = !a.textContent!.toLowerCase().includes(q)));
+				select(0);
+			});
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'ArrowDown') (e.preventDefault(), select(active + 1));
+				else if (e.key === 'ArrowUp') (e.preventDefault(), select(active - 1));
+				else if (e.key === 'Enter') visible()[active]?.click();
+			});
+			// following a link to a section on the same page: close the box first
+			items.forEach((a) => a.addEventListener('click', () => dialog.close()));
+			// a click on the backdrop closes it
+			dialog.addEventListener('click', (e) => e.target === dialog && dialog.close());
+		}
+	});
 </script>

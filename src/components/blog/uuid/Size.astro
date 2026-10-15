@@ -28,28 +28,32 @@ const keys = [
 </Demo>
 
 <script>
-	const root = document.getElementById('uuid-size');
-	if (root) {
-		const range = root.querySelector<HTMLInputElement>('[data-range]')!;
-		const fmtBytes = (n: number) => {
-			const u = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-			let i = 0;
-			while (n >= 1000 && i < u.length - 1) (n /= 1000), i++;
-			return `${n >= 100 ? n.toFixed(0) : n >= 10 ? n.toFixed(1) : n.toFixed(2)} ${u[i]}`;
-		};
-		const fmtRows = (n: number) =>
-			n >= 1e9 ? `${(n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 1)} billion` : n >= 1e6 ? `${(n / 1e6).toFixed(n % 1e6 === 0 ? 0 : 1)} million` : Math.round(n).toLocaleString('en-US');
-		const update = () => {
-			const rows = Math.round(10 ** +range.value);
-			const over = rows > 2147483647; // an int runs out here
-			root.querySelector('[data-rows]')!.textContent = fmtRows(rows);
-			root.querySelectorAll<HTMLElement>('[data-val]').forEach((v) => {
-				const b = +v.dataset.val!;
-				v.textContent = b === 4 && over ? 'overflows' : fmtBytes(rows * b);
-			});
-			root.querySelector<HTMLElement>('[data-fill="4"]')!.style.width = over ? '0%' : '25%';
-		};
-		range.addEventListener('input', update);
-		update();
-	}
+	import { onPage } from '../../../lib/on-page';
+
+	onPage(() => {
+		const root = document.getElementById('uuid-size');
+		if (root) {
+			const range = root.querySelector<HTMLInputElement>('[data-range]')!;
+			const fmtBytes = (n: number) => {
+				const u = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+				let i = 0;
+				while (n >= 1000 && i < u.length - 1) (n /= 1000), i++;
+				return `${n >= 100 ? n.toFixed(0) : n >= 10 ? n.toFixed(1) : n.toFixed(2)} ${u[i]}`;
+			};
+			const fmtRows = (n: number) =>
+				n >= 1e9 ? `${(n / 1e9).toFixed(n % 1e9 === 0 ? 0 : 1)} billion` : n >= 1e6 ? `${(n / 1e6).toFixed(n % 1e6 === 0 ? 0 : 1)} million` : Math.round(n).toLocaleString('en-US');
+			const update = () => {
+				const rows = Math.round(10 ** +range.value);
+				const over = rows > 2147483647; // an int runs out here
+				root.querySelector('[data-rows]')!.textContent = fmtRows(rows);
+				root.querySelectorAll<HTMLElement>('[data-val]').forEach((v) => {
+					const b = +v.dataset.val!;
+					v.textContent = b === 4 && over ? 'overflows' : fmtBytes(rows * b);
+				});
+				root.querySelector<HTMLElement>('[data-fill="4"]')!.style.width = over ? '0%' : '25%';
+			};
+			range.addEventListener('input', update);
+			update();
+		}
+	});
 </script>

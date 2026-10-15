@@ -129,27 +129,31 @@ const first = filters[0].name;
 </style>
 
 <script>
-	// the hovered tile's lit side follows the pointer: its angle from the tile's centre (0 = up) and how close to the
-	// edge it is (0 in the middle, 1 on the border)
-	document.querySelector<HTMLElement>('[data-stack-grid]')?.addEventListener('pointermove', (e) => {
-		const tile = (e.target as Element).closest<HTMLElement>('[data-stack-grid] > li');
-		if (!tile) return;
-		const r = tile.getBoundingClientRect();
-		const dx = e.clientX - r.left - r.width / 2;
-		const dy = e.clientY - r.top - r.height / 2;
-		const edge = Math.min(1, Math.max(Math.abs(dx) / (r.width / 2), Math.abs(dy) / (r.height / 2)));
-		tile.style.setProperty('--angle', `${(Math.atan2(dy, dx) * 180) / Math.PI + 90}deg`);
-		tile.style.setProperty('--edge', edge.toFixed(3));
-	});
+	import { onPage } from '../lib/on-page';
 
-	// clicking a category shows only its tiles
-	const buttons = document.querySelectorAll<HTMLButtonElement>('[data-stack-filters] button');
-	const tiles = document.querySelectorAll<HTMLElement>('[data-stack-grid] > li');
-	buttons.forEach((btn) =>
-		btn.addEventListener('click', () => {
-			const filter = btn.dataset.filter;
-			buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-			tiles.forEach((tile) => tile.toggleAttribute('data-hidden', tile.dataset.category !== filter));
-		}),
-	);
+	onPage(() => {
+		// the hovered tile's lit side follows the pointer: its angle from the tile's centre (0 = up) and how close to the
+		// edge it is (0 in the middle, 1 on the border)
+		document.querySelector<HTMLElement>('[data-stack-grid]')?.addEventListener('pointermove', (e) => {
+			const tile = (e.target as Element).closest<HTMLElement>('[data-stack-grid] > li');
+			if (!tile) return;
+			const r = tile.getBoundingClientRect();
+			const dx = e.clientX - r.left - r.width / 2;
+			const dy = e.clientY - r.top - r.height / 2;
+			const edge = Math.min(1, Math.max(Math.abs(dx) / (r.width / 2), Math.abs(dy) / (r.height / 2)));
+			tile.style.setProperty('--angle', `${(Math.atan2(dy, dx) * 180) / Math.PI + 90}deg`);
+			tile.style.setProperty('--edge', edge.toFixed(3));
+		});
+
+		// clicking a category shows only its tiles
+		const buttons = document.querySelectorAll<HTMLButtonElement>('[data-stack-filters] button');
+		const tiles = document.querySelectorAll<HTMLElement>('[data-stack-grid] > li');
+		buttons.forEach((btn) =>
+			btn.addEventListener('click', () => {
+				const filter = btn.dataset.filter;
+				buttons.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+				tiles.forEach((tile) => tile.toggleAttribute('data-hidden', tile.dataset.category !== filter));
+			}),
+		);
+	});
 </script>

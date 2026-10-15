@@ -1,5 +1,6 @@
 ---
 import { Font, fontData } from 'astro:assets';
+import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 
 interface Props {
@@ -73,6 +74,8 @@ const image = new URL('/og.png', Astro.site);
 		<Font cssVariable="--font-grape-nuts" preload={[{ weight: 400, style: 'normal' }]} />
 		<Font cssVariable="--font-caveat" />
 		{caveatUrl && <link rel="preload" href={caveatUrl} as="font" type="font/woff2" crossorigin media="(min-width: 1280px)" />}
+		<!-- moving between pages swaps the page in place instead of reloading it (scripts: src/lib/on-page.ts) -->
+		<ClientRouter />
 	</head>
 	<body class="font-sohne">
 		<slot />

@@ -24,55 +24,58 @@ import Demo from '../Demo.astro';
 
 <script>
 	import { parseUuid, uuid7 } from './uuid';
+	import { onPage } from '../../../lib/on-page';
 
-	const root = document.getElementById('uuid-decode');
-	if (root) {
-		const input = root.querySelector<HTMLInputElement>('[data-in]')!;
-		const view = root.querySelector('[data-view]')!;
-		const set = (k: string, v: string) => (root.querySelector(`[data-f="${k}"]`)!.textContent = v);
-		const ago = (s: number) =>
-			s < 0 ? `in the future by ${Math.round(-s)} s` : s < 120 ? `${Math.round(s)} seconds ago` : s < 7200 ? `${Math.round(s / 60)} minutes ago` : s < 172800 ? `${Math.round(s / 3600)} hours ago` : `${Math.round(s / 86400)} days ago`;
+	onPage(() => {
+		const root = document.getElementById('uuid-decode');
+		if (root) {
+			const input = root.querySelector<HTMLInputElement>('[data-in]')!;
+			const view = root.querySelector('[data-view]')!;
+			const set = (k: string, v: string) => (root.querySelector(`[data-f="${k}"]`)!.textContent = v);
+			const ago = (s: number) =>
+				s < 0 ? `in the future by ${Math.round(-s)} s` : s < 120 ? `${Math.round(s)} seconds ago` : s < 7200 ? `${Math.round(s / 60)} minutes ago` : s < 172800 ? `${Math.round(s / 3600)} hours ago` : `${Math.round(s / 86400)} days ago`;
 
-		const decode = () => {
-			const p = parseUuid(input.value);
-			view.textContent = '';
-			if (!p) {
-				set('ver', 'Not a valid UUID (need 32 hex digits)');
-				['ts', 'age', 'rand'].forEach((k) => set(k, ''));
-				return;
-			}
-			const h = p.hex;
-			const span = (cls: string, txt: string) => {
-				const s = document.createElement('span');
-				s.className = cls;
-				s.textContent = txt;
-				view.append(s);
+			const decode = () => {
+				const p = parseUuid(input.value);
+				view.textContent = '';
+				if (!p) {
+					set('ver', 'Not a valid UUID (need 32 hex digits)');
+					['ts', 'age', 'rand'].forEach((k) => set(k, ''));
+					return;
+				}
+				const h = p.hex;
+				const span = (cls: string, txt: string) => {
+					const s = document.createElement('span');
+					s.className = cls;
+					s.textContent = txt;
+					view.append(s);
+				};
+				if (p.ver === 7) {
+					span('ts', `${h.slice(0, 8)}-${h.slice(8, 12)}`);
+					span('rand', '-');
+					span('ver', h[12]);
+					span('rand', `${h.slice(13, 16)}-${h.slice(16, 20)}-${h.slice(20)}`);
+				} else span('rand', input.value.trim());
+				const kind = p.ver === 7 ? ' (time-ordered)' : p.ver === 4 ? ' (random)' : p.ver === 1 ? ' (v1 timestamp)' : '';
+				set('ver', `Version ${p.ver}${kind}${p.variantOk ? '' : ', unusual variant'}`);
+				if (p.ver === 7) {
+					const d = new Date(p.ts);
+					set('ts', isNaN(d.getTime()) ? 'out of range' : `${d.toISOString()} (${p.ts} ms since 1970)`);
+					set('age', ago((Date.now() - p.ts) / 1000));
+					set('rand', 'up to 74 bits (12 in rand_a, 62 in rand_b); nothing to read here');
+				} else {
+					set('ts', 'No millisecond timestamp in this version');
+					set('age', '');
+					set('rand', '');
+				}
 			};
-			if (p.ver === 7) {
-				span('ts', `${h.slice(0, 8)}-${h.slice(8, 12)}`);
-				span('rand', '-');
-				span('ver', h[12]);
-				span('rand', `${h.slice(13, 16)}-${h.slice(16, 20)}-${h.slice(20)}`);
-			} else span('rand', input.value.trim());
-			const kind = p.ver === 7 ? ' (time-ordered)' : p.ver === 4 ? ' (random)' : p.ver === 1 ? ' (v1 timestamp)' : '';
-			set('ver', `Version ${p.ver}${kind}${p.variantOk ? '' : ', unusual variant'}`);
-			if (p.ver === 7) {
-				const d = new Date(p.ts);
-				set('ts', isNaN(d.getTime()) ? 'out of range' : `${d.toISOString()} (${p.ts} ms since 1970)`);
-				set('age', ago((Date.now() - p.ts) / 1000));
-				set('rand', 'up to 74 bits (12 in rand_a, 62 in rand_b); nothing to read here');
-			} else {
-				set('ts', 'No millisecond timestamp in this version');
-				set('age', '');
-				set('rand', '');
-			}
-		};
-		root.querySelector('[data-gen]')!.addEventListener('click', () => {
+			root.querySelector('[data-gen]')!.addEventListener('click', () => {
+				input.value = uuid7();
+				decode();
+			});
+			input.addEventListener('input', decode);
 			input.value = uuid7();
 			decode();
-		});
-		input.addEventListener('input', decode);
-		input.value = uuid7();
-		decode();
-	}
+		}
+	});
 </script>

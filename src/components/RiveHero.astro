@@ -18,7 +18,7 @@ import poster from '../assets/images/hero-poster.webp';
 		width="1528"
 		height="859"
 		class="absolute inset-0 size-full [image-rendering:pixelated]"></canvas>
-	<script is:inline define:vars={{ posterSrc: poster.src }}>
+	<script is:inline data-astro-rerun define:vars={{ posterSrc: poster.src }}>
 		// draw at the hero's on-screen resolution, capped at 1528x859: no sharper than the screen shows anyway, and on
 		// phones and 1x screens Rive (sized to match in the script below) has far fewer pixels to draw every frame
 		const c = document.querySelector('[data-hero-poster]');
@@ -125,6 +125,7 @@ import poster from '../assets/images/hero-poster.webp';
 	// ua-parser-js 1.x (MIT; 2.x is AGPL)
 	import UAParser from 'ua-parser-js';
 	import keys from '../data/keyboard-keys.json';
+	import { onLeave, onPage } from '../lib/on-page';
 
 	type Point = [number, number];
 
@@ -182,9 +183,17 @@ import poster from '../assets/images/hero-poster.webp';
 			(k) => p[0] >= k.rect[0] && p[0] < k.rect[0] + k.rect[2] && p[1] >= k.rect[1] && p[1] < k.rect[1] + k.rect[3],
 		);
 
-	const canvas = document.querySelector<HTMLCanvasElement>('#hero-rive');
+	// browsers keep audio blocked until the first click/tap or key press; after that it stays unlocked for the visit,
+	// so coming back to this page doesn't block it again
+	let audioReady = false;
 
-	if (canvas) {
+	onPage((signal) => {
+		const canvas = document.querySelector<HTMLCanvasElement>('#hero-rive');
+		if (!canvas) return;
+		// leaving the page stops the scene; whatever's added to this runs then too
+		const stops: (() => void)[] = [];
+		onLeave(signal, () => stops.forEach((stop) => stop()));
+
 		const toScene = (e: PointerEvent): Point => {
 			const b = canvas.getBoundingClientRect();
 			return [((e.clientX - b.left) * W) / b.width, ((e.clientY - b.top) * H) / b.height];
@@ -195,6 +204,7 @@ import poster from '../assets/images/hero-poster.webp';
 		let selfFired = 0;
 		let typed = '';
 		let bookOpen = false;
+		HOT[3] = BOOK_CLOSED;
 
 		// sounds play inside Rive (DeskAudio script); the page only stores the mute choice in the ViewModel
 		let muted = false;
@@ -202,9 +212,8 @@ import poster from '../assets/images/hero-poster.webp';
 			muted = localStorage.getItem('desk-muted') === '1';
 		} catch {}
 		const soundBtn = document.querySelector<HTMLButtonElement>('#hero-sound');
-		// browsers keep audio blocked until the first click/tap, and Rive's audio engine only unlocks on
-		// those events, so the toggle shows "off" until then even if the visitor hasn't muted it
-		let audioReady = false;
+		// Rive's audio engine only unlocks on a click or tap (and a key press, below), so the toggle shows "off"
+		// until then even if the visitor hasn't muted it
 		const isOn = () => audioReady && !muted;
 		const showSound = () => {
 			if (!soundBtn) return;
@@ -228,7 +237,7 @@ import poster from '../assets/images/hero-poster.webp';
 		};
 		// a press on the toggle itself is handled (and re-rendered) by its own click handler
 		const onFirstGesture = (e: Event) => markAudioReady(!soundBtn?.contains(e.target as Node));
-		unlockEvents.forEach((t) => document.addEventListener(t, onFirstGesture, true));
+		if (!audioReady) unlockEvents.forEach((t) => document.addEventListener(t, onFirstGesture, { capture: true, signal }));
 		showSound();
 		soundBtn?.addEventListener('click', () => {
 			// flip what the visitor sees: a first press on "sound off" (blocked, not muted) turns sound on
@@ -274,6 +283,7 @@ import poster from '../assets/images/hero-poster.webp';
 				document.head.append(link);
 			}
 			const { Alignment, Fit, Layout, Rive, RuntimeLoader } = await import('@rive-app/canvas');
+			if (signal.aborted) return;
 			// serve the runtime from our own bundle instead of the default CDN
 			RuntimeLoader.setWasmUrl(wasmUrl);
 			// same drawing size as the poster, so the swap matches
@@ -298,13 +308,15 @@ import poster from '../assets/images/hero-poster.webp';
 							document.querySelector('[data-hero-poster]')?.remove();
 						}),
 					);
-					new ResizeObserver(() => {
+					const sized = new ResizeObserver(() => {
 						const w = Math.min(1528, Math.round(canvas.getBoundingClientRect().width * devicePixelRatio));
 						if (w <= canvas.width) return;
 						canvas.width = w;
 						canvas.height = Math.round((w * 859) / 1528);
 						r.resizeToCanvas();
-					}).observe(canvas);
+					});
+					sized.observe(canvas);
+					stops.push(() => sized.disconnect());
 
 					vmi = r.viewModelInstance;
 					if (!vmi) return;
@@ -323,14 +335,16 @@ import poster from '../assets/images/hero-poster.webp';
 							if (inView.value !== v) inView.value = v;
 							canvas.dataset.inView = String(v); // visible in devtools, for checking
 						};
-						new IntersectionObserver(
+						const seen = new IntersectionObserver(
 							([e]) => {
 								showing = e.intersectionRatio >= 0.2;
 								update();
 							},
 							{ threshold: [0, 0.2] },
-						).observe(canvas);
-						document.addEventListener('visibilitychange', update);
+						);
+						seen.observe(canvas);
+						stops.push(() => seen.disconnect());
+						document.addEventListener('visibilitychange', update, { signal });
 						update();
 					}
 
@@ -358,11 +372,13 @@ import poster from '../assets/images/hero-poster.webp';
 							clock.value = String(h).padStart(2, ' ') + String(d.getMinutes()).padStart(2, '0');
 						};
 						tick();
-						setInterval(tick, 10_000);
+						const ticking = setInterval(tick, 10_000);
+						stops.push(() => clearInterval(ticking));
 					}
 				},
 			});
 			rive = r;
+			stops.push(() => r.cleanup());
 		};
 		// start once the page has loaded and its first paint is on screen, so fetching and compiling the runtime never
 		// holds up the first frame (a requestAnimationFrame runs just before that frame paints, which is too early);
@@ -383,7 +399,7 @@ import poster from '../assets/images/hero-poster.webp';
 		const loaded = new Promise<void>((resolve) =>
 			document.readyState === 'complete' ? resolve() : addEventListener('load', () => resolve(), { once: true }),
 		);
-		Promise.all([painted, loaded]).then(() => setTimeout(boot, 0));
+		Promise.all([painted, loaded]).then(() => !signal.aborted && setTimeout(boot, 0));
 
 		// Rive's audio only unlocks on click/touchend/pointerdown, so a first key press stays silent.
 		// Unlock it ourselves inside the key gesture: resume every AudioContext (tracked by the inline
@@ -413,7 +429,7 @@ import poster from '../assets/images/hero-poster.webp';
 				if (audioUnlocked()) window.removeEventListener('keydown', unlockAudioOnKey, true);
 			}, 250);
 		};
-		window.addEventListener('keydown', unlockAudioOnKey, true);
+		window.addEventListener('keydown', unlockAudioOnKey, { capture: true, signal });
 
 		// typing on the real keyboard presses the drawn keys and types on the monitor
 		const isFormField = (t: EventTarget | null) =>
@@ -431,14 +447,14 @@ import poster from '../assets/images/hero-poster.webp';
 				e.preventDefault();
 			}
 			type(e.key, e.ctrlKey || e.metaKey || e.altKey);
-		});
+		}, { signal });
 		window.addEventListener('keyup', (e) => {
 			if (down.delete(keys.findIndex((k) => k.code === e.code))) setKeys();
-		});
+		}, { signal });
 		window.addEventListener('blur', () => {
 			down.clear();
 			setKeys();
-		});
+		}, { signal });
 
 		// clicking a key on the drawn keyboard presses it and types its glyph (random letter for modifiers)
 		let clicked = -1;
@@ -473,5 +489,5 @@ import poster from '../assets/images/hero-poster.webp';
 			canvas.style.cursor =
 				HOT.some((poly) => inPoly(p, poly)) || keyAt(p) >= 0 ? 'pointer' : inPoly(p, BOARD) ? 'grab' : 'default';
 		});
-	}
+	});
 </script>

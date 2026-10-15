@@ -34,6 +34,8 @@ const BOOK_A_CALL = 'https://cal.com/smit-sojitra-dev/30min';
 </section>
 
 <script>
+	import { onPage } from '../lib/on-page';
+
 	// Cal.com's pop-up embed. Its 'init' adds embed.js, so it waits until the page has loaded and gone idle
 	// (or the button is hovered or focused first): the calendar never slows the first paint.
 	type CalApi = ((...args: unknown[]) => void) & { q?: unknown[]; ns?: Record<string, CalApi>; loaded?: boolean };
@@ -99,22 +101,25 @@ const BOOK_A_CALL = 'https://cal.com/smit-sojitra-dev/30min';
 		Cal.ns!['30min']('ui', CAL_UI);
 	}
 
-	const button = document.querySelector<HTMLAnchorElement>('[data-book-call]');
-	button?.addEventListener('pointerenter', startCal, { once: true });
-	button?.addEventListener('focus', startCal, { once: true });
-	// open the calendar as a pop-up (Cal queues the call if embed.js is still on its way); a modified click
-	// (new tab, new window) keeps the plain link
-	button?.addEventListener('click', (e) => {
-		if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-		e.preventDefault();
-		startCal();
-		w.Cal!.ns!['30min']('modal', {
-			calLink: 'smit-sojitra-dev/30min',
-			config: { layout: 'month_view', useSlotsViewOnSmallScreen: 'true', theme: 'dark' },
+	onPage(() => {
+		const button = document.querySelector<HTMLAnchorElement>('[data-book-call]');
+		if (!button) return;
+		button.addEventListener('pointerenter', startCal, { once: true });
+		button.addEventListener('focus', startCal, { once: true });
+		// open the calendar as a pop-up (Cal queues the call if embed.js is still on its way); a modified click
+		// (new tab, new window) keeps the plain link
+		button.addEventListener('click', (e) => {
+			if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+			e.preventDefault();
+			startCal();
+			w.Cal!.ns!['30min']('modal', {
+				calLink: 'smit-sojitra-dev/30min',
+				config: { layout: 'month_view', useSlotsViewOnSmallScreen: 'true', theme: 'dark' },
+			});
+			w.Cal!.ns!['30min']('ui', CAL_UI);
 		});
-		w.Cal!.ns!['30min']('ui', CAL_UI);
+		// page-load fires once the page has loaded, the first one included
+		if ('requestIdleCallback' in window) requestIdleCallback(startCal, { timeout: 4000 });
+		else setTimeout(startCal, 2000);
 	});
-	const idle = () => ('requestIdleCallback' in window ? requestIdleCallback(startCal, { timeout: 4000 }) : setTimeout(startCal, 2000));
-	if (document.readyState === 'complete') idle();
-	else addEventListener('load', idle, { once: true });
 </script>
