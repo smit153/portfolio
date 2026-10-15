@@ -1,0 +1,122 @@
+---
+// Answer-is-in-the-input demo 3: 1,000 synthetic predictions, a threshold slider, and what a calibrated vs overconfident model lets through.
+import Demo from '../Demo.astro';
+---
+
+<Demo
+	id="aii-thresh"
+	title="Demo 3: pick a threshold"
+	tryIt="Drag the threshold and watch how many answers you'd accept automatically and how many wrong ones slip through. Then switch to the overconfident model and keep the same threshold."
+>
+	<div class="row">
+		<button type="button" data-cal="0" class="on">Well calibrated</button>
+		<button type="button" data-cal="1">Overconfident</button>
+	</div>
+	<label class="ctl-one">Auto-accept when the top score is at least <b data-v>0.80</b><input type="range" data-th min="0.30" max="0.99" step="0.01" value="0.80" aria-label="Threshold" /></label>
+	<div class="stats">
+		<div><b data-o="acc"></b>auto-accepted</div>
+		<div><b data-o="wrong"></b>wrong but accepted</div>
+		<div><b data-o="rev"></b>sent to a human</div>
+		<div><b data-o="accu"></b>accuracy of accepted</div>
+	</div>
+	<div class="legend"><span><i style="background:#fff"></i>right</span><span><i style="background:#5a5a5a"></i>wrong</span><span><i style="background:#fff;width:2px"></i>threshold</span></div>
+	<div class="chart" data-chart></div>
+	<Fragment slot="note">
+		<b>Synthetic data, not ScaleDown's.</b> 1,000 fake predictions generated in your browser. "Well calibrated" means a 0.8 score is right about 80% of the time. "Overconfident" means scores run higher than the real hit rate. Real models land somewhere in between, and only your own labeled sample tells you where.
+	</Fragment>
+</Demo>
+
+<script>
+	const NS = 'http://www.w3.org/2000/svg';
+	const el = (tag: string, attrs: Record<string, string | number>, parent: Element) => {
+		const e = document.createElementNS(NS, tag);
+		for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+		parent.append(e);
+		return e;
+	};
+	const txt = (parent: Element, x: number, y: number, s: string, attrs: Record<string, string | number>) => (el('text', { x, y, ...attrs }, parent).textContent = s);
+
+	// mulberry32, seeded so every visitor sees the same 1,000 predictions
+	const rng = (seed: number) => () => {
+		seed = (seed + 0x6d2b79f5) | 0;
+		let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+
+	const root = document.getElementById('aii-thresh');
+	if (root) {
+		const $ = (s: string) => root.querySelector<HTMLElement>(s)!;
+		const N = 1000;
+		const r = rng(42);
+		const conf: number[] = [];
+		const u: number[] = [];
+		for (let i = 0; i < N; i++) {
+			conf.push(0.25 + 0.75 * Math.pow(r(), 0.45));
+			u.push(r());
+		}
+		let over = false;
+		// an overconfident model is right less often than its score says
+		const hit = (c: number) => (over ? 0.25 + (c - 0.25) * 0.7 : c);
+
+		const W = 640;
+		const H = 200;
+		const L = 34;
+		const R = 10;
+		const T = 10;
+		const B = 30;
+		const BINS = 15;
+		const lo = 0.25;
+		const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Histogram of prediction scores, split into right and wrong, with the threshold marked' }, $('[data-chart]'));
+		const xOf = (c: number) => L + ((c - lo) / (1 - lo)) * (W - L - R);
+		const slider = $('[data-th]') as HTMLInputElement;
+		const cals = [...root.querySelectorAll<HTMLButtonElement>('[data-cal]')];
+		const out = (k: string, v: string) => ($(`[data-o="${k}"]`).textContent = v);
+
+		const render = () => {
+			const th = +slider.value;
+			$('[data-v]').textContent = th.toFixed(2);
+			const right = conf.map((c, i) => u[i] < hit(c));
+			let acc = 0;
+			let wrong = 0;
+			conf.forEach((c, i) => {
+				if (c >= th) {
+					acc++;
+					if (!right[i]) wrong++;
+				}
+			});
+			out('acc', `${acc} of ${N}`);
+			out('wrong', String(wrong));
+			out('rev', String(N - acc));
+			out('accu', acc ? (((acc - wrong) / acc) * 100).toFixed(1) + '%' : '-');
+
+			const bins = Array.from({ length: BINS }, () => [0, 0]);
+			conf.forEach((c, i) => bins[Math.min(BINS - 1, Math.floor(((c - lo) / (1 - lo)) * BINS))][right[i] ? 0 : 1]++);
+			const maxC = Math.max(...bins.map((b) => b[0] + b[1]));
+			const yOf = (n: number) => H - B - (n / maxC) * (H - T - B);
+			svg.innerHTML = '';
+			el('line', { x1: L, x2: W - R, y1: H - B, y2: H - B, stroke: '#383838' }, svg);
+			const bw = (W - L - R) / BINS;
+			bins.forEach(([ok, bad], i) => {
+				const x = L + i * bw + 1;
+				el('rect', { x, y: yOf(ok), width: bw - 2, height: H - B - yOf(ok), fill: '#fff' }, svg);
+				el('rect', { x, y: yOf(ok + bad), width: bw - 2, height: yOf(ok) - yOf(ok + bad), fill: '#5a5a5a' }, svg);
+			});
+			[0.25, 0.5, 0.75, 1].forEach((v) => txt(svg, xOf(v), H - 12, v.toFixed(2), { 'text-anchor': 'middle', 'font-size': 11, fill: '#8d8d8d' }));
+			txt(svg, W - R, H - 1, 'top score', { 'text-anchor': 'end', 'font-size': 11, fill: '#8d8d8d' });
+			el('line', { x1: xOf(th), x2: xOf(th), y1: T, y2: H - B, stroke: '#fff', 'stroke-width': 2, 'stroke-dasharray': '4 3' }, svg);
+			txt(svg, Math.min(xOf(th) + 6, W - 120), T + 12, 'auto-accept ->', { 'font-size': 11, fill: '#fff' });
+			cals.forEach((b) => b.classList.toggle('on', (b.dataset.cal === '1') === over));
+		};
+
+		slider.addEventListener('input', render);
+		cals.forEach(
+			(b) =>
+				(b.onclick = () => {
+					over = b.dataset.cal === '1';
+					render();
+				}),
+		);
+		render();
+	}
+</script>

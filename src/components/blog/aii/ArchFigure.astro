@@ -1,0 +1,16 @@
+---
+// Answer-is-in-the-input figure: small task models (Classify, Compress, Extract) placed around a main LLM.
+// The art is built by isoart (blogs/cover-art): `isoart.py build answer-is-in-the-input/cdm-architecture`.
+import { Image } from 'astro:assets';
+import art from '../../../assets/blog/answer-is-in-the-input/cdm-architecture.webp';
+---
+
+<figure>
+	<Image
+		src={art}
+		width={1400}
+		alt="A user request goes to Classify, which routes it to the main LLM. Tool output passes through Compress before reaching the LLM. The agent trace goes to a second Classify that checks for looping and can stop the run. Documents go to Extract, which writes spans with offsets into your database."
+		class="block h-auto w-full"
+	/>
+	<figcaption>Small models handle routing, shrinking and extraction. The general LLM handles what actually needs writing. The loop check comes from LangChain's example, which stops a run when Classify scores "looping" above 0.8.</figcaption>
+</figure>

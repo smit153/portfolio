@@ -1,0 +1,57 @@
+---
+// Answer-is-in-the-input demo 4: a month of labels from an LLM at list price vs ScaleDown's input-only price.
+import Demo from '../Demo.astro';
+---
+
+<Demo id="aii-cost" title="Demo 4: what a label costs at your volume" tryIt="Set your daily volume and request size, then raise the output tokens to see when the writer's output starts to matter.">
+	<div class="ctl">
+		<label>Requests per day: <b data-v="req"></b><input type="range" data-s="req" min="0" max="1000" step="1" value="500" aria-label="Requests per day" /></label>
+		<label>Input tokens per request: <b data-v="in"></b><input type="range" data-s="in" min="100" max="20000" step="100" value="800" aria-label="Input tokens per request" /></label>
+		<label>Output tokens the LLM writes: <b data-v="out"></b><input type="range" data-s="out" min="5" max="1000" step="5" value="15" aria-label="Output tokens per request" /></label>
+		<label
+			>LLM price per 1M tokens, input / output ($)
+			<span class="pair"><input type="number" data-s="pin" value="1" min="0" step="0.01" aria-label="LLM input price" /><input type="number" data-s="pout" value="5" min="0" step="0.01" aria-label="LLM output price" /></span></label
+		>
+	</div>
+	<div class="stats">
+		<div><b data-o="llm"></b>LLM, per month</div>
+		<div><b data-o="cdm"></b>CDM, per month</div>
+		<div><b data-o="share"></b>output share of the LLM bill</div>
+	</div>
+	<Fragment slot="note">
+		<b>List prices, not a benchmark.</b> Defaults are Claude Haiku 4.5's list price ($1 / $5) and ScaleDown's $0.05 input with free output. It assumes both models see the same token count, which they won't exactly, since tokenizers differ. Price says nothing about accuracy on your data.
+	</Fragment>
+</Demo>
+
+<script>
+	// $ per million input tokens, LiteLLM's ScaleDown provider page (checked October 15, 2026)
+	const CDM_IN = 0.05;
+	// the requests slider is logarithmic: 1,000 to 10,000,000 a day
+	const reqOf = (v: number) => Math.round(Math.pow(10, 3 + (4 * v) / 1000) / 10) * 10;
+	const money = (x: number) => (x >= 100 ? '$' + Math.round(x).toLocaleString('en-US') : '$' + x.toFixed(2));
+	const fmt = (n: number) => n.toLocaleString('en-US');
+
+	const root = document.getElementById('aii-cost');
+	if (root) {
+		const inputs = [...root.querySelectorAll<HTMLInputElement>('[data-s]')];
+		const val = (k: string) => Math.max(0, +inputs.find((i) => i.dataset.s === k)!.value || 0);
+		const set = (attr: string, k: string, v: string) => (root.querySelector(`[data-${attr}="${k}"]`)!.textContent = v);
+
+		const render = () => {
+			const req = reqOf(val('req'));
+			const tin = val('in');
+			const tout = val('out');
+			set('v', 'req', fmt(req));
+			set('v', 'in', fmt(tin));
+			set('v', 'out', fmt(tout));
+			const month = req * 30;
+			const llmIn = ((month * tin) / 1e6) * val('pin');
+			const llmOut = ((month * tout) / 1e6) * val('pout');
+			set('o', 'llm', money(llmIn + llmOut));
+			set('o', 'cdm', money(((month * tin) / 1e6) * CDM_IN));
+			set('o', 'share', llmIn + llmOut > 0 ? ((llmOut / (llmIn + llmOut)) * 100).toFixed(0) + '%' : '-');
+		};
+		inputs.forEach((i) => i.addEventListener('input', render));
+		render();
+	}
+</script>

@@ -1,0 +1,16 @@
+---
+// Answer-is-in-the-input figure: a writer loops once per token and can emit any string; a pointer scores your labels in one pass.
+// The art is built by isoart (blogs/cover-art): `isoart.py build answer-is-in-the-input/write-vs-point`.
+import { Image } from 'astro:assets';
+import art from '../../../assets/blog/answer-is-in-the-input/write-vs-point.webp';
+---
+
+<figure>
+	<Image
+		src={art}
+		width={1400}
+		alt="Two lanes. Write: the ticket and labels go into a model that loops once per token and emits a row of token cubes, so any string can come out. Point: the same input goes into a model once and comes out as one bar per label, billing tall and the rest near zero, so only your labels can come out."
+		class="block h-auto w-full"
+	/>
+	<figcaption>A writer loops once per output token and can produce any string. A pointer scores what's already in front of it. Bar heights are sample values.</figcaption>
+</figure>

@@ -1,0 +1,158 @@
+/* Answer-is-in-the-input post: its demos. Everything is scoped under .post-answer-is-in-the-input. */
+.post-answer-is-in-the-input {
+  --fg: #fff;
+  --muted: #8d8d8d;
+  --rule: #383838;
+}
+
+/* the writer and the pointer, side by side */
+.post-answer-is-in-the-input .cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 560px) {
+  .post-answer-is-in-the-input .cols {
+    grid-template-columns: 1fr;
+  }
+}
+.post-answer-is-in-the-input .pane {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--rule);
+}
+.post-answer-is-in-the-input .pane h4 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--fg);
+}
+.post-answer-is-in-the-input .toks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 30px;
+  margin: 6px 0;
+}
+.post-answer-is-in-the-input .tok {
+  padding: 2px 7px;
+  border: 1px solid var(--rule);
+  font-size: 12px;
+  line-height: 18px;
+  white-space: pre-wrap;
+}
+.post-answer-is-in-the-input .tok.new {
+  border-color: var(--fg);
+}
+
+/* label, score bar, value */
+.post-answer-is-in-the-input .bars {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 4px 8px;
+  align-items: center;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.post-answer-is-in-the-input .bar {
+  height: 12px;
+  background: var(--color-line);
+}
+.post-answer-is-in-the-input .bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--fg);
+  transition: width 0.35s;
+}
+.post-answer-is-in-the-input .check {
+  min-height: 2.6em;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+}
+
+/* the invoice and the model's output */
+.post-answer-is-in-the-input .doc,
+.post-answer-is-in-the-input .out {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  font-size: 12px;
+  line-height: 19px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.post-answer-is-in-the-input .doc mark {
+  padding: 0 1px;
+  background: var(--fg);
+  color: var(--color-ink);
+}
+.post-answer-is-in-the-input .demo button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* sliders, two to a row */
+.post-answer-is-in-the-input .ctl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 18px;
+  margin-bottom: 12px;
+}
+@media (max-width: 560px) {
+  .post-answer-is-in-the-input .ctl {
+    grid-template-columns: 1fr;
+  }
+}
+.post-answer-is-in-the-input .ctl label,
+.post-answer-is-in-the-input .ctl-one {
+  display: block;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--muted);
+}
+.post-answer-is-in-the-input .ctl label b,
+.post-answer-is-in-the-input .ctl-one b {
+  font-weight: 400;
+  color: var(--fg);
+}
+.post-answer-is-in-the-input .pair {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.post-answer-is-in-the-input .demo input[type='number'] {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--color-line);
+  background: var(--color-line);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+}
+
+.post-answer-is-in-the-input .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.post-answer-is-in-the-input .legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: -1px;
+}
+.post-answer-is-in-the-input .chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.post-answer-is-in-the-input .chart svg text {
+  font-family: var(--font-sohne-mono);
+}
