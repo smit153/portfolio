@@ -51,7 +51,7 @@ const tabs = [
 					<>
 						<div class="flex items-center gap-[14px]">
 							{job.logo ? (
-								<img src={job.logo.src} alt="" width="24" height="24" class="size-6 shrink-0" />
+								<img src={job.logo.src} alt={`${job.company} logo`} width="24" height="24" class="size-6 shrink-0" />
 							) : (
 								<PixelIcon name="briefcase" class="shrink-0 text-[#cfcfcf]" />
 							)}

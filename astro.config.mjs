@@ -3,11 +3,15 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 import cloudflare from '@astrojs/cloudflare';
 import mdx from '@astrojs/mdx';
+import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://smiit.in',
+  // every page is built as a folder (/writing/index.html), which Cloudflare serves at /writing/: links and canonicals
+  // end in a slash to match, so nobody is redirected
+  trailingSlash: 'always',
   // deployed as a Cloudflare Worker (static assets). Every page is still prerendered; prerendering runs in Node
   // because the colophon reads git and node_modules at build time, and images are still made at build with sharp.
   adapter: cloudflare({ prerenderEnvironment: 'node', imageService: 'compile' }),
@@ -15,19 +19,20 @@ export default defineConfig({
   session: false,
   // the CSS is small (about 9 KB): inline it so the first paint doesn't wait on another request
   build: { inlineStylesheets: 'always' },
-  // blog posts are MDX: Markdown with interactive components dropped in
-  integrations: [mdx()],
+  // blog posts are MDX: Markdown with interactive components dropped in. The sitemap lists only the pages people
+  // read: endpoints (index.md, llms.txt, rss.xml, OG images) aren't pages, and the 404 page is left out here
+  integrations: [mdx(), sitemap({ filter: (page) => !page.includes('/404') })],
   markdown: {
     // mermaid blocks stay plain text: the project pages draw them as diagrams in the browser
     syntaxHighlight: { type: 'shiki', excludeLangs: ['mermaid'] },
-    // code in posts stays in the site's greys: keywords white, strings light, comments dim
+    // code in posts stays in the site's greys: keywords white, strings light, comments dim (but still readable: 4.8:1)
     shikiConfig: {
       theme: {
         name: 'mono',
         type: 'dark',
         colors: { 'editor.background': '#0e0e10', 'editor.foreground': '#a3a3a3' },
         tokenColors: [
-          { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#5a5a5a', fontStyle: 'italic' } },
+          { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#808080', fontStyle: 'italic' } },
           { scope: ['keyword', 'storage', 'keyword.operator.new', 'constant.language'], settings: { foreground: '#ffffff' } },
           { scope: ['string', 'constant.numeric', 'constant.other'], settings: { foreground: '#d4d4d4' } },
           { scope: ['entity.name.function', 'support.function', 'variable.other.property', 'meta.object-literal.key'], settings: { foreground: '#e7e7e7' } },

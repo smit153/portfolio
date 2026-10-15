@@ -1,0 +1,11 @@
+---
+// Structured data for search engines: one or more schema.org entities as a single JSON-LD @graph. `<` is escaped so
+// no string in the data can close the script tag early.
+interface Props {
+	data: Record<string, unknown> | Record<string, unknown>[];
+}
+const { data } = Astro.props;
+const json = JSON.stringify({ '@context': 'https://schema.org', '@graph': [data].flat() }).replace(/</g, '\\u003c');
+---
+
+<script type="application/ld+json" set:html={json} />

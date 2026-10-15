@@ -1,5 +1,7 @@
 ---
 title: BeyondDiff
+seoTitle: "BeyondDiff: AI Pull Request Impact Checker"
+seoDescription: "BeyondDiff is a GitHub App that flags what a pull request missed: breaking callers, stale docs, untested code and files that change together."
 summary: A GitHub App that reads a pull request and tells the author what the change left unfinished outside the lines they touched, such as callers that will break, docs that are now wrong, untested code and files that usually change together. It's for teams on Python or JavaScript/TypeScript who review PRs on GitHub.
 tagline: A PR bot that finds the callers, docs and tests your diff forgot about.
 notes:

@@ -13,6 +13,7 @@ import Header from '../../components/Header.astro';
 import PostMeta from '../../components/blog/PostMeta.astro';
 import SectionPill from '../../components/blog/SectionPill.astro';
 import { getPosts } from '../../lib/posts';
+import { NAME, abs, breadcrumbs, ids } from '../../lib/seo';
 import '../../styles/prose.css';
 import '../../styles/posts/jev.css';
 import '../../styles/posts/uuid-v7.css';
@@ -31,9 +32,43 @@ export async function getStaticPaths() {
 const { post, number, total, newer, older } = Astro.props;
 const { Content, headings } = await render(post);
 const sections = headings.filter((h) => h.depth === 2);
+
+// search engines get the title people search for; the page keeps its headline
+const d = post.data;
+const title = d.seoTitle ?? d.title;
+const description = d.seoDescription ?? d.description;
+const url = abs(post.href);
+const card = `/og/${post.id}.png`;
+const article = {
+	'@type': 'BlogPosting',
+	'@id': `${url}#article`,
+	headline: d.title,
+	alternativeHeadline: d.seoTitle,
+	description,
+	url,
+	mainEntityOfPage: url,
+	datePublished: d.date.toISOString(),
+	dateModified: (d.updated ?? d.date).toISOString(),
+	author: { '@type': 'Person', '@id': ids.person, name: NAME, url: abs('/') },
+	publisher: { '@id': ids.person },
+	isPartOf: { '@id': ids.website },
+	image: [abs(card), abs(d.cover.src)],
+	keywords: d.tags,
+	wordCount: post.words,
+	inLanguage: 'en',
+};
 ---
 
-<Layout title={`${post.data.title} · Smit Sojitra`} description={post.data.description} type="article">
+<Layout
+	title={title}
+	description={description}
+	type="article"
+	image={card}
+	imageAlt={d.title}
+	published={d.date}
+	modified={d.updated}
+	jsonLd={[article, breadcrumbs([{ name: 'Writing', path: '/writing/' }, { name: d.title, path: post.href }])]}
+>
 	<div class="min-h-screen overflow-x-clip bg-ink">
 		<main class="relative mx-auto flex min-h-screen w-full max-w-[768px] flex-col border-x-2 border-line">
 			<Header />
@@ -41,7 +76,7 @@ const sections = headings.filter((h) => h.depth === 2);
 
 			<!-- back, copy link, next -->
 			<div class="relative flex h-12 items-center justify-between gap-4 px-5">
-				<a href="/writing" class="group flex items-center gap-2 text-small text-muted transition-colors hover:text-white">
+				<a href="/writing/" class="group flex items-center gap-2 text-small text-muted transition-colors hover:text-white">
 					<img src={arrowUp.src} alt="" width="13" height="14" class="-rotate-90 opacity-70 transition-[opacity,translate] group-hover:-translate-x-0.5 group-hover:opacity-100" />
 					writing
 				</a>
@@ -101,11 +136,11 @@ const sections = headings.filter((h) => h.depth === 2);
 					].map(({ post: p, label }, i) =>
 						p ? (
 							<a href={p.href} class:list={['group flex flex-col gap-1 px-5 py-5 transition-colors hover:bg-[#0e0e10]', i === 1 && 'sm:items-end sm:border-l-2 sm:border-line sm:text-right']}>
-								<span class="text-small text-tick">{label === 'previous' ? '← previous' : 'next →'}</span>
+								<span class="text-small text-label">{label === 'previous' ? '← previous' : 'next →'}</span>
 								<span class="text-heading tracking-[-0.01em] text-white decoration-tick underline-offset-4 group-hover:underline">{p.data.title}</span>
 							</a>
 						) : (
-							<span class:list={['px-5 py-5 text-small text-tick', i === 1 && 'sm:border-l-2 sm:border-line sm:text-right']}>
+							<span class:list={['px-5 py-5 text-small text-label', i === 1 && 'sm:border-l-2 sm:border-line sm:text-right']}>
 								{label === 'previous' ? 'this is the newest post' : 'this is the first post'}
 							</span>
 						),

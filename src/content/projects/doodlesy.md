@@ -1,5 +1,6 @@
 ---
 title: Doodlesy!
+seoTitle: "Doodlesy: Multiplayer Draw-and-Guess Game"
 summary: A free multiplayer browser game for drawing and guessing words together. Players share a room, take turns drawing, and earn points for guessing fast.
 tagline: Draw together, guess the word, and race the clock.
 notes:

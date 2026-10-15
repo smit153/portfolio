@@ -187,7 +187,7 @@ const { projects } = Astro.props;
 	}
 	.name::after {
 		content: '/';
-		color: var(--color-tick);
+		color: var(--color-label);
 	}
 	/* the short line shows while it's closed; open, README.md says it in full */
 	.tagline {
@@ -210,7 +210,7 @@ const { projects } = Astro.props;
 		gap: 8px;
 		font-size: var(--text-body);
 		line-height: var(--text-body--line-height);
-		color: var(--color-tick);
+		color: var(--color-label);
 	}
 
 	/* opening a project folds its files out instead of snapping (browsers without ::details-content just snap) */
@@ -296,7 +296,7 @@ const { projects } = Astro.props;
 		width: auto;
 		height: auto;
 		background: none;
-		color: var(--color-tick);
+		color: var(--color-label);
 	}
 	.points > li::after {
 		content: none;

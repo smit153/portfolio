@@ -1,5 +1,7 @@
 ---
 title: Oshi
+seoTitle: "Oshi: Ricochet Robots-Style Sliding Puzzle"
+seoDescription: "Oshi is a Ricochet Robots-inspired sliding puzzle for the web: daily puzzles, solution replays and a board editor with a BFS solver."
 summary: A Ricochet Robots-inspired sliding puzzle for the web. Get the puck to the target in the fewest moves, with daily puzzles, solution replays and tools for making new boards.
 tagline: Slide the puck to the target. Fewest moves wins.
 notes:

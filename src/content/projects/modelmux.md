@@ -1,5 +1,7 @@
 ---
 title: ModelMux
+seoTitle: "ModelMux: Claude Code & Codex as an OpenAI API"
+seoDescription: "ModelMux runs Claude Code and Codex behind a self-hosted, OpenAI-compatible Chat Completions API, with tool execution blocked."
 summary: Claude Code and Codex behind a self-hosted, OpenAI-compatible Chat Completions API, for developers who want to plug coding CLIs into apps that already use the OpenAI SDK, LangChain or LiteLLM.
 tagline: Coding CLIs behind a Chat Completions API, execution blocked.
 notes:

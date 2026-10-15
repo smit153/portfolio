@@ -1,5 +1,7 @@
 ---
 title: "Your model doesn't need to write the answer. It needs to point at it."
+seoTitle: "Pointing vs Generating: Cheaper LLM Classification and Extraction"
+seoDescription: "Classification and extraction answers are already in your input. Why pointing at spans beats generating text, with cost math and live demos."
 description: "For classify and extract jobs the answer is already in your input. Why pointing beats writing, what ScaleDown's CDMs do with that idea, and where it stops working."
 date: 2026-10-17
 tags: [ai, llm, architecture]
@@ -23,7 +25,7 @@ A lot of what we hand to LLMs looks like this: the answer is already sitting in 
 
 ## Writing an answer is a loop
 
-An LLM produces text one token at a time. A token is a chunk of text, roughly ¾ of a word. The model reads your whole prompt in one parallel pass, then writes the first token, appends it, writes the next, and so on until it stops. Each new token waits for the one before it. (My [earlier post on long sessions](/writing/long-session-cost) walks through why, if you want the mechanics.)
+An LLM produces text one token at a time. A token is a chunk of text, roughly ¾ of a word. The model reads your whole prompt in one parallel pass, then writes the first token, appends it, writes the next, and so on until it stops. Each new token waits for the one before it. (My [earlier post on long sessions](/writing/long-session-cost/) walks through why, if you want the mechanics.)
 
 That loop is why output tokens cost more. On Anthropic's price list, Claude Sonnet 5.5 is $2 per million input tokens and $10 per million output tokens. Haiku 4.5 is $1 and $5. Output is five times the price of input.
 
@@ -100,7 +102,7 @@ First, the scores in single-label mode always sum to 1.0, and "the endpoint alwa
 
 ## Jev, OpenAI and Cloudflare do half of this
 
-CDMs aren't alone. A month earlier, TypeSafe AI launched Jev ([I wrote about it here](/writing/jev)), and since then OpenAI's Decisions API and Cloudflare's Clef models have shown up with the same shape: you send text and typed questions (yes/no, pick one, score) and get probabilities back, with no text written. That's Classify. What none of them document is pointing at spans or shortening long text.
+CDMs aren't alone. A month earlier, TypeSafe AI launched Jev ([I wrote about it here](/writing/jev/)), and since then OpenAI's Decisions API and Cloudflare's Clef models have shown up with the same shape: you send text and typed questions (yes/no, pick one, score) and get probabilities back, with no text written. That's Classify. What none of them document is pointing at spans or shortening long text.
 
 <div class="table-wrap">
 <table>

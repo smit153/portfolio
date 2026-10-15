@@ -6,5 +6,5 @@ export type Project = CollectionEntry<'projects'> & { href: string };
 
 export async function getProjects(): Promise<Project[]> {
 	const entries = await getCollection('projects');
-	return entries.map((entry) => ({ ...entry, href: `/projects/${entry.id}` })).sort((a, b) => a.data.order - b.data.order);
+	return entries.map((entry) => ({ ...entry, href: `/projects/${entry.id}/` })).sort((a, b) => a.data.order - b.data.order);
 }

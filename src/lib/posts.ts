@@ -24,7 +24,7 @@ export async function getPosts(): Promise<Post[]> {
 		.map((entry) => {
 			const words = countWords(entry.body);
 			// about 220 words a minute, plus a little time for the demos
-			return { ...entry, href: `/writing/${entry.id}`, words, minutes: Math.max(1, Math.round(words / 220) + 1) };
+			return { ...entry, href: `/writing/${entry.id}/`, words, minutes: Math.max(1, Math.round(words / 220) + 1) };
 		})
 		.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 }

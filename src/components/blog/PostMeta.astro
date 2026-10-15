@@ -17,7 +17,16 @@ const pad = (n: number) => String(n).padStart(2, '0');
 <dl class:list={['meta', className]}>
 	<div>
 		<dt>filed</dt>
-		<dd>{formatDate(post.data.date)}</dd>
+		<dd>
+			<time datetime={post.data.date.toISOString().slice(0, 10)}>{formatDate(post.data.date)}</time>
+			{
+				post.data.updated && (
+					<span class="block text-label">
+						updated <time datetime={post.data.updated.toISOString().slice(0, 10)}>{formatDate(post.data.updated)}</time>
+					</span>
+				)
+			}
+		</dd>
 	</div>
 	<div>
 		<dt>read</dt>
@@ -40,9 +49,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
 		<dd class="flex items-end justify-between">
 			<span>
 				<span class="font-grape text-[26px] leading-none">{pad(number)}</span>
-				<span class="text-tick"> / {pad(total)}</span>
+				<span class="text-label"> / {pad(total)}</span>
 			</span>
-			<span class="text-tick">by s.s.</span>
+			<span class="text-label">by s.s.</span>
 		</dd>
 	</div>
 </dl>
@@ -79,7 +88,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 		line-height: var(--text-tiny--line-height);
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		color: var(--color-tick);
+		color: var(--color-label);
 	}
 	dd {
 		margin: 0;
