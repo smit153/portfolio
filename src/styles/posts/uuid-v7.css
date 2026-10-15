@@ -104,7 +104,7 @@
   text-decoration: line-through;
 }
 
-/* bars: benchmark A and the size demo */
+/* bars: the size demo */
 .post-uuid-v7 .bar {
   display: flex;
   align-items: center;
@@ -142,10 +142,6 @@
 .post-uuid-v7 .f-dark {
   background: #5a5a5a;
 }
-.post-uuid-v7 .group + .group {
-  margin-top: 12px;
-}
-
 /* demo 5: chooser */
 .post-uuid-v7 .choice label {
   display: block;
