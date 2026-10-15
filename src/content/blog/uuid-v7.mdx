@@ -3,8 +3,9 @@ title: "How UUIDv7 fixes the primary-key tradeoff"
 description: "Auto-increment is cheap until you have two writers, and random UUIDs wreck your index. UUIDv7 puts the clock first and stops making you pick."
 date: 2026-09-26
 tags: [databases, postgres, uuid]
-cover: ../../assets/blog/uuid-v7.png
-coverAlt: "Dithered photo of a long library card catalogue, drawers in neat rows."
+cover: ../../assets/blog/uuid-v7.webp
+coverSquare: ../../assets/blog/uuid-v7-square.webp
+coverAlt: "Isometric illustration of a B-tree: a root page linked to four leaf pages filled in order, with the newest cube dropping into the last free slot."
 ---
 
 import BTree from '../../components/blog/uuid/BTree.astro';
