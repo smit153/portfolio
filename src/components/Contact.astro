@@ -36,8 +36,8 @@ const BOOK_A_CALL = 'https://cal.com/smit-sojitra-dev/30min';
 <script>
 	import { onPage } from '../lib/on-page';
 
-	// Cal.com's pop-up embed. Its 'init' adds embed.js, so it waits until the page has loaded and gone idle
-	// (or the button is hovered or focused first): the calendar never slows the first paint.
+	// Cal.com's pop-up embed. Its 'init' adds embed.js (and Cal's cookie), so it waits until the button is about a
+	// screen away (or hovered, focused or clicked first): a visit that never reaches the button never loads Cal.
 	type CalApi = ((...args: unknown[]) => void) & { q?: unknown[]; ns?: Record<string, CalApi>; loaded?: boolean };
 	const w = window as unknown as { Cal?: CalApi };
 
@@ -101,7 +101,7 @@ const BOOK_A_CALL = 'https://cal.com/smit-sojitra-dev/30min';
 		Cal.ns!['30min']('ui', CAL_UI);
 	}
 
-	onPage(() => {
+	onPage((signal) => {
 		const button = document.querySelector<HTMLAnchorElement>('[data-book-call]');
 		if (!button) return;
 		button.addEventListener('pointerenter', startCal, { once: true });
@@ -118,8 +118,15 @@ const BOOK_A_CALL = 'https://cal.com/smit-sojitra-dev/30min';
 			});
 			w.Cal!.ns!['30min']('ui', CAL_UI);
 		});
-		// page-load fires once the page has loaded, the first one included
-		if ('requestIdleCallback' in window) requestIdleCallback(startCal, { timeout: 4000 });
-		else setTimeout(startCal, 2000);
+		const near = new IntersectionObserver(
+			([e]) => {
+				if (!e.isIntersecting) return;
+				near.disconnect();
+				startCal();
+			},
+			{ rootMargin: '100% 0px' },
+		);
+		near.observe(button);
+		signal.addEventListener('abort', () => near.disconnect());
 	});
 </script>
